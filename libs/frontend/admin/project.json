@@ -1,0 +1,1 @@
+{ "name": "frontend-admin", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/frontend/admin/src", "projectType": "library", "tags": ["scope:frontend", "type:feature"] }

@@ -1,0 +1,1 @@
+{ "name": "contracts-shared-types", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/contracts/shared-types/src", "projectType": "library", "tags": ["scope:contracts", "type:shared-types"] }

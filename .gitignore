@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.angular/
+.nx/
+.pnpm-store/
+.agents/
+.codex/
+.env
+.env.local
+*.log

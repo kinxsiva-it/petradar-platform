@@ -1,0 +1,1 @@
+{ "name": "frontend-matching", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/frontend/matching/src", "projectType": "library", "tags": ["scope:frontend", "type:feature"] }

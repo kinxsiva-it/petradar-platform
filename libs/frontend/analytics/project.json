@@ -1,0 +1,1 @@
+{ "name": "frontend-analytics", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/frontend/analytics/src", "projectType": "library", "tags": ["scope:frontend", "type:feature"] }

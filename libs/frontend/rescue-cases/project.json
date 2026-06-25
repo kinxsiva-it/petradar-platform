@@ -1,0 +1,1 @@
+{ "name": "frontend-rescue-cases", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/frontend/rescue-cases/src", "projectType": "library", "tags": ["scope:frontend", "type:feature"] }

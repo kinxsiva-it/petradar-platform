@@ -1,0 +1,1 @@
+{ "name": "frontend-sightings", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/frontend/sightings/src", "projectType": "library", "tags": ["scope:frontend", "type:feature"] }

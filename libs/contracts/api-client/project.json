@@ -1,0 +1,1 @@
+{ "name": "contracts-api-client", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/contracts/api-client/src", "projectType": "library", "tags": ["scope:contracts", "type:api-client"] }

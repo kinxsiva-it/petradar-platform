@@ -1,0 +1,1 @@
+{ "name": "backend-admin", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/backend/admin/src", "projectType": "library", "tags": ["scope:backend", "type:module"] }

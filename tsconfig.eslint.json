@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "NodeNext",
+    "noEmit": true,
+    "types": ["node", "jest", "vitest/globals"]
+  },
+  "include": ["apps/**/*.ts", "libs/**/*.ts", "prisma/**/*.ts", "*.ts", "*.mts", "*.cts"]
+}

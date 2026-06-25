@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: petradar-postgres
+    environment:
+      POSTGRES_DB: petradar
+      POSTGRES_USER: petradar
+      POSTGRES_PASSWORD: petradar
+    ports:
+      - "5432:5432"
+    volumes:
+      - petradar-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U petradar -d petradar"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  petradar-postgres-data:
