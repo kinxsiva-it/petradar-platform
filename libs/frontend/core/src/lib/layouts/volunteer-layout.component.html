@@ -16,8 +16,8 @@
     <section class="volunteer-profile-chip">
       <img [src]="rescue.currentVolunteer.avatarUrl" alt="Mock volunteer avatar" />
       <div>
-        <strong>{{ rescue.currentVolunteer.name }}</strong>
-        <span>{{ rescue.currentVolunteer.roleLabel }}</span>
+        <strong>{{ auth.user()?.displayName ?? rescue.currentVolunteer.name }}</strong>
+        <span>{{ auth.roles().join(', ') || rescue.currentVolunteer.roleLabel }}</span>
       </div>
     </section>
   </aside>
@@ -27,7 +27,7 @@
       <a routerLink="/" class="volunteer-brand compact"><span>P</span>PetRadar</a>
       <div class="topbar-actions">
         <a routerLink="/notifications">Notifications <b>{{ workspace.unreadCount() }}</b></a>
-        <button type="button" (click)="signOutMock()">Sign out</button>
+        <button type="button" (click)="signOut()">Sign out</button>
       </div>
     </header>
 

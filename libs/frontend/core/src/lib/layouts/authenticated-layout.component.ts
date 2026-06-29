@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { UserWorkspaceDataSource } from '@petradar/frontend/mock-data';
+
+import { AuthStateService } from '../auth/auth-state.service.js';
 
 interface UserNavItem {
   label: string;
@@ -28,11 +30,14 @@ const userNavItems: UserNavItem[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AuthenticatedLayoutComponent {
+  readonly auth = inject(AuthStateService);
   readonly workspace = inject(UserWorkspaceDataSource);
   readonly navItems = userNavItems;
   readonly mobileItems = userNavItems.slice(0, 5);
+  private readonly router = inject(Router);
 
-  signOutMock(): void {
-    this.workspace.showToast('Mock sign-out action only. No session was changed.');
+  async signOut(): Promise<void> {
+    await this.auth.logout();
+    await this.router.navigate(['/login']);
   }
 }

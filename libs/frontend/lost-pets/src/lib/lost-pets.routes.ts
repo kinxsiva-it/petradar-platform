@@ -1,10 +1,11 @@
 import type { Routes } from '@angular/router';
 
-import { AuthenticatedLayoutComponent, PublicLayoutComponent } from '@petradar/frontend/core';
+import { authGuard, AuthenticatedLayoutComponent, PublicLayoutComponent } from '@petradar/frontend/core';
 
 export const LOST_PET_ROUTES: Routes = [
   {
     path: 'new',
+    canActivate: [authGuard],
     component: AuthenticatedLayoutComponent,
     children: [
       {

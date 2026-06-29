@@ -1,10 +1,10 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
+import { AuthStateService, safeReturnUrl } from '@petradar/frontend/core';
 import { AlertComponent, ButtonComponent, PrivacyBannerComponent } from '@petradar/frontend/shared-ui';
 
-import { AuthPreviewState } from '../../data-access/auth-preview.state.js';
 import type { LoginPreviewForm } from '../../models/auth-preview.model.js';
 
 @Component({
@@ -16,16 +16,43 @@ import type { LoginPreviewForm } from '../../models/auth-preview.model.js';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginPageComponent {
-  readonly authState = inject(AuthPreviewState);
+  readonly authState = inject(AuthStateService);
   readonly showPassword = signal(false);
+  readonly localError = signal<string | null>(null);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   readonly form: LoginPreviewForm = {
     email: '',
     password: '',
     remember: true,
   };
 
-  submit(): void {
-    this.authState.submitLogin(this.form);
+  async submit(): Promise<void> {
+    if (this.authState.loading()) {
+      return;
+    }
+
+    this.localError.set(null);
+    this.authState.resetError();
+
+    if (!this.form.email.includes('@') || this.form.password.length < 1) {
+      this.localError.set('Enter your email address and password.');
+      return;
+    }
+
+    const success = await this.authState.login({
+      email: this.form.email,
+      password: this.form.password,
+    });
+
+    if (success) {
+      await this.router.navigateByUrl(this.returnUrl());
+    }
+  }
+
+  private returnUrl(): string {
+    const value = this.route.snapshot.queryParamMap.get('returnUrl');
+    return safeReturnUrl(value) ?? '/my/reports';
   }
 }
 

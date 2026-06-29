@@ -2,12 +2,22 @@
   @for (chip of chips(); track chip.label) {
     <button
       type="button"
-      [class]="chip.tone + ' chip' + (chip.active ? ' active' : '')"
+      class="chip"
+      [class.cat]="chip.tone === 'cat'"
+      [class.dog]="chip.tone === 'dog'"
+      [class.other]="chip.tone === 'other'"
+      [class.injured]="chip.tone === 'injured'"
+      [class.match]="chip.tone === 'match'"
+      [class.rescue]="chip.tone === 'rescue'"
+      [class.reunited]="chip.tone === 'reunited'"
+      [class.active]="chip.active"
       [attr.aria-pressed]="chip.active"
       (click)="chipToggled.emit(chip)"
     >
-      <span aria-hidden="true">{{ chip.icon }}</span>
-      {{ chip.label }}
+      <span class="chip-icon" aria-hidden="true">
+        <svg [lucideIcon]="chip.icon" [size]="17" [strokeWidth]="2.2"></svg>
+      </span>
+      <span class="chip-label"> {{ chip.label }} </span>
     </button>
   }
 </section>

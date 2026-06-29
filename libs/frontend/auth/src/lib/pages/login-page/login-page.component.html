@@ -38,9 +38,9 @@
       <a href="#">Forgot password?</a>
     </div>
 
-    @if (authState.lastResult(); as result) {
-      <pr-alert [title]="result.ok ? 'Mock login complete' : 'Invalid login state'" [tone]="result.ok ? 'success' : 'danger'">
-        {{ result.message }}
+    @if (localError() || authState.error(); as message) {
+      <pr-alert title="Login problem" tone="danger">
+        {{ message }}
       </pr-alert>
     }
 

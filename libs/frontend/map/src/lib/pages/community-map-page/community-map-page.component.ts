@@ -1,13 +1,21 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-
+import {
+  LucideCat,
+  LucideCircleCheck,
+  LucideDog,
+  LucideHeartPulse,
+  LucideLifeBuoy,
+  LucidePawPrint,
+  LucideSearch,
+  LucideStar,
+} from '@lucide/angular';
 import {
   DiscoveryFilters,
-  PublicSighting,
   PublicDiscoveryDataSource,
+  PublicSighting,
 } from '@petradar/frontend/mock-data';
 import { EmptyStateComponent } from '@petradar/frontend/shared-ui';
-
 import {
   ActiveCaseSummary,
   ActiveCaseSummaryComponent,
@@ -24,16 +32,8 @@ import { MapResultsListComponent } from '../../components/map-results-list/map-r
 import { MapSearchOverlayComponent } from '../../components/map-search-overlay/map-search-overlay.component.js';
 import { MapTopNavComponent } from '../../components/map-top-nav/map-top-nav.component.js';
 import { SightingDetailDrawerComponent } from '../../components/sighting-detail-drawer/sighting-detail-drawer.component.js';
-
-type MapUiState =
-  | 'default'
-  | 'loading'
-  | 'empty'
-  | 'error'
-  | 'location-denied'
-  | 'map-unavailable';
+type MapUiState = 'default' | 'loading' | 'empty' | 'error' | 'location-denied' | 'map-unavailable';
 type NearMeState = 'idle' | 'loading' | 'ready' | 'denied';
-
 @Component({
   selector: 'pr-community-map-page',
   standalone: true,
@@ -77,14 +77,15 @@ export class CommunityMapPageComponent {
       : undefined;
   });
   readonly hasFilteredEmpty = computed(
-    () => this.dataSource.filteredSightings().length === 0 && this.dataSource.sightings().length > 0,
+    () =>
+      this.dataSource.filteredSightings().length === 0 && this.dataSource.sightings().length > 0,
   );
   readonly filterChips = computed<MapFilterChip[]>(() => {
     const filters = this.dataSource.currentSightingFilters();
     return [
       {
         active: filters.species === 'Cat',
-        icon: 'C',
+        icon: LucideCat,
         key: 'species',
         label: 'Cats',
         tone: 'cat',
@@ -92,7 +93,7 @@ export class CommunityMapPageComponent {
       },
       {
         active: filters.species === 'Dog',
-        icon: 'D',
+        icon: LucideDog,
         key: 'species',
         label: 'Dogs',
         tone: 'dog',
@@ -100,7 +101,7 @@ export class CommunityMapPageComponent {
       },
       {
         active: filters.species === 'Other',
-        icon: 'O',
+        icon: LucidePawPrint,
         key: 'species',
         label: 'Other animals',
         tone: 'other',
@@ -108,7 +109,7 @@ export class CommunityMapPageComponent {
       },
       {
         active: filters.condition === 'Injured',
-        icon: '!',
+        icon: LucideHeartPulse,
         key: 'condition',
         label: 'Injured',
         tone: 'injured',
@@ -116,7 +117,7 @@ export class CommunityMapPageComponent {
       },
       {
         active: filters.status === 'Possible match',
-        icon: '*',
+        icon: LucideStar,
         key: 'status',
         label: 'Possible match',
         tone: 'match',
@@ -124,7 +125,7 @@ export class CommunityMapPageComponent {
       },
       {
         active: filters.status === 'Needs rescue',
-        icon: '+',
+        icon: LucideLifeBuoy,
         key: 'status',
         label: 'Rescue needed',
         tone: 'rescue',
@@ -132,7 +133,7 @@ export class CommunityMapPageComponent {
       },
       {
         active: filters.status === 'Reunited',
-        icon: 'R',
+        icon: LucideCircleCheck,
         key: 'status',
         label: 'Reunited',
         tone: 'reunited',
@@ -153,31 +154,28 @@ export class CommunityMapPageComponent {
       total: sightings.length,
     };
   });
-
   selectSighting(id: string): void {
     this.dataSource.setSelectedSighting(id);
   }
-
   updateFilter(event: { key: keyof DiscoveryFilters; value: string }): void {
-    this.dataSource.updateSightingFilter(event.key, event.value as DiscoveryFilters[typeof event.key]);
+    this.dataSource.updateSightingFilter(
+      event.key,
+      event.value as DiscoveryFilters[typeof event.key],
+    );
     this.ensureSelectedVisible();
   }
-
   clearFilters(): void {
     this.dataSource.clearSightingFilters();
     this.ensureSelectedVisible();
   }
-
   updateSearch(query: string): void {
     this.updateFilter({ key: 'query', value: query });
   }
-
   toggleChip(chip: MapFilterChip): void {
     const current = this.dataSource.currentSightingFilters()[chip.key];
     const nextValue = current === chip.value ? 'All' : chip.value;
     this.updateFilter({ key: chip.key, value: nextValue });
   }
-
   runNearMe(): void {
     if (this.nearMeState() === 'denied') {
       return;
@@ -185,12 +183,10 @@ export class CommunityMapPageComponent {
     this.nearMeState.set('loading');
     window.setTimeout(() => this.nearMeState.set('ready'), 650);
   }
-
   resetMapFilters(): void {
     this.clearFilters();
     this.casesOpen.set(false);
   }
-
   private ensureSelectedVisible(): void {
     const visible = this.dataSource.filteredSightings();
     const selectedId = this.selectedId();
@@ -199,7 +195,6 @@ export class CommunityMapPageComponent {
     }
   }
 }
-
 function countBy(
   sightings: readonly PublicSighting[],
   predicate: (sighting: PublicSighting) => boolean,

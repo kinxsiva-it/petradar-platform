@@ -1,6 +1,6 @@
 import type { Routes } from '@angular/router';
 
-import { PublicLayoutComponent } from '@petradar/frontend/core';
+import { anonymousOnlyGuard, PublicLayoutComponent } from '@petradar/frontend/core';
 
 export const AUTH_ROUTES: Routes = [
   {
@@ -9,6 +9,7 @@ export const AUTH_ROUTES: Routes = [
     children: [
       {
         path: 'login',
+        canActivate: [anonymousOnlyGuard],
         loadComponent: () =>
           import('./pages/login-page/login-page.component.js').then(
             (module) => module.LoginPageComponent,
@@ -16,6 +17,7 @@ export const AUTH_ROUTES: Routes = [
       },
       {
         path: 'register',
+        canActivate: [anonymousOnlyGuard],
         loadComponent: () =>
           import('./pages/register-page/register-page.component.js').then(
             (module) => module.RegisterPageComponent,

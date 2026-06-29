@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
+import { AuthStateService } from '@petradar/frontend/core';
 import { AdminWorkspaceDataSource } from '@petradar/frontend/mock-data';
 
 interface AdminNavItem {
@@ -20,8 +21,10 @@ interface AdminNavItem {
 })
 export class AdminLayoutComponent {
   readonly admin = inject(AdminWorkspaceDataSource);
+  readonly auth = inject(AuthStateService);
   readonly menuOpen = signal(false);
   readonly pendingCount = computed(() => this.admin.pendingReports().length);
+  private readonly router = inject(Router);
   readonly navItems: AdminNavItem[] = [
     { label: 'Verification', marker: 'V', route: '/admin/verification', count: this.pendingCount },
     { label: 'Rescue Cases', marker: 'R', route: '/admin/rescue-cases' },
@@ -32,7 +35,8 @@ export class AdminLayoutComponent {
     { label: 'Privacy', marker: 'P', route: '/admin/privacy' },
   ];
 
-  signOut(): void {
-    this.admin.showToast('Mock sign-out only. No real session was ended.');
+  async signOut(): Promise<void> {
+    await this.auth.logout();
+    await this.router.navigate(['/login']);
   }
 }

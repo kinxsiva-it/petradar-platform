@@ -1,1 +1,11 @@
-export {};
+export * from './lib/auth.module.js';
+export * from './lib/auth.service.js';
+export * from './lib/authenticated-user.js';
+export * from './lib/authorization-policy.service.js';
+export * from './lib/decorators/current-user.decorator.js';
+export * from './lib/decorators/public.decorator.js';
+export * from './lib/decorators/roles.decorator.js';
+export * from './lib/guards/jwt-auth.guard.js';
+export * from './lib/guards/roles.guard.js';
+export * from './lib/jwt-token.service.js';
+export * from './lib/password.service.js';

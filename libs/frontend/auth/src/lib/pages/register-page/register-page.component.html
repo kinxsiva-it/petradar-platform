@@ -58,9 +58,9 @@
       I agree to use PetRadar responsibly and follow community guidelines.
     </label>
 
-    @if (authState.lastResult(); as result) {
-      <pr-alert [title]="result.ok ? 'Registration success state' : 'Registration validation'" [tone]="result.ok ? 'success' : 'danger'">
-        {{ result.message }}
+    @if (localError() || authState.error(); as message) {
+      <pr-alert title="Registration problem" tone="danger">
+        {{ message }}
       </pr-alert>
     }
 

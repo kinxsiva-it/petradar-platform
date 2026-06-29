@@ -1,5 +1,7 @@
 import type { Routes } from '@angular/router';
 
+import { authGuard, roleGuard } from '@petradar/frontend/core';
+
 export const appRoutes: Routes = [
   {
     path: '',
@@ -27,6 +29,7 @@ export const appRoutes: Routes = [
   },
   {
     path: 'report-animal',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('@petradar/frontend/report-animal').then(
         (module) => module.REPORT_ANIMAL_ROUTES,
@@ -34,31 +37,37 @@ export const appRoutes: Routes = [
   },
   {
     path: 'my/reports',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('@petradar/frontend/sightings').then((module) => module.MY_REPORTS_ROUTES),
   },
   {
     path: 'my/lost-pets',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('@petradar/frontend/lost-pets').then((module) => module.MY_LOST_PET_ROUTES),
   },
   {
     path: 'matches',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('@petradar/frontend/matching').then((module) => module.MATCHING_ROUTES),
   },
   {
     path: 'notifications',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('@petradar/frontend/notifications').then((module) => module.NOTIFICATIONS_ROUTES),
   },
   {
     path: 'profile',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('@petradar/frontend/account').then((module) => module.PROFILE_ROUTES),
   },
   {
     path: 'settings',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('@petradar/frontend/account').then((module) => module.SETTINGS_ROUTES),
   },
@@ -71,11 +80,15 @@ export const appRoutes: Routes = [
   },
   {
     path: 'volunteer',
+    canActivate: [roleGuard],
+    data: { roles: ['VOLUNTEER', 'ADMIN'] },
     loadChildren: () =>
       import('@petradar/frontend/volunteer').then((module) => module.VOLUNTEER_ROUTES),
   },
   {
     path: 'admin',
+    canActivate: [roleGuard],
+    data: { roles: ['ADMIN'] },
     loadChildren: () => import('@petradar/frontend/admin').then((module) => module.ADMIN_ROUTES),
   },
   {

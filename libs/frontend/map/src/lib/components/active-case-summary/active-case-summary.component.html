@@ -5,14 +5,81 @@
   </header>
 
   <dl>
-    <div class="cat"><dt><span aria-hidden="true">C</span>Cats</dt><dd>{{ summary().cats }}</dd></div>
-    <div class="dog"><dt><span aria-hidden="true">D</span>Dogs</dt><dd>{{ summary().dogs }}</dd></div>
-    <div class="other"><dt><span aria-hidden="true">O</span>Other animals</dt><dd>{{ summary().other }}</dd></div>
-    <div class="injured"><dt><span aria-hidden="true">!</span>Injured</dt><dd>{{ summary().injured }}</dd></div>
-    <div class="match"><dt><span aria-hidden="true">*</span>Possible match</dt><dd>{{ summary().matches }}</dd></div>
-    <div class="rescue"><dt><span aria-hidden="true">+</span>Rescue needed</dt><dd>{{ summary().rescue }}</dd></div>
-    <div class="reunited"><dt><span aria-hidden="true">R</span>Reunited</dt><dd>{{ summary().reunited }}</dd></div>
+    <div class="cat">
+      <dt>
+        <span class="summary-icon" aria-hidden="true">
+          <svg lucideCat size="16" strokeWidth="2.2"></svg>
+        </span>
+        Cats
+      </dt>
+      <dd>{{ summary().cats }}</dd>
+    </div>
+
+    <div class="dog">
+      <dt>
+        <span class="summary-icon" aria-hidden="true">
+          <svg lucideDog size="16" strokeWidth="2.2"></svg>
+        </span>
+        Dogs
+      </dt>
+      <dd>{{ summary().dogs }}</dd>
+    </div>
+
+    <div class="other">
+      <dt>
+        <span class="summary-icon" aria-hidden="true">
+          <svg lucidePawPrint size="16" strokeWidth="2.2"></svg>
+        </span>
+        Other animals
+      </dt>
+      <dd>{{ summary().other }}</dd>
+    </div>
+
+    <div class="injured">
+      <dt>
+        <span class="summary-icon" aria-hidden="true">
+          <svg lucideHeartPulse size="16" strokeWidth="2.2"></svg>
+        </span>
+        Injured
+      </dt>
+      <dd>{{ summary().injured }}</dd>
+    </div>
+
+    <div class="match">
+      <dt>
+        <span class="summary-icon" aria-hidden="true">
+          <svg lucideStar size="16" strokeWidth="2.2"></svg>
+        </span>
+        Possible match
+      </dt>
+      <dd>{{ summary().matches }}</dd>
+    </div>
+
+    <div class="rescue">
+      <dt>
+        <span class="summary-icon" aria-hidden="true">
+          <svg lucideLifeBuoy size="16" strokeWidth="2.2"></svg>
+        </span>
+        Rescue needed
+      </dt>
+      <dd>{{ summary().rescue }}</dd>
+    </div>
+
+    <div class="reunited">
+      <dt>
+        <span class="summary-icon" aria-hidden="true">
+          <svg lucideBadgeCheck size="16" strokeWidth="2.2"></svg>
+        </span>
+        Reunited
+      </dt>
+      <dd>{{ summary().reunited }}</dd>
+    </div>
   </dl>
 
-  <button type="button" (click)="viewAll.emit()">View all cases <span aria-hidden="true">></span></button>
+  <button type="button" (click)="viewAll.emit()">
+    View all cases
+    <span class="button-icon" aria-hidden="true">
+      <svg lucideChevronRight size="16" strokeWidth="2.4"></svg>
+    </span>
+  </button>
 </aside>

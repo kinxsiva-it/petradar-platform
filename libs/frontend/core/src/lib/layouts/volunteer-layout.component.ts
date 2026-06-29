@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { RescueWorkflowDataSource, UserWorkspaceDataSource } from '@petradar/frontend/mock-data';
+
+import { AuthStateService } from '../auth/auth-state.service.js';
 
 interface VolunteerNavItem {
   label: string;
@@ -26,12 +28,15 @@ const volunteerNavItems: VolunteerNavItem[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VolunteerLayoutComponent {
+  readonly auth = inject(AuthStateService);
   readonly rescue = inject(RescueWorkflowDataSource);
   readonly workspace = inject(UserWorkspaceDataSource);
   readonly navItems = volunteerNavItems;
   readonly mobileItems = volunteerNavItems;
+  private readonly router = inject(Router);
 
-  signOutMock(): void {
-    this.rescue.showToast('Mock volunteer sign-out action only.');
+  async signOut(): Promise<void> {
+    await this.auth.logout();
+    await this.router.navigate(['/login']);
   }
 }

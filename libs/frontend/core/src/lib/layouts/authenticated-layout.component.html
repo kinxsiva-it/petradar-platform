@@ -19,8 +19,8 @@
     <section class="auth-user-card">
       <img [src]="workspace.currentUser().avatarUrl" alt="Mock user avatar" />
       <div>
-        <strong>{{ workspace.currentUser().name }}</strong>
-        <span>{{ workspace.currentUser().trustLabel }}</span>
+        <strong>{{ auth.user()?.displayName ?? workspace.currentUser().name }}</strong>
+        <span>{{ auth.roles().join(', ') || workspace.currentUser().trustLabel }}</span>
       </div>
     </section>
   </aside>
@@ -38,7 +38,7 @@
             <b>{{ workspace.unreadCount() }}</b>
           }
         </a>
-        <button type="button" (click)="signOutMock()">Sign out</button>
+        <button type="button" (click)="signOut()">Sign out</button>
       </div>
     </header>
 
