@@ -8,7 +8,7 @@
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "tsc -p apps/api/tsconfig.app.json && node dist/apps/api/src/main.js"
+        "command": "tsc -p apps/api/tsconfig.app.json && node -r ./apps/api/src/register-dist-paths.cjs dist/apps/api/apps/api/src/main.js"
       }
     },
     "build": {

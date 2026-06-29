@@ -60,6 +60,33 @@ button:focus-visible {
   white-space: nowrap;
 }
 
+.search-icon {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  color: var(--color-text-muted);
+}
+
+.search-icon svg,
+.filter-icon {
+  display: block;
+}
+
+.search-box:focus-within .search-icon {
+  color: var(--color-primary);
+}
+
+.search-box button {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  cursor: pointer;
+}
+
+.filter-icon {
+  color: currentColor;
+}
+
 @media (max-width: 680px) {
   .search-box {
     width: calc(100vw - 1.5rem);

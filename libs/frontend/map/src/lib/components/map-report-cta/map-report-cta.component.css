@@ -1,64 +1,143 @@
+:host {
+  display: block;
+}
+
+.report-cta,
+.report-cta * {
+  box-sizing: border-box;
+}
+
 .report-cta {
+  position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) 6.5rem;
   align-items: center;
   gap: 0.8rem;
+
   min-width: 18rem;
   min-height: 5.25rem;
+  overflow: hidden;
+
   border-radius: 1.35rem;
+
   background:
-    radial-gradient(circle at 88% 15%, rgb(255 255 255 / 0.16), transparent 34%),
-    linear-gradient(135deg, var(--color-primary), var(--color-primary-active));
+    radial-gradient(
+      circle at 88% 15%,
+      rgb(255 255 255 / 0.16),
+      transparent 34%
+    ),
+    linear-gradient(
+      135deg,
+      var(--color-primary),
+      var(--color-primary-active)
+    );
+
   color: white;
-  padding: 0.85rem 1rem;
+  padding: 0.85rem 0 0.85rem 1rem;
   text-decoration: none;
+
   box-shadow: 0 20px 45px rgb(15 118 110 / 0.28);
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.report-cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 52px rgb(15 118 110 / 0.34);
+}
+
+.report-cta:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.report-cta:focus-visible {
+  outline: 3px solid
+    color-mix(
+      in srgb,
+      var(--color-primary) 30%,
+      transparent
+    );
+  outline-offset: 3px;
 }
 
 .plus {
   display: grid;
   width: 2.2rem;
   height: 2.2rem;
+  flex-shrink: 0;
   place-items: center;
+
   border-radius: 999px;
   background: rgb(255 255 255 / 0.14);
+
   font-size: 1.55rem;
+  font-weight: 400;
   line-height: 1;
 }
 
 .copy {
+  position: relative;
+  z-index: 2;
+
   display: grid;
+  min-width: 0;
   gap: 0.15rem;
 }
 
-strong {
+.copy strong {
+  color: white;
   font-size: 1.22rem;
+  font-weight: 900;
   line-height: 1.1;
+  white-space: nowrap;
 }
 
-small {
+.copy small {
   color: rgb(255 255 255 / 0.78);
+  font-size: 0.85rem;
   font-weight: 650;
+  white-space: nowrap;
 }
+
+/* Transparent dog and cat image */
 
 .pets {
-  display: grid;
-  width: 3.5rem;
-  height: 3.5rem;
-  place-items: center;
-  border-radius: 1.1rem;
-  background: rgb(255 255 255 / 0.18);
-  font-weight: 950;
-  letter-spacing: 0;
+  align-self: stretch;
+  display: flex;
+  width: 6.5rem;
+  min-width: 0;
+  align-items: flex-end;
+  justify-content: flex-end;
+
+  overflow: hidden;
+  pointer-events: none;
 }
+
+.pets img {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  object-position: right bottom;
+
+  transform: translateY(0.2rem) scale(1.08);
+  transform-origin: right bottom;
+}
+
+/* Responsive */
 
 @media (max-width: 680px) {
   .report-cta {
-    min-width: 3.5rem;
     width: 3.5rem;
+    min-width: 3.5rem;
     min-height: 3.5rem;
+
     grid-template-columns: 1fr;
     justify-items: center;
+
     border-radius: 999px;
     padding: 0;
   }

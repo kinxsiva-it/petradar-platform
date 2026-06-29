@@ -1,5 +1,7 @@
 <label class="search-box">
-  <span aria-hidden="true">S</span>
+  <span class="search-icon" aria-hidden="true">
+    <svg lucideSearch size="20" strokeWidth="2.2"></svg>
+  </span>
   <span class="sr-only">Search map cases</span>
   <input
     type="search"
@@ -8,6 +10,12 @@
     placeholder="Search by pet, breed, color, area, or landmark..."
   />
   <button type="button" (click)="filtersOpened.emit()" aria-label="Open advanced filters">
-    <span aria-hidden="true">F</span>
+    <svg
+      lucideSlidersHorizontal
+      class="filter-icon"
+      size="20"
+      strokeWidth="2.2"
+      aria-hidden="true"
+    ></svg>
   </button>
 </label>

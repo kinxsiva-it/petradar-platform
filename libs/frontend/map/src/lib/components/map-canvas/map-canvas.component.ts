@@ -12,6 +12,17 @@ import {
   viewChild,
 } from '@angular/core';
 
+import {
+  Cat,
+  CircleCheck,
+  createElement,
+  Dog,
+  HeartPulse,
+  LifeBuoy,
+  PawPrint,
+  Star,
+} from 'lucide';
+
 import type { PublicSighting } from '@petradar/frontend/mock-data';
 
 @Component({
@@ -28,7 +39,9 @@ export class MapCanvasComponent implements AfterViewInit, OnDestroy {
   readonly markerSelected = output<string>();
   readonly unavailable = signal(false);
 
-  private readonly host = viewChild.required<ElementRef<HTMLElement>>('mapHost');
+  private readonly host =
+    viewChild.required<ElementRef<HTMLElement>>('mapHost');
+
   private leaflet: typeof import('leaflet') | undefined;
   private map: import('leaflet').Map | undefined;
   private layers: import('leaflet').Layer[] = [];
@@ -37,8 +50,13 @@ export class MapCanvasComponent implements AfterViewInit, OnDestroy {
     effect(() => {
       const sightings = this.sightings();
       const selectedId = this.selectedId();
+
       if (this.map && this.leaflet) {
-        this.renderMarkers(this.leaflet, sightings, selectedId);
+        this.renderMarkers(
+          this.leaflet,
+          sightings,
+          selectedId,
+        );
       }
     });
   }
@@ -46,21 +64,42 @@ export class MapCanvasComponent implements AfterViewInit, OnDestroy {
   async ngAfterViewInit(): Promise<void> {
     try {
       const leaflet = await import('leaflet');
+
       const map = leaflet
-        .map(this.host().nativeElement, { zoomControl: false })
+        .map(this.host().nativeElement, {
+          zoomControl: false,
+        })
         .setView([13.782, 100.545], 12);
+
       leaflet
-        .tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors',
-          maxZoom: 18,
+        .tileLayer(
+          'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+          {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 18,
+          },
+        )
+        .addTo(map);
+
+      leaflet.control
+        .zoom({
+          position: 'bottomright',
         })
         .addTo(map);
-      leaflet.control.zoom({ position: 'bottomright' }).addTo(map);
 
       this.leaflet = leaflet;
       this.map = map;
-      this.renderMarkers(leaflet, this.sightings(), this.selectedId());
-      window.setTimeout(() => map.invalidateSize(), 80);
+
+      this.renderMarkers(
+        leaflet,
+        this.sightings(),
+        this.selectedId(),
+      );
+
+      window.setTimeout(
+        () => map.invalidateSize(),
+        80,
+      );
     } catch {
       this.unavailable.set(true);
     }
@@ -68,6 +107,7 @@ export class MapCanvasComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.map?.remove();
+    this.layers = [];
   }
 
   private renderMarkers(
@@ -82,6 +122,7 @@ export class MapCanvasComponent implements AfterViewInit, OnDestroy {
     for (const layer of this.layers) {
       this.map.removeLayer(layer);
     }
+
     this.layers = [];
 
     for (const sighting of sightings) {
@@ -89,86 +130,164 @@ export class MapCanvasComponent implements AfterViewInit, OnDestroy {
         sighting.approximateLocation.latitude,
         sighting.approximateLocation.longitude,
       ];
+
       const tone = markerTone(sighting);
       const isSelected = selectedId === sighting.id;
+      const color = markerColor(sighting);
+
       const circleLayer = leaflet
         .circle(center, {
-          color: markerColor(sighting),
-          fillColor: markerColor(sighting),
+          color,
+          fillColor: color,
           fillOpacity: isSelected ? 0.2 : 0.1,
           radius: sighting.approximateLocation.radiusMeters,
           weight: isSelected ? 2 : 1,
         })
         .addTo(this.map);
 
+      const markerElement = createMarkerElement(
+        sighting,
+        tone,
+        isSelected,
+      );
+
       const markerLayer = leaflet
         .marker(center, {
           icon: leaflet.divIcon({
             className: 'pr-map-marker-host',
-            html: `<span class="pr-map-marker-modern ${tone}${isSelected ? ' selected' : ''}" aria-hidden="true">${markerLabel(sighting)}</span>`,
+            html: markerElement,
             iconAnchor: [22, 48],
             iconSize: [44, 48],
           }),
-          title: `${sighting.title}. ${sighting.status}. Approximate location: ${sighting.approximateLocation.label}`,
+          title: [
+            sighting.title,
+            sighting.status,
+            `Approximate location: ${sighting.approximateLocation.label}`,
+          ].join('. '),
         })
-        .on('click', () => this.markerSelected.emit(sighting.id))
+        .on('click', () => {
+          this.markerSelected.emit(sighting.id);
+        })
         .addTo(this.map);
 
-      this.layers.push(circleLayer, markerLayer);
+      this.layers.push(
+        circleLayer,
+        markerLayer,
+      );
     }
   }
+}
+
+function createMarkerElement(
+  sighting: PublicSighting,
+  tone: string,
+  isSelected: boolean,
+): HTMLSpanElement {
+  const marker = document.createElement('span');
+
+  marker.className = [
+    'pr-map-marker-modern',
+    tone,
+    isSelected ? 'selected' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  marker.setAttribute('aria-hidden', 'true');
+
+  const icon = createElement(markerIcon(sighting), {
+    class: 'pr-map-marker-icon',
+    width: 20,
+    height: 20,
+    'stroke-width': 2.35,
+    'aria-hidden': 'true',
+  });
+
+  marker.append(icon);
+
+  return marker;
+}
+
+function markerIcon(sighting: PublicSighting) {
+  if (sighting.condition === 'Injured') {
+    return HeartPulse;
+  }
+
+  if (sighting.status === 'Needs rescue') {
+    return LifeBuoy;
+  }
+
+  if (sighting.status === 'Possible match') {
+    return Star;
+  }
+
+  if (sighting.status === 'Reunited') {
+    return CircleCheck;
+  }
+
+  if (sighting.species === 'Cat') {
+    return Cat;
+  }
+
+  if (sighting.species === 'Dog') {
+    return Dog;
+  }
+
+  return PawPrint;
 }
 
 function markerColor(sighting: PublicSighting): string {
   if (sighting.condition === 'Injured') {
     return '#ef4444';
   }
+
   if (sighting.status === 'Needs rescue') {
     return '#f59e0b';
   }
+
   if (sighting.status === 'Possible match') {
     return '#8b5cf6';
   }
+
   if (sighting.status === 'Reunited') {
     return '#22c55e';
   }
+
   if (sighting.species === 'Cat') {
     return '#2563eb';
   }
+
   if (sighting.species === 'Dog') {
     return '#f59e0b';
   }
+
   return '#0f766e';
 }
 
 function markerTone(sighting: PublicSighting): string {
   if (sighting.condition === 'Injured') {
-    return ' injured';
+    return 'injured';
   }
-  if (sighting.status === 'Needs rescue') {
-    return ' rescue';
-  }
-  if (sighting.status === 'Possible match') {
-    return ' match';
-  }
-  if (sighting.status === 'Reunited') {
-    return ' reunited';
-  }
-  return ` ${sighting.species.toLowerCase()}`;
-}
 
-function markerLabel(sighting: PublicSighting): string {
-  if (sighting.condition === 'Injured') {
-    return '!';
-  }
   if (sighting.status === 'Needs rescue') {
-    return '+';
+    return 'rescue';
   }
+
   if (sighting.status === 'Possible match') {
-    return '*';
+    return 'match';
   }
+
   if (sighting.status === 'Reunited') {
-    return 'R';
+    return 'reunited';
   }
-  return sighting.species.slice(0, 1).toUpperCase();
+
+  if (sighting.species === 'Cat') {
+    return 'cat';
+  }
+
+  if (sighting.species === 'Dog') {
+    return 'dog';
+  }
+
+  return 'other';
 }
