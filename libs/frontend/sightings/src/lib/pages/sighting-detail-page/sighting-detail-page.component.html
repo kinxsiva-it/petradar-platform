@@ -1,0 +1,38 @@
+@if (uiState() === 'loading') {
+  <pr-empty-state title="Loading report" description="Loading public sighting details." icon="..." />
+} @else if (uiState() === 'error') {
+  <pr-empty-state title="Report could not load" description="Mock error state for public sighting detail." icon="!" />
+} @else if (sighting(); as item) {
+  <section class="detail-header">
+    <a routerLink="/map">Back to map</a>
+    <div>
+      <p class="eyebrow">Public sighting detail</p>
+      <h1>{{ item.reference }}</h1>
+      <p>{{ item.species }} · {{ item.color }} · {{ item.pattern ?? 'Pattern not listed' }}</p>
+    </div>
+  </section>
+
+  <section class="detail-layout">
+    <pr-sighting-photo-gallery [photos]="item.photoUrls" [alt]="item.title" />
+    <article class="summary-card">
+      <h2>{{ item.title }}</h2>
+      <p>{{ item.description }}</p>
+      <pr-sighting-metadata [sighting]="item" />
+      <pr-privacy-banner />
+      <div class="action-row">
+        <a routerLink="/lost-pets" class="link-button primary">Search lost pets</a>
+        <a routerLink="/map" class="link-button secondary">View on map</a>
+      </div>
+    </article>
+  </section>
+
+  <pr-related-sightings [sightings]="related()" />
+} @else {
+  <pr-empty-state
+    title="Report not found"
+    description="This public sighting does not exist in the mock data source."
+    icon="?"
+  >
+    <a routerLink="/map" class="link-button secondary">Back to map</a>
+  </pr-empty-state>
+}

@@ -1,0 +1,56 @@
+<section class="profile-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">User Profile</p>
+      <h1>{{ workspace.currentUser().name }}</h1>
+      <p>{{ workspace.currentUser().locationLabel }} · Member since {{ workspace.currentUser().memberSince }}</p>
+    </div>
+    @if (!editing()) {
+      <button type="button" (click)="edit()">Edit Profile</button>
+    }
+  </header>
+
+  @if (saveSuccess()) {
+    <pr-alert title="Profile saved" tone="success">This update exists only in frontend mock state.</pr-alert>
+  }
+  @if (validationError()) {
+    <pr-alert title="Validation issue" tone="danger">{{ validationError() }}</pr-alert>
+  }
+
+  <section class="profile-grid">
+    <article class="profile-summary">
+      <img [src]="workspace.currentUser().avatarUrl" alt="Mock user avatar" />
+      <h2>{{ workspace.currentUser().name }}</h2>
+      <p>{{ workspace.currentUser().email }}</p>
+      <div class="badge-row">
+        @for (role of workspace.currentUser().roles; track role) {
+          <pr-status-badge [label]="role" tone="success" />
+        }
+      </div>
+      <dl>
+        <div><dt>Reports</dt><dd>{{ history().reports }}</dd></div>
+        <div><dt>Lost-pet posts</dt><dd>{{ history().lostPets }}</dd></div>
+        <div><dt>Reunited</dt><dd>{{ history().reunited }}</dd></div>
+      </dl>
+    </article>
+
+    <article class="profile-form">
+      <h2>Contact profile</h2>
+      <label>Name <input [(ngModel)]="draft.name" [disabled]="!editing()" /></label>
+      <label>Email <input [(ngModel)]="draft.email" [disabled]="!editing()" /></label>
+      <label>Phone <input [(ngModel)]="draft.phone" [disabled]="!editing()" /></label>
+      <label>Contact preference
+        <select [(ngModel)]="draft.contactPreference" [disabled]="!editing()">
+          @for (item of contactOptions; track item) { <option [ngValue]="item">{{ item }}</option> }
+        </select>
+      </label>
+      <label>About me <textarea rows="4" [(ngModel)]="draft.bio" [disabled]="!editing()"></textarea></label>
+      @if (editing()) {
+        <footer>
+          <button type="button" class="secondary" (click)="cancel()">Cancel</button>
+          <button type="button" (click)="save()">Save</button>
+        </footer>
+      }
+    </article>
+  </section>
+</section>

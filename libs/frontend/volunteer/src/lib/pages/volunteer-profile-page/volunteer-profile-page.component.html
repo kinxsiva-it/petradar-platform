@@ -1,0 +1,61 @@
+<section class="profile-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Volunteer profile</p>
+      <h1>{{ rescue.volunteerProfile().volunteer.name }}</h1>
+      <p>{{ rescue.volunteerProfile().volunteer.roleLabel }} · Joined {{ rescue.volunteerProfile().joinedAt }}</p>
+    </div>
+    @if (!editing()) {
+      <button type="button" (click)="edit()">Edit profile</button>
+    }
+  </header>
+
+  @if (saved()) {
+    <pr-alert title="Volunteer profile saved" tone="success">Changes are stored only in frontend mock state.</pr-alert>
+  }
+  @if (error()) {
+    <pr-alert title="Validation issue" tone="danger">{{ error() }}</pr-alert>
+  }
+
+  <section class="profile-grid">
+    <article class="identity-card">
+      <img [src]="rescue.volunteerProfile().volunteer.avatarUrl" alt="Mock volunteer avatar" />
+      <h2>{{ rescue.volunteerProfile().volunteer.name }}</h2>
+      <span>Verified volunteer</span>
+      <p>{{ rescue.volunteerProfile().bio }}</p>
+    </article>
+
+    <section class="stats-grid">
+      <pr-volunteer-stat-card [value]="rescue.volunteerProfile().casesAssisted" label="Cases assisted" hint="Mock total" />
+      <pr-volunteer-stat-card [value]="rescue.assignedCases().length" label="Active cases" hint="Assigned now" />
+      <pr-volunteer-stat-card [value]="rescue.volunteerProfile().completedCases" label="Completed cases" hint="Historical mock" />
+    </section>
+
+    <article class="form-card">
+      <h2>Contact and coverage</h2>
+      <label>Name <input [(ngModel)]="draft.volunteer.name" [disabled]="!editing()" /></label>
+      <label>Email <input [(ngModel)]="draft.volunteer.email" [disabled]="!editing()" /></label>
+      <label>Phone <input [(ngModel)]="draft.volunteer.phone" [disabled]="!editing()" /></label>
+      <label>Coverage area <input [(ngModel)]="draft.coverageArea" [disabled]="!editing()" /></label>
+      <label>About <textarea rows="4" [(ngModel)]="draft.bio" [disabled]="!editing()"></textarea></label>
+      @if (editing()) {
+        <footer>
+          <button type="button" class="secondary" (click)="editing.set(false)">Cancel</button>
+          <button type="button" (click)="save()">Save</button>
+        </footer>
+      }
+    </article>
+
+    <aside class="side-column">
+      <pr-volunteer-availability-card [availability]="rescue.volunteerProfile().availability" (statusChanged)="availabilityChanged($event)" />
+      <article class="skills-card">
+        <h2>Skills</h2>
+        <div>
+          @for (skill of rescue.volunteerProfile().skills; track skill) {
+            <span>{{ skill }}</span>
+          }
+        </div>
+      </article>
+    </aside>
+  </section>
+</section>

@@ -1,0 +1,13 @@
+<label class="search-box">
+  <span aria-hidden="true">S</span>
+  <span class="sr-only">Search map cases</span>
+  <input
+    type="search"
+    [ngModel]="query()"
+    (ngModelChange)="queryChanged.emit($event)"
+    placeholder="Search by pet, breed, color, area, or landmark..."
+  />
+  <button type="button" (click)="filtersOpened.emit()" aria-label="Open advanced filters">
+    <span aria-hidden="true">F</span>
+  </button>
+</label>

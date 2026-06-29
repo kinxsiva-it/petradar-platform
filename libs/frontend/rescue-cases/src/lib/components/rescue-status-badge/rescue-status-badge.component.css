@@ -1,0 +1,42 @@
+.status-badge {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-default);
+  padding: 0 0.65rem;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.needs-rescue,
+.emergency,
+.false-report {
+  border-color: var(--color-danger-subtle);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}
+
+.needs-verification,
+.foster-needed {
+  border-color: var(--color-warning-subtle);
+  background: var(--color-warning-subtle);
+  color: #a85f00;
+}
+
+.volunteer-assigned,
+.watching,
+.at-clinic {
+  border-color: var(--color-info-subtle);
+  background: var(--color-info-subtle);
+  color: var(--color-info);
+}
+
+.reunited,
+.adopted {
+  border-color: var(--color-success-subtle);
+  background: var(--color-success-subtle);
+  color: var(--color-primary);
+}

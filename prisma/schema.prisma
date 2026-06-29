@@ -21,19 +21,87 @@ enum AccountStatus {
   PENDING_REVIEW
 }
 
+enum VolunteerVerificationState {
+  NOT_APPLICABLE
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum AnimalSpecies {
+  CAT
+  DOG
+  OTHER
+}
+
+enum AnimalCondition {
+  NORMAL_STRAY
+  INJURED
+  NEEDS_RESCUE
+  NEWBORN_LITTER
+  POSSIBLE_LOST_PET
+  SICK
+  PREGNANT
+  AGGRESSIVE
+  UNKNOWN
+}
+
+enum CollarStatus {
+  NO_COLLAR
+  RED_COLLAR_WITH_BELL
+  BLUE_COLLAR
+  UNKNOWN
+  OTHER
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  EMERGENCY
+}
+
+enum SightingLifecycleStatus {
+  SIGHTING
+  POSSIBLE_MATCH
+  NEEDS_RESCUE
+  REUNITED
+  CLOSED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  COMMUNITY_VERIFIED
+  NEEDS_REVIEW
+  REJECTED
+  DUPLICATE
+}
+
+enum PhotoStorageProvider {
+  EXTERNAL_URL
+  SUPABASE
+  LOCAL_PLACEHOLDER
+}
+
 model User {
-  id           String        @id @default(uuid()) @db.Uuid
-  email        String        @unique
-  displayName  String
-  passwordHash String        @map("password_hash")
-  roles        UserRole[]    @default([REPORTER])
-  status       AccountStatus @default(ACTIVE)
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                    String                     @id @default(uuid()) @db.Uuid
+  email                 String                     @unique
+  displayName           String
+  passwordHash          String                     @map("password_hash")
+  phone                 String?
+  roles                 UserRole[]                 @default([REPORTER])
+  status                AccountStatus              @default(ACTIVE)
+  volunteerVerification VolunteerVerificationState @default(NOT_APPLICABLE) @map("volunteer_verification")
+  createdAt             DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   refreshTokens RefreshToken[]
+  sightings     AnimalSighting[]
+  auditLogs     AuditLog[]
 
   @@index([status])
+  @@index([volunteerVerification])
   @@map("users")
 }
 
@@ -48,11 +116,80 @@ model RefreshToken {
   replacedByTokenId String?   @map("replaced_by_token_id") @db.Uuid
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  replacedByToken RefreshToken? @relation("RefreshTokenRotation", fields: [replacedByTokenId], references: [id])
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replacedByToken RefreshToken?  @relation("RefreshTokenRotation", fields: [replacedByTokenId], references: [id])
   replacesTokens  RefreshToken[] @relation("RefreshTokenRotation")
 
   @@index([userId, revokedAt])
   @@index([expiresAt])
   @@map("refresh_tokens")
+}
+
+model AnimalSighting {
+  id                 String                               @id @default(uuid()) @db.Uuid
+  reporterId         String?                              @map("reporter_id") @db.Uuid
+  species            AnimalSpecies
+  animalCount        Int                                  @default(1) @map("animal_count")
+  color              String?
+  pattern            String?
+  collarStatus       CollarStatus                         @default(UNKNOWN) @map("collar_status")
+  condition          AnimalCondition                      @default(UNKNOWN)
+  description        String?
+  seenAt             DateTime                             @map("seen_at") @db.Timestamptz(6)
+  urgency            UrgencyLevel                         @default(LOW)
+  lifecycleStatus    SightingLifecycleStatus              @default(SIGHTING) @map("lifecycle_status")
+  verificationStatus VerificationStatus                   @default(PENDING) @map("verification_status")
+  exactLocation      Unsupported("geography(Point,4326)") @map("exact_location")
+  publicLocation     Unsupported("geography(Point,4326)") @map("public_location")
+  publicRadiusMeters Int                                  @map("public_radius_meters")
+  createdAt          DateTime                             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                             @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  reporter User?           @relation(fields: [reporterId], references: [id], onDelete: SetNull)
+  photos   SightingPhoto[]
+
+  @@index([reporterId])
+  @@index([species])
+  @@index([lifecycleStatus])
+  @@index([verificationStatus])
+  @@index([urgency])
+  @@index([seenAt])
+  @@index([createdAt])
+  @@map("animal_sightings")
+}
+
+model SightingPhoto {
+  id              String               @id @default(uuid()) @db.Uuid
+  sightingId      String               @map("sighting_id") @db.Uuid
+  storageProvider PhotoStorageProvider @default(EXTERNAL_URL) @map("storage_provider")
+  storageKey      String?              @map("storage_key")
+  url             String
+  mimeType        String?              @map("mime_type")
+  fileSizeBytes   Int?                 @map("file_size_bytes")
+  sortOrder       Int                  @default(0) @map("sort_order")
+  createdAt       DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  sighting AnimalSighting @relation(fields: [sightingId], references: [id], onDelete: Cascade)
+
+  @@index([sightingId, sortOrder])
+  @@map("sighting_photos")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  metadata   Json?
+  requestId  String?  @map("request_id")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([actorId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_logs")
 }

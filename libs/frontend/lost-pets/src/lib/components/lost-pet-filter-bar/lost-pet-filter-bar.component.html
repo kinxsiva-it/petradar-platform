@@ -1,0 +1,28 @@
+<section class="filter-bar">
+  <input
+    [ngModel]="filters().query"
+    (ngModelChange)="filterChanged.emit({ key: 'query', value: $event })"
+    placeholder="Search by pet name, breed, or area..."
+    type="search"
+  />
+  <select [ngModel]="filters().species" (ngModelChange)="filterChanged.emit({ key: 'species', value: $event })">
+    <option>All</option>
+    <option>Cat</option>
+    <option>Dog</option>
+    <option>Other</option>
+  </select>
+  <select [ngModel]="filters().status" (ngModelChange)="filterChanged.emit({ key: 'status', value: $event })">
+    <option>All</option>
+    <option>Active</option>
+    <option>Possible match</option>
+    <option>Reunited</option>
+    <option>Closed</option>
+  </select>
+  <select aria-label="Date range">
+    <option>Last seen any time</option>
+    <option>Last 24 hours</option>
+    <option>Last 7 days</option>
+  </select>
+  <button type="button" (click)="clearFilters.emit()">Clear</button>
+</section>
+

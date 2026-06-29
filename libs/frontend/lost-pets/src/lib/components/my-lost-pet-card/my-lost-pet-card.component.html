@@ -1,0 +1,29 @@
+<article class="pet-card">
+  <img [src]="pet().photoUrls[0]" [alt]="pet().petName" />
+  <div class="pet-body">
+    <header>
+      <div>
+        <p>{{ pet().reference }}</p>
+        <h2>{{ pet().petName }}</h2>
+        <span>{{ pet().species }} · {{ pet().breed }} · {{ pet().ageDescription }}</span>
+      </div>
+      <pr-status-badge [label]="pet().status" [tone]="tone(pet().status)" />
+    </header>
+    <dl>
+      <div><dt>Last seen</dt><dd>{{ pet().approximateLastSeenLabel }}</dd></div>
+      <div><dt>Time</dt><dd>{{ pet().lastSeenAt }}</dd></div>
+      <div><dt>Matches</dt><dd>{{ pet().possibleMatchCount }}</dd></div>
+      <div><dt>Contact</dt><dd>{{ pet().contactPreference }}</dd></div>
+    </dl>
+    <footer>
+      <a [routerLink]="['/lost-pets', pet().id]">View</a>
+      <a [routerLink]="['/my/lost-pets', pet().id, 'matches']">View matches</a>
+      <button type="button" [disabled]="pet().status === 'Reunited'" (click)="statusChanged.emit({ id: pet().id, status: 'Reunited' })">
+        Mark reunited
+      </button>
+      <button type="button" [disabled]="pet().status === 'Closed'" (click)="statusChanged.emit({ id: pet().id, status: 'Closed' })">
+        Close post
+      </button>
+    </footer>
+  </div>
+</article>

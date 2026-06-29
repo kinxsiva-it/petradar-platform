@@ -1,0 +1,248 @@
+.admin-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  background: var(--color-background);
+}
+
+.admin-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-right: 1px solid var(--color-border-default);
+  background: var(--color-surface);
+  padding: 1.25rem;
+  z-index: var(--z-header);
+}
+
+.brand,
+.mobile-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: var(--color-text-strong);
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.brand span {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 0.7rem;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+}
+
+.panel-label {
+  margin: 1rem 0 0;
+  color: var(--color-text-muted);
+  font: var(--text-caption);
+  text-transform: uppercase;
+}
+
+nav {
+  display: grid;
+  gap: 0.35rem;
+}
+
+nav a,
+.mobile-nav a {
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  border-radius: var(--radius-card);
+  color: var(--color-text-default);
+  padding: 0 0.75rem;
+  text-decoration: none;
+}
+
+nav a span {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 0.45rem;
+  background: var(--color-surface-muted);
+  color: var(--color-primary);
+  font-weight: 850;
+}
+
+nav a small,
+.mobile-nav a small {
+  margin-left: auto;
+  border-radius: 999px;
+  background: var(--color-match-subtle);
+  color: var(--color-match);
+  padding: 0.15rem 0.45rem;
+  font-weight: 800;
+}
+
+nav a.active,
+.mobile-nav a.active {
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+.admin-card {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  padding: 0.7rem;
+}
+
+.admin-card img {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.admin-card b,
+.admin-card span {
+  display: block;
+}
+
+.admin-card span {
+  color: var(--color-text-muted);
+  font: var(--text-caption);
+}
+
+.admin-main {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.admin-header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+  min-height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-border-default);
+  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
+  padding: 0 var(--space-page);
+  backdrop-filter: blur(14px);
+}
+
+.menu-button,
+.admin-header button,
+.close-menu {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  padding: 0 0.85rem;
+  font-weight: 750;
+}
+
+.menu-button {
+  display: none;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.indicator {
+  border-radius: 999px;
+  background: var(--color-warning-subtle);
+  color: #915f00;
+  padding: 0.45rem 0.7rem;
+  font-weight: 800;
+}
+
+main {
+  min-width: 0;
+  padding: var(--space-page);
+}
+
+.mobile-nav {
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: var(--z-sheet);
+  width: min(22rem, 92vw);
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  border-left: 1px solid var(--color-border-default);
+  background: var(--color-surface);
+  padding: 1rem;
+  box-shadow: var(--shadow-panel);
+}
+
+.close-menu {
+  justify-self: end;
+}
+
+.admin-toast {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: var(--z-sheet);
+  max-width: min(28rem, calc(100vw - 2rem));
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-text-strong);
+  color: white;
+  padding: 0.9rem 1rem;
+  box-shadow: var(--shadow-panel);
+}
+
+@media (max-width: 1100px) {
+  .admin-shell {
+    display: block;
+  }
+
+  .admin-sidebar {
+    display: none;
+  }
+
+  .admin-header {
+    gap: 0.6rem;
+  }
+
+  .menu-button {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+
+  .header-actions .indicator,
+  .header-actions button:first-of-type {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .mobile-brand {
+    font-size: 0.95rem;
+  }
+
+  .admin-header {
+    padding: 0 0.75rem;
+  }
+
+  main {
+    padding: 0.85rem;
+  }
+}

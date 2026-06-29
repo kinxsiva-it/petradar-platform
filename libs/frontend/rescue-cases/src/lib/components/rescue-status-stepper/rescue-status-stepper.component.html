@@ -1,0 +1,16 @@
+<section class="status-stepper">
+  <header>
+    <span>Current status</span>
+    <strong>{{ label(status()) }}</strong>
+  </header>
+  <div class="transition-list">
+    @for (option of options(); track option.to) {
+      <button type="button" (click)="statusChanged.emit(option.to)">
+        <b>{{ option.label }}</b>
+        <span>{{ option.description }}</span>
+      </button>
+    } @empty {
+      <p>No further mock transitions for this status.</p>
+    }
+  </div>
+</section>

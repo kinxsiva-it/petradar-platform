@@ -1,0 +1,115 @@
+<header class="map-top-nav">
+  <a routerLink="/" class="brand" aria-label="PetRadar home">
+    <span class="brand-mark" aria-hidden="true">
+      <svg
+        lucidePawPrint
+        size="25"
+        strokeWidth="2.4"
+      ></svg>
+    </span>
+
+    <strong>PetRadar</strong>
+
+    <small>
+      Reuniting hearts
+      <span class="brand-heart" aria-hidden="true">♥</span>
+    </small>
+  </a>
+
+  <nav aria-label="Main navigation">
+    <a
+      routerLink="/map"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+      [routerLinkActiveOptions]="{ exact: true }"
+    >
+      <svg
+        lucideMap
+        size="21"
+        strokeWidth="2"
+        aria-hidden="true"
+      ></svg>
+
+      <span class="nav-label">Map</span>
+    </a>
+
+    <a
+      routerLink="/lost-pets"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+    >
+      <svg
+        lucideHeart
+        size="21"
+        strokeWidth="2"
+        aria-hidden="true"
+      ></svg>
+
+      <span class="nav-label">Lost Pets</span>
+    </a>
+
+    <a
+      routerLink="/matches/match-00021"
+      routerLinkActive="active"
+      ariaCurrentWhenActive="page"
+    >
+      <svg
+        lucideGitFork
+        size="21"
+        strokeWidth="2"
+        aria-hidden="true"
+      ></svg>
+
+      <span class="nav-label">Matches</span>
+      <b aria-label="3 new matches">3</b>
+    </a>
+  </nav>
+
+  <div class="actions">
+    <a routerLink="/report-animal" class="report-link">
+      <svg
+        lucidePlus
+        size="22"
+        strokeWidth="2.3"
+        aria-hidden="true"
+      ></svg>
+
+      <span>Report Animal</span>
+    </a>
+
+    <a
+      routerLink="/notifications"
+      class="icon-action"
+      aria-label="Notifications, 3 unread"
+    >
+      <svg
+        lucideBell
+        size="21"
+        strokeWidth="2"
+        aria-hidden="true"
+      ></svg>
+
+      <b aria-hidden="true">3</b>
+    </a>
+
+    <a
+      routerLink="/profile"
+      class="avatar-action"
+      aria-label="Open profile"
+    >
+      <img
+        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80"
+        alt=""
+        loading="lazy"
+      />
+
+      <svg
+        lucideChevronDown
+        class="avatar-chevron"
+        size="16"
+        strokeWidth="2"
+        aria-hidden="true"
+      ></svg>
+    </a>
+  </div>
+</header>

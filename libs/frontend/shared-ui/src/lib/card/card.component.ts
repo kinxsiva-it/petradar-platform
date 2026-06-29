@@ -4,12 +4,25 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
   selector: 'pr-card',
   standalone: true,
   template: `
-    <section
-      [class]="compact() ? 'rounded-card border border-border-default bg-surface p-4 shadow-card' : 'rounded-card border border-border-default bg-surface p-6 shadow-card'"
-    >
+    <section [class]="compact() ? 'card card--compact' : 'card'">
       <ng-content />
     </section>
   `,
+  styles: [
+    `
+      .card {
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--radius-card);
+        background: var(--color-surface);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-card);
+      }
+
+      .card--compact {
+        padding: 1rem;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CardComponent {

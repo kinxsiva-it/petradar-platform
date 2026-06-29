@@ -1,0 +1,51 @@
+<section class="my-pets-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">My PetRadar</p>
+      <h1>My Lost Pets</h1>
+      <p>Manage active, matched, reunited, and closed lost-pet posts.</p>
+    </div>
+    <a routerLink="/lost-pets/new">Post Lost Pet</a>
+  </header>
+
+  <section class="summary-grid">
+    <article><span>{{ workspace.lostPetSummary().active }}</span><b>Active posts</b></article>
+    <article><span>{{ workspace.lostPetSummary().matches }}</span><b>Possible matches</b></article>
+    <article><span>{{ workspace.lostPetSummary().reunited }}</span><b>Reunited</b></article>
+  </section>
+
+  <section class="filter-bar">
+    <input type="search" [(ngModel)]="query" placeholder="Search pet name, ID, breed, or area" />
+    <select [(ngModel)]="status">
+      @for (item of statusOptions; track item) {
+        <option [ngValue]="item">{{ item }}</option>
+      }
+    </select>
+  </section>
+
+  @if (workspace.userLostPets().length === 0) {
+    <pr-empty-state title="No lost-pet posts" description="Create a lost-pet post to start matching sightings." icon="+">
+      <a routerLink="/lost-pets/new" class="inline-action">Post Lost Pet</a>
+    </pr-empty-state>
+  } @else if (filteredPets().length === 0) {
+    <pr-empty-state title="No pets match this filter" description="Try clearing search or selecting another status." icon="0" />
+  } @else {
+    <section class="pet-list">
+      @for (pet of filteredPets(); track pet.id) {
+        <pr-my-lost-pet-card [pet]="pet" (statusChanged)="confirmAction.set($event)" />
+      }
+    </section>
+  }
+
+  @if (confirmAction(); as action) {
+    <div class="modal-backdrop" (click)="confirmAction.set(null)"></div>
+    <section class="confirm-modal" role="dialog" aria-modal="true">
+      <h2>Confirm status change</h2>
+      <p>This updates mock UI state only. Mark this lost-pet post as {{ action.status.toLowerCase() }}?</p>
+      <footer>
+        <button type="button" class="secondary" (click)="confirmAction.set(null)">Cancel</button>
+        <button type="button" (click)="applyStatus()">Confirm</button>
+      </footer>
+    </section>
+  }
+</section>

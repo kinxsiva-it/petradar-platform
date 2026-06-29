@@ -1,0 +1,124 @@
+.summary-card {
+  width: min(16.5rem, calc(100vw - 2rem));
+  border: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
+  border-radius: 1.35rem;
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  padding: 1rem;
+  box-shadow: 0 18px 45px rgb(31 41 51 / 0.13);
+  backdrop-filter: blur(16px);
+}
+
+h2,
+p,
+dl {
+  margin: 0;
+}
+
+h2 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-3);
+}
+
+p {
+  margin-top: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+dl {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem 0;
+}
+
+dl div,
+dt {
+  display: flex;
+  align-items: center;
+}
+
+dl div {
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+dt {
+  gap: 0.55rem;
+  color: var(--color-text-default);
+  font-weight: 800;
+}
+
+dt span {
+  display: grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--tone-soft);
+  color: var(--tone);
+  font-size: 0.72rem;
+  font-weight: 950;
+}
+
+dd {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-weight: 900;
+}
+
+button {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  padding: 0 0.9rem;
+  font-weight: 900;
+}
+
+.cat {
+  --tone: #2563eb;
+  --tone-soft: #dbeafe;
+}
+
+.dog,
+.rescue {
+  --tone: var(--color-warning);
+  --tone-soft: var(--color-warning-subtle);
+}
+
+.other {
+  --tone: var(--color-primary);
+  --tone-soft: var(--color-primary-subtle);
+}
+
+.injured {
+  --tone: var(--color-danger);
+  --tone-soft: var(--color-danger-subtle);
+}
+
+.match {
+  --tone: var(--color-match);
+  --tone-soft: var(--color-match-subtle);
+}
+
+.reunited {
+  --tone: var(--color-success);
+  --tone-soft: var(--color-success-subtle);
+}
+
+@media (max-width: 760px) {
+  .summary-card {
+    width: 100%;
+    padding: 0.85rem;
+  }
+
+  dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,46 @@
+<section class="heatmap-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Community heatmap</p>
+      <h1>Privacy-Preserving Heatmap</h1>
+      <p>Aggregated fictional hotspots only. Individual exact report coordinates are not displayed.</p>
+    </div>
+  </header>
+
+  @if (uiState() === 'loading') {
+    <section class="panel"><pr-loading-skeleton [rows]="10" /></section>
+  } @else if (uiState() === 'error' || uiState() === 'map-unavailable') {
+    <pr-empty-state title="Heatmap unavailable" description="The Leaflet heatmap preview could not render." icon="!" />
+  } @else if (uiState() === 'empty' || admin.heatmapPoints().length === 0) {
+    <pr-empty-state title="No hotspot data" description="No aggregated mock cells exist for this filter." icon="0" />
+  } @else {
+    <pr-alert title="Privacy aggregation warning" tone="privacy">
+      Hotspots are aggregated cells and weighted circle layers. This is a visual approximation, not individual sighting coordinates.
+    </pr-alert>
+    <section class="heatmap-layout">
+      <aside class="filter-panel">
+        <h2>Filters</h2>
+        <select><option>All species</option><option>Cats</option><option>Dogs</option></select>
+        <select><option>All conditions</option><option>Injured</option><option>Needs rescue</option></select>
+        <select><option>All statuses</option><option>Open rescue cases</option></select>
+        <select><option>This week</option><option>This month</option></select>
+        <label><input type="checkbox" checked /> Verified only</label>
+        <label><input type="checkbox" /> Rescue cases only</label>
+        <button type="button" (click)="admin.showToast('Heatmap filters are mock-only in this preview.')">Apply filters</button>
+        <div class="legend"><span></span><b>Low activity</b><i></i><b>High activity</b></div>
+      </aside>
+      <div class="map-panel">
+        <pr-heatmap-map [points]="admin.heatmapPoints()" (selected)="selected.set($event)" />
+      </div>
+      <pr-heatmap-insight-drawer [hotspot]="selected()" (closed)="selected.set(undefined)" />
+    </section>
+    <section class="hotspot-grid">
+      @for (hotspot of admin.heatmapPoints(); track hotspot.id) {
+        <button type="button" (click)="selected.set(hotspot)">
+          <b>{{ hotspot.area }}</b>
+          <span>{{ hotspot.reportCount }} reports · {{ hotspot.severity }}</span>
+        </button>
+      }
+    </section>
+  }
+</section>

@@ -1,0 +1,36 @@
+<aside class="detail-drawer">
+  <button type="button" class="close-button" (click)="closed.emit()" aria-label="Close selected case">x</button>
+  <img [src]="sighting().photoUrls[0]" [alt]="sighting().title" />
+  <div class="drawer-body">
+    <div class="badge-row">
+      <pr-status-badge [label]="sighting().status" [tone]="toneFor()" />
+      <pr-status-badge [label]="sighting().urgency" tone="warning" />
+    </div>
+    <p class="reference">{{ sighting().reference }}</p>
+    <h2>{{ sighting().title }}</h2>
+    <p class="location">{{ sighting().approximateLocation.label }} - approximate location</p>
+
+    @if (sighting().matchConfidence) {
+      <section class="match-panel">
+        <span>Match confidence</span>
+        <strong>{{ sighting().matchConfidence }}%</strong>
+        <div><i [style.width.%]="sighting().matchConfidence"></i></div>
+      </section>
+    }
+
+    <dl>
+      <div><dt>Species</dt><dd>{{ sighting().species }}</dd></div>
+      <div><dt>Condition</dt><dd>{{ sighting().condition }}</dd></div>
+      <div><dt>Color</dt><dd>{{ sighting().color }}</dd></div>
+      <div><dt>Collar</dt><dd>{{ sighting().collarStatus }}</dd></div>
+      <div><dt>Seen</dt><dd>{{ sighting().seenAt }}</dd></div>
+      <div><dt>Distance</dt><dd>{{ sighting().distanceLabel }}</dd></div>
+    </dl>
+
+    <div class="drawer-actions">
+      <a class="drawer-link" [routerLink]="['/sightings', sighting().id]">View Case</a>
+      <button type="button">Save</button>
+      <button type="button">Request verification</button>
+    </div>
+  </div>
+</aside>

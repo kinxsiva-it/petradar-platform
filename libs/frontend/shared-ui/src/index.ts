@@ -9,5 +9,6 @@ export * from './lib/layouts/dashboard-shell.component.js';
 export * from './lib/layouts/public-shell.component.js';
 export * from './lib/loading-skeleton/loading-skeleton.component.js';
 export * from './lib/page-header/page-header.component.js';
+export * from './lib/privacy-banner/privacy-banner.component.js';
 export * from './lib/select/select.component.js';
 export * from './lib/status-badge/status-badge.component.js';

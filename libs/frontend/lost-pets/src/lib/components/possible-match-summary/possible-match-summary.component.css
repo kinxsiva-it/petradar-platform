@@ -1,0 +1,38 @@
+.match-summary {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  border: 1px solid var(--color-match-subtle);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--color-match-subtle) 55%, white);
+}
+
+div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+span {
+  color: var(--color-match);
+  font-weight: 850;
+}
+
+strong {
+  color: var(--color-match);
+  font-size: 2rem;
+}
+
+p {
+  margin: 0;
+  color: var(--color-text-default);
+  line-height: 1.55;
+}
+
+a {
+  color: var(--color-primary);
+  font-weight: 850;
+  text-decoration: none;
+}
+

@@ -1,0 +1,1 @@
+{ "name": "frontend-report-animal", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/frontend/report-animal/src", "projectType": "library", "tags": ["scope:frontend", "type:feature"] }

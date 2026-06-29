@@ -1,0 +1,68 @@
+<section class="users-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">User and role management</p>
+      <h1>Admin Users</h1>
+      <p>Review mock users, role presentation, volunteer verification, and account status.</p>
+    </div>
+  </header>
+
+  @if (uiState() === 'loading') {
+    <section class="panel"><pr-loading-skeleton [rows]="8" /></section>
+  } @else if (uiState() === 'error') {
+    <pr-empty-state title="Users unavailable" description="The mock user list could not render." icon="!" />
+  } @else {
+    <section class="summary-grid">
+      <pr-admin-summary-card label="Users" [value]="admin.users().length" detail="Stored mock users" />
+      <pr-admin-summary-card label="Admins" [value]="admin.users().filter(user => user.roles.includes('ADMIN')).length" detail="Frontend role presentation" />
+      <pr-admin-summary-card label="Volunteers" [value]="admin.users().filter(user => user.roles.includes('VOLUNTEER')).length" detail="Includes pending" />
+      <pr-admin-summary-card label="Suspended" [value]="admin.users().filter(user => user.accountStatus === 'SUSPENDED').length" detail="Mock moderation state" />
+    </section>
+
+    <section class="filter-bar">
+      <input type="search" [ngModel]="admin.userFilters().query" (ngModelChange)="admin.updateUserFilter('query', $event)" placeholder="Search users" />
+      <select [ngModel]="admin.userFilters().role" (ngModelChange)="admin.updateUserFilter('role', $event)">
+        <option>All</option>
+        <option>REPORTER</option>
+        <option>PET_OWNER</option>
+        <option>VOLUNTEER</option>
+        <option>ADMIN</option>
+      </select>
+      <select [ngModel]="admin.userFilters().accountStatus" (ngModelChange)="admin.updateUserFilter('accountStatus', $event)">
+        <option>All</option>
+        <option>ACTIVE</option>
+        <option>SUSPENDED</option>
+        <option>PENDING_REVIEW</option>
+      </select>
+      <select [ngModel]="admin.userFilters().volunteerVerification" (ngModelChange)="admin.updateUserFilter('volunteerVerification', $event)">
+        <option>All</option>
+        <option>NOT_APPLICABLE</option>
+        <option>PENDING</option>
+        <option>VERIFIED</option>
+        <option>REJECTED</option>
+      </select>
+      <button type="button" (click)="admin.clearUserFilters()">Clear</button>
+    </section>
+
+    @if (uiState() === 'empty' || admin.users().length === 0) {
+      <pr-empty-state title="No users" description="There are no mock users in this state." icon="0" />
+    } @else if (admin.filteredUsers().length === 0) {
+      <pr-empty-state title="No users match filters" description="Clear filters or search for another role." icon="0" />
+    } @else {
+      <pr-admin-user-table [users]="admin.filteredUsers()" />
+      <section class="mobile-cards">
+        @for (user of admin.filteredUsers(); track user.id) {
+          <article>
+            <img [src]="user.avatarUrl" alt="" />
+            <div>
+              <h2>{{ user.name }}</h2>
+              <p>{{ user.email }}</p>
+              <pr-status-badge [label]="user.accountStatus" [tone]="user.accountStatus === 'ACTIVE' ? 'success' : 'warning'" />
+            </div>
+            <a [routerLink]="['/admin/users', user.id]">Open detail</a>
+          </article>
+        }
+      </section>
+    }
+  }
+</section>

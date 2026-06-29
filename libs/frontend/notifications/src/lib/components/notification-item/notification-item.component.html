@@ -1,0 +1,14 @@
+<article class="notification-item" [class.unread]="!notification().read">
+  <div class="kind" aria-hidden="true">{{ notification().kind.charAt(0).toUpperCase() }}</div>
+  <div>
+    <h2>{{ notification().title }}</h2>
+    <p>{{ notification().description }}</p>
+    <span>{{ notification().createdAtLabel }} · {{ notification().targetLabel }}</span>
+  </div>
+  <footer>
+    <a [routerLink]="notification().route">Open</a>
+    <button type="button" [disabled]="notification().read" (click)="read.emit(notification().id)">
+      {{ notification().read ? 'Read' : 'Mark read' }}
+    </button>
+  </footer>
+</article>

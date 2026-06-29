@@ -1,0 +1,61 @@
+<section class="reports-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">My PetRadar</p>
+      <h1>My Reports</h1>
+      <p>Track submitted sightings and reports without exposing exact animal locations.</p>
+    </div>
+    <a routerLink="/report-animal">Report Animal</a>
+  </header>
+
+  <section class="summary-grid">
+    <article><span>{{ workspace.reportSummary().all }}</span><b>Total reports</b></article>
+    <article><span>{{ workspace.reportSummary().verified }}</span><b>Verified</b></article>
+    <article><span>{{ workspace.reportSummary().pending }}</span><b>Pending review</b></article>
+    <article><span>{{ workspace.reportSummary().matches }}</span><b>Possible matches</b></article>
+  </section>
+
+  <section class="filter-bar">
+    <input type="search" [(ngModel)]="query" placeholder="Search reference, title, or area" />
+    <select [(ngModel)]="status">
+      @for (item of statusOptions; track item) {
+        <option [ngValue]="item">{{ item }}</option>
+      }
+    </select>
+    <select [(ngModel)]="verification">
+      @for (item of verificationOptions; track item) {
+        <option [ngValue]="item">{{ item }}</option>
+      }
+    </select>
+    <select [(ngModel)]="species">
+      @for (item of speciesOptions; track item) {
+        <option [ngValue]="item">{{ item }}</option>
+      }
+    </select>
+    <button type="button" (click)="clearFilters()">Clear</button>
+  </section>
+
+  @if (uiState() === 'loading') {
+    <section class="panel"><pr-loading-skeleton [rows]="6" /></section>
+  } @else if (uiState() === 'error') {
+    <pr-empty-state title="Reports unavailable" description="Mock report state could not be displayed." icon="!" />
+  } @else if (workspace.userReports().length === 0) {
+    <pr-empty-state title="No reports yet" description="Create your first community report." icon="+">
+      <a routerLink="/report-animal" class="inline-action">Report Animal</a>
+    </pr-empty-state>
+  } @else if (filteredReports().length === 0) {
+    <pr-empty-state title="No matching reports" description="Try another search or filter." icon="0">
+      <button type="button" class="inline-action" (click)="clearFilters()">Change Filter</button>
+    </pr-empty-state>
+  } @else {
+    <section class="reports-list">
+      @for (report of filteredReports(); track report.id) {
+        <pr-my-report-card [report]="report" (editRequested)="editingReport.set($event)" />
+      }
+    </section>
+  }
+
+  @if (editingReport(); as report) {
+    <pr-report-edit-drawer [report]="report" (closed)="editingReport.set(null)" (saved)="saveMockEdit($event)" />
+  }
+</section>

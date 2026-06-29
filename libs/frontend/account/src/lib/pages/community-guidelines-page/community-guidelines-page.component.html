@@ -1,0 +1,45 @@
+<section class="guidelines-page">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">Community safety</p>
+      <h1>Safety & Community Guidelines</h1>
+      <p>Keep people, animals, and sensitive locations safe while using PetRadar.</p>
+    </div>
+    <a routerLink="/report-animal">Report Animal</a>
+  </header>
+
+  <section class="guideline-grid">
+    @for (section of sections; track section.title) {
+      <article>
+        <h2>{{ section.title }}</h2>
+        <ul>
+          @for (point of section.points; track point) {
+            <li>{{ point }}</li>
+          }
+        </ul>
+      </article>
+    }
+  </section>
+
+  <section class="support-grid">
+    <article>
+      <h2>Owner-contact safety</h2>
+      <p>Use verified channels where possible and avoid sharing phone numbers in public comments.</p>
+    </article>
+    <article>
+      <h2>Volunteer safety</h2>
+      <p>Coordinate transport, clinic visits, and rescue actions through trusted groups.</p>
+    </article>
+    <article>
+      <h2>False-report warning</h2>
+      <p>Misleading or harmful posts can be reviewed and removed by admins in the real product.</p>
+    </article>
+  </section>
+
+  <pr-privacy-banner />
+
+  <pr-alert title="Emergency guidance" tone="danger">
+    PetRadar is not an emergency service. For life-threatening situations, contact local animal
+    rescue services or authorities.
+  </pr-alert>
+</section>

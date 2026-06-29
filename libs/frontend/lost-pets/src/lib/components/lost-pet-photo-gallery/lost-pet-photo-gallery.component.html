@@ -1,0 +1,9 @@
+<section class="pet-gallery">
+  <img class="hero-photo" [src]="photos()[0]" [alt]="alt()" />
+  <div>
+    @for (photo of photos(); track photo; let index = $index) {
+      <img [src]="photo" [alt]="alt() + ' photo ' + (index + 1)" loading="lazy" />
+    }
+  </div>
+</section>
+

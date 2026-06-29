@@ -1,0 +1,28 @@
+<section class="photo-update">
+  <h2>Photo update</h2>
+  <label class="upload-zone">
+    <input type="file" accept="image/png,image/jpeg,image/webp" (change)="addFile($event)" />
+    <strong>Add rescue photo</strong>
+    <span>Local preview only. JPG, PNG, WebP up to 10MB.</span>
+  </label>
+  @if (progress() > 0) {
+    <div class="progress"><span [style.width.%]="progress()"></span></div>
+  }
+  @if (previewUrl(); as url) {
+    <figure>
+      <img [src]="url" alt="Selected rescue update preview" />
+      <button type="button" (click)="remove()">Remove</button>
+    </figure>
+  }
+  <label>
+    Caption
+    <textarea rows="3" [ngModel]="caption()" (ngModelChange)="caption.set($event)"></textarea>
+  </label>
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+  <footer>
+    <button type="button" class="secondary" (click)="failPreview()">Preview failure</button>
+    <button type="button" (click)="submit()">Add to timeline</button>
+  </footer>
+</section>

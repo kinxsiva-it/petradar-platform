@@ -1,0 +1,134 @@
+.my-pets-page,
+.pet-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header,
+.filter-bar,
+.summary-grid article {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  box-shadow: var(--shadow-card);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow,
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+.eyebrow {
+  color: var(--color-primary);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h1 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-1);
+}
+
+.page-header p {
+  color: var(--color-text-muted);
+}
+
+.page-header a,
+.inline-action,
+button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: white;
+  padding: 0 1rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.summary-grid span {
+  display: block;
+  color: var(--color-primary);
+  font-size: 1.75rem;
+  font-weight: 850;
+}
+
+.summary-grid b {
+  color: var(--color-text-muted);
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) minmax(10rem, 0.3fr);
+  gap: 0.75rem;
+}
+
+input,
+select {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  padding: 0 0.8rem;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgb(31 41 51 / 0.34);
+}
+
+.confirm-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: var(--z-drawer);
+  display: grid;
+  width: min(28rem, calc(100vw - 2rem));
+  gap: 1rem;
+  transform: translate(-50%, -50%);
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-panel);
+}
+
+.confirm-modal footer {
+  display: flex;
+  justify-content: end;
+  gap: 0.75rem;
+}
+
+.secondary {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+@media (max-width: 700px) {
+  .page-header,
+  .filter-bar,
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

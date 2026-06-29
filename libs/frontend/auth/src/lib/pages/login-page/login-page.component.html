@@ -1,0 +1,56 @@
+<section class="auth-page">
+  <form class="auth-card" (ngSubmit)="submit()">
+    <a routerLink="/" class="auth-brand" aria-label="PetRadar home">
+      <span aria-hidden="true">P</span>
+      PetRadar
+    </a>
+
+    <header>
+      <h1>Welcome back</h1>
+      <p>Log in to continue helping animals in your community.</p>
+    </header>
+
+    <label>
+      Email address
+      <input [(ngModel)]="form.email" name="email" type="email" placeholder="you@example.com" />
+    </label>
+
+    <label>
+      Password
+      <span class="password-row">
+        <input
+          [(ngModel)]="form.password"
+          name="password"
+          [type]="showPassword() ? 'text' : 'password'"
+          placeholder="Enter your password"
+        />
+        <button type="button" (click)="showPassword.set(!showPassword())">
+          {{ showPassword() ? 'Hide' : 'Show' }}
+        </button>
+      </span>
+    </label>
+
+    <div class="form-row">
+      <label class="check-row">
+        <input [(ngModel)]="form.remember" name="remember" type="checkbox" />
+        Remember me
+      </label>
+      <a href="#">Forgot password?</a>
+    </div>
+
+    @if (authState.lastResult(); as result) {
+      <pr-alert [title]="result.ok ? 'Mock login complete' : 'Invalid login state'" [tone]="result.ok ? 'success' : 'danger'">
+        {{ result.message }}
+      </pr-alert>
+    }
+
+    <pr-button type="submit" [fullWidth]="true" [disabled]="authState.loading()">
+      {{ authState.loading() ? 'Logging in...' : 'Log in' }}
+    </pr-button>
+
+    <p class="auth-switch">Do not have an account? <a routerLink="/register">Sign up</a></p>
+  </form>
+
+  <pr-privacy-banner />
+</section>
+

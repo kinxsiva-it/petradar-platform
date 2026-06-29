@@ -1,0 +1,49 @@
+.privacy-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border: 1px solid color-mix(in srgb, var(--color-warning) 36%, var(--color-border-default));
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--color-warning-subtle) 58%, white);
+  color: var(--color-text-default);
+}
+
+.privacy-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  place-items: center;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 999px;
+  color: var(--color-text-strong);
+  font-weight: 800;
+}
+
+p {
+  flex: 1;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+strong {
+  margin-right: 0.35rem;
+  color: var(--color-text-strong);
+}
+
+a {
+  color: var(--color-primary);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .privacy-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+

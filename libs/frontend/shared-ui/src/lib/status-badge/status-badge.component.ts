@@ -3,11 +3,11 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 type StatusTone = 'default' | 'danger' | 'match' | 'success' | 'warning';
 
 const toneClasses: Record<StatusTone, string> = {
-  danger: 'border-danger-subtle bg-danger-subtle text-danger',
-  default: 'border-border-default bg-surface-muted text-text-default',
-  match: 'border-match-subtle bg-match-subtle text-match',
-  success: 'border-success-subtle bg-success-subtle text-primary',
-  warning: 'border-warning-subtle bg-warning-subtle text-warning',
+  danger: 'badge badge--danger',
+  default: 'badge badge--default',
+  match: 'badge badge--match',
+  success: 'badge badge--success',
+  warning: 'badge badge--warning',
 };
 
 @Component({
@@ -15,20 +15,69 @@ const toneClasses: Record<StatusTone, string> = {
   standalone: true,
   template: `
     <span [class]="classes()">
-      <span aria-hidden="true" class="size-2 rounded-full bg-current"></span>
+      <span aria-hidden="true" class="dot"></span>
       {{ label() }}
     </span>
   `,
+  styles: [
+    `
+      .badge {
+        display: inline-flex;
+        min-height: 1.75rem;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid transparent;
+        border-radius: 999px;
+        padding: 0 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 800;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .dot {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .badge--default {
+        border-color: var(--color-border-default);
+        background: var(--color-surface-muted);
+        color: var(--color-text-default);
+      }
+
+      .badge--danger {
+        border-color: var(--color-danger-subtle);
+        background: var(--color-danger-subtle);
+        color: var(--color-danger);
+      }
+
+      .badge--match {
+        border-color: var(--color-match-subtle);
+        background: var(--color-match-subtle);
+        color: var(--color-match);
+      }
+
+      .badge--success {
+        border-color: var(--color-success-subtle);
+        background: var(--color-success-subtle);
+        color: var(--color-primary);
+      }
+
+      .badge--warning {
+        border-color: var(--color-warning-subtle);
+        background: var(--color-warning-subtle);
+        color: #a16207;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StatusBadgeComponent {
   readonly label = input.required<string>();
   readonly tone = input<StatusTone>('default');
 
-  readonly classes = computed(() =>
-    [
-      'inline-flex min-h-7 items-center gap-2 rounded-full border px-3 text-xs font-semibold',
-      toneClasses[this.tone()],
-    ].join(' '),
-  );
+  readonly classes = computed(() => toneClasses[this.tone()]);
 }

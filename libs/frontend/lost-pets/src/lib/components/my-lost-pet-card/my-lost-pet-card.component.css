@@ -1,0 +1,114 @@
+.pet-card {
+  display: grid;
+  grid-template-columns: 11rem minmax(0, 1fr);
+  gap: 1rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  padding: 0.85rem;
+  box-shadow: var(--shadow-card);
+}
+
+img {
+  width: 100%;
+  height: 100%;
+  min-height: 12rem;
+  border-radius: calc(var(--radius-card) - 0.15rem);
+  object-fit: cover;
+}
+
+.pet-body,
+dl,
+footer {
+  display: grid;
+  gap: 0.8rem;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+p,
+h2,
+dl {
+  margin: 0;
+}
+
+p {
+  color: var(--color-danger);
+  font: var(--text-data);
+}
+
+h2 {
+  margin-top: 0.15rem;
+  color: var(--color-text-strong);
+  font: var(--text-heading-2);
+}
+
+header span {
+  color: var(--color-text-muted);
+}
+
+dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+dt {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+dd {
+  margin: 0.15rem 0 0;
+  color: var(--color-text-strong);
+}
+
+footer {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+a,
+button {
+  display: inline-flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: white;
+  padding: 0 0.65rem;
+  font-weight: 750;
+  text-align: center;
+  text-decoration: none;
+}
+
+button {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+button:disabled {
+  border-color: var(--color-border-default);
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 760px) {
+  .pet-card,
+  dl,
+  footer {
+    grid-template-columns: 1fr;
+  }
+
+  img {
+    aspect-ratio: 16 / 10;
+    min-height: 0;
+  }
+
+  header {
+    display: grid;
+  }
+}

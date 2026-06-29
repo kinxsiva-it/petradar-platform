@@ -1,0 +1,64 @@
+<section class="filter-panel">
+  <div class="filter-header">
+    <h2>Filters</h2>
+    <button type="button" (click)="clearFilters.emit()">Clear all</button>
+  </div>
+
+  <label>
+    Search
+    <input
+      [ngModel]="filters().query"
+      (ngModelChange)="filterChanged.emit({ key: 'query', value: $event })"
+      placeholder="Search cases, animals, locations..."
+      type="search"
+    />
+  </label>
+
+  <label>
+    Species
+    <select [ngModel]="filters().species" (ngModelChange)="filterChanged.emit({ key: 'species', value: $event })">
+      <option>All</option>
+      <option>Cat</option>
+      <option>Dog</option>
+      <option>Other</option>
+    </select>
+  </label>
+
+  <label>
+    Condition
+    <select [ngModel]="filters().condition" (ngModelChange)="filterChanged.emit({ key: 'condition', value: $event })">
+      <option>All</option>
+      <option>Normal stray</option>
+      <option>Injured</option>
+      <option>Needs rescue</option>
+      <option>Newborn litter</option>
+      <option>Possible lost pet</option>
+    </select>
+  </label>
+
+  <label>
+    Status
+    <select [ngModel]="filters().status" (ngModelChange)="filterChanged.emit({ key: 'status', value: $event })">
+      <option>All</option>
+      <option>Sighting</option>
+      <option>Possible match</option>
+      <option>Needs rescue</option>
+      <option>Reunited</option>
+    </select>
+  </label>
+
+  <label>
+    Verification
+    <select
+      [ngModel]="filters().verification"
+      (ngModelChange)="filterChanged.emit({ key: 'verification', value: $event })"
+    >
+      <option>All</option>
+      <option>Pending</option>
+      <option>Verified</option>
+      <option>Community verified</option>
+      <option>Needs review</option>
+    </select>
+  </label>
+</section>
+

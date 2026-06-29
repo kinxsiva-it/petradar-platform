@@ -1,56 +1,68 @@
-# PetRadar Development Rules
+# PetRadar Engineering Instructions
 
-## Design references
+PetRadar is an existing Angular and NestJS application for community animal sightings, lost-pet matching, rescue coordination, and geospatial analytics.
 
-Before implementing or modifying frontend UI, inspect the relevant images in:
+Read `docs/PETRADAR_SPEC.md` before making architectural or database decisions.
 
-docs/design/
+## Current state
 
-The primary design-system reference is:
+* The application is already initialized and running.
+* The major frontend pages and routes are already implemented.
+* The existing UI, routes, components, styling, and project structure must be preserved.
+* PostgreSQL is hosted on Neon.
+* PostGIS 3.6 has been enabled and verified.
+* `DATABASE_URL` is configured in the backend environment.
+* Never print, expose, or commit credentials.
 
-docs/design/petradar-design-system.png
+## Working rules
 
-Do not use screenshots as page backgrounds or copy UI sections as raster images.
+1. Inspect the existing implementation before editing.
+2. Treat the repository as the source of truth.
+3. Reuse the existing ORM, package manager, modules, services, DTOs, and conventions.
+4. Do not install a second ORM.
+5. Do not rebuild or redesign working frontend pages.
+6. Replace mock data incrementally only after the corresponding API works.
+7. Use migrations as the source of truth for database changes.
+8. Never modify a production database unless the task explicitly authorizes it.
+9. Preserve existing compatible data and schema.
+10. Explain migrations, environment changes, assumptions, and risks before implementation.
+11. Keep controllers thin and place business logic in services.
+12. Use strict TypeScript types and validated DTOs.
+13. Enforce authorization, ownership, and location privacy on the backend.
+14. Never expose exact coordinates to unauthorized users.
+15. Use PostGIS for radius searches, distance calculation, and heatmap queries.
+16. Use transactions for multi-record business operations.
+17. Add focused tests for security, matching, status transitions, and privacy rules.
+18. Do not claim commands passed unless they were actually executed.
 
-Build all interfaces using reusable Angular components and semantic design tokens.
+## Spatial rules
 
-## Requirement priority
+* Use SRID 4326.
+* Coordinate order is longitude first, latitude second.
+* Prefer PostGIS `geography(Point, 4326)` where distances are measured in meters.
+* Use parameterized spatial queries.
+* Use `ST_DWithin` for radius searches.
+* Add appropriate GiST indexes.
+* Store exact and public approximate locations separately.
+* Public APIs must return only privacy-safe coordinates.
 
-1. Security, privacy, authorization, and functional requirements
-2. PetRadar development specification
-3. Global design system reference
-4. Page-specific visual references
-5. Existing reusable project patterns
+## Task workflow
 
-## Frontend rules
+Before editing, report:
 
-- Use Angular standalone components.
-- Use feature-first architecture.
-- Keep API calls out of UI components.
-- Reuse shared components.
-- Use semantic design tokens.
-- Support loading, empty, error, and permission states.
-- Implement mobile layouts intentionally.
-- Do not expose exact animal locations to unauthorized users.
-- Do not hard-code reference-board sample data.
+* Current state
+* Existing relevant files
+* Proposed changes
+* Architecture decisions
+* Database and environment changes
+* Risks and assumptions
 
-## Backend rules
+After editing, report:
 
-- Controllers must remain thin.
-- Do not access Prisma directly from controllers.
-- Keep domain logic framework-independent.
-- Enforce permissions on the server.
-- Record sensitive operations in audit logs.
-- Use transactions for workflow status changes.
+* Implemented files and behavior
+* Migrations created or executed
+* Commands and tests actually run
+* Failures or limitations
+* Remaining work
 
-## Workflow
-
-Before modifying code:
-
-1. Inspect the repository.
-2. Inspect relevant specifications and design references.
-3. State the implementation plan.
-4. List files to change.
-5. Implement a coherent milestone.
-6. Run lint, typecheck, tests, and build.
-7. Report actual results honestly.
+Keep each implementation task focused and incremental.

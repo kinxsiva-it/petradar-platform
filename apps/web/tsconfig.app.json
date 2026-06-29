@@ -15,5 +15,10 @@
   },
   "files": ["src/main.ts"],
   "include": ["src/**/*.ts", "../../libs/frontend/**/*.ts"],
-  "exclude": ["src/**/*.spec.ts", "../../libs/frontend/**/*.spec.ts"]
+  "exclude": [
+    "src/**/*.spec.ts",
+    "src/app/ui-prototype.pages.ts",
+    "src/app/mock-data/**/*.ts",
+    "../../libs/frontend/**/*.spec.ts"
+  ]
 }

@@ -1,0 +1,116 @@
+@if (submittedPet(); as pet) {
+  <section class="success-panel">
+    <div aria-hidden="true">✓</div>
+    <h1>{{ pet.petName }} is posted.</h1>
+    <p>{{ pet.reference }} was added to mock state as an active lost-pet post.</p>
+    <nav>
+      <a routerLink="/my/lost-pets">View My Lost Pets</a>
+      <a routerLink="/lost-pets" class="secondary">Browse Public Lost Pets</a>
+    </nav>
+  </section>
+} @else {
+  <section class="lost-pet-wizard">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Post Lost Pet</p>
+        <h1>{{ steps[step()] }}</h1>
+        <p>Create a UI-only lost-pet post with approximate public location.</p>
+      </div>
+      <button type="button">Save Draft</button>
+    </header>
+
+    <nav class="stepper">
+      @for (item of steps; track item; let index = $index) {
+        <button type="button" [class.active]="index === step()" [class.done]="index < step()" (click)="go(index)">
+          <span>{{ index + 1 }}</span>{{ item }}
+        </button>
+      }
+    </nav>
+
+    <section class="wizard-card">
+      @switch (step()) {
+        @case (0) {
+          <div class="form-grid two">
+            <label>Pet name <input [(ngModel)]="petName" /></label>
+            <label>Species
+              <select [(ngModel)]="species">
+                @for (item of speciesOptions; track item) { <option [ngValue]="item">{{ item }}</option> }
+              </select>
+            </label>
+            <label>Breed / type <input [(ngModel)]="breed" /></label>
+            <label>Sex <input [(ngModel)]="sex" /></label>
+            <label>Age <input [(ngModel)]="ageDescription" /></label>
+          </div>
+        }
+        @case (1) {
+          <div class="form-grid two">
+            <label>Primary color <input [(ngModel)]="color" /></label>
+            <label>Pattern <input [(ngModel)]="pattern" /></label>
+            <label>Collar description <input [(ngModel)]="collarDescription" /></label>
+            <label>Microchip <input [(ngModel)]="microchipLabel" /></label>
+          </div>
+          <label>Description <textarea rows="4" [(ngModel)]="description"></textarea></label>
+        }
+        @case (2) {
+          <label class="upload-zone">
+            <input type="file" multiple accept="image/png,image/jpeg,image/webp" (change)="addFiles($event)" />
+            <strong>Add photos</strong>
+            <span>Clear photos improve match quality. JPG, PNG, WebP only.</span>
+          </label>
+          @if (uploadError()) { <p class="field-error">{{ uploadError() }}</p> }
+          <div class="photo-grid">
+            @for (photo of photoUrls; track photo) {
+              <figure><img [src]="photo" alt="Lost pet preview" /><button type="button" (click)="removePhoto(photo)">Remove</button></figure>
+            } @empty {
+              <p class="empty-note">No photos selected yet. A placeholder will be used for mock preview.</p>
+            }
+          </div>
+        }
+        @case (3) {
+          <div class="location-grid">
+            <div class="mock-map"><span></span><b>{{ approximateLastSeenLabel }}</b></div>
+            <div class="location-panel">
+              <label>Approximate public area <input [(ngModel)]="approximateLastSeenLabel" /></label>
+              <label>Last seen date <input [(ngModel)]="lastSeenDate" /></label>
+              <label>Last seen time <input [(ngModel)]="lastSeenTime" /></label>
+              <button type="button" (click)="useCurrentLocation()">Use current location</button>
+              <pr-privacy-banner />
+            </div>
+          </div>
+        }
+        @case (4) {
+          <div class="form-grid two">
+            <label>Contact preference
+              <select [(ngModel)]="contactPreference">
+                @for (item of contactOptions; track item) { <option [ngValue]="item">{{ item }}</option> }
+              </select>
+            </label>
+            <label>Contact detail <input [(ngModel)]="contactDetail" /></label>
+            <label>Reward <input [(ngModel)]="rewardLabel" /></label>
+            <label class="toggle"><input type="checkbox" [(ngModel)]="hideContactPublicly" /> Hide contact publicly</label>
+          </div>
+        }
+        @case (5) {
+          <section class="review">
+            <h2>Review {{ petName }}</h2>
+            <dl>
+              <div><dt>Pet</dt><dd>{{ species }} · {{ breed }} · {{ sex }} · {{ ageDescription }}</dd></div>
+              <div><dt>Appearance</dt><dd>{{ color }} · {{ pattern }} · {{ collarDescription }}</dd></div>
+              <div><dt>Last seen</dt><dd>{{ approximateLastSeenLabel }} · {{ lastSeenDate }} at {{ lastSeenTime }}</dd></div>
+              <div><dt>Contact</dt><dd>{{ contactPreference }} · {{ hideContactPublicly ? 'Hidden publicly' : 'Visible to verified helpers' }}</dd></div>
+            </dl>
+            <pr-privacy-banner />
+          </section>
+        }
+      }
+      <footer class="wizard-actions">
+        <button type="button" class="secondary" [disabled]="step() === 0" (click)="back()">Back</button>
+        @if (step() === steps.length - 1) {
+          <button type="button" (click)="submit()">Review & Submit</button>
+        } @else {
+          <button type="button" (click)="next()">Continue</button>
+        }
+      </footer>
+    </section>
+  </section>
+}

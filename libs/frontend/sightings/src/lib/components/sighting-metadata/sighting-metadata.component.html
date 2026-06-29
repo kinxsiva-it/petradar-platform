@@ -1,0 +1,17 @@
+<section class="metadata-card">
+  <div class="badge-row">
+    <pr-status-badge [label]="sighting().verificationStatus" tone="success" />
+    <pr-status-badge [label]="sighting().urgency" tone="warning" />
+  </div>
+  <dl>
+    <div><dt>Species</dt><dd>{{ sighting().species }}</dd></div>
+    <div><dt>Color</dt><dd>{{ sighting().color }}</dd></div>
+    <div><dt>Pattern</dt><dd>{{ sighting().pattern ?? 'Not listed' }}</dd></div>
+    <div><dt>Collar</dt><dd>{{ sighting().collarStatus }}</dd></div>
+    <div><dt>Condition</dt><dd>{{ sighting().condition }}</dd></div>
+    <div><dt>Seen date and time</dt><dd>{{ sighting().seenAt }}</dd></div>
+    <div><dt>Approximate area</dt><dd>{{ sighting().approximateLocation.label }}</dd></div>
+    <div><dt>Public radius</dt><dd>{{ sighting().approximateLocation.radiusMeters }} meters</dd></div>
+  </dl>
+</section>
+

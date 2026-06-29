@@ -1,0 +1,30 @@
+.score-ring {
+  display: grid;
+  width: clamp(9rem, 18vw, 12rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.score-ring > div {
+  display: grid;
+  width: 72%;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-surface);
+  text-align: center;
+  box-shadow: inset 0 0 0 1px var(--color-border-default);
+}
+
+strong {
+  color: var(--color-text-strong);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+span {
+  color: var(--color-match);
+  font-size: 0.82rem;
+  font-weight: 800;
+}

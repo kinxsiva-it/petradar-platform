@@ -1,0 +1,76 @@
+<section class="auth-page register-page">
+  <form class="auth-card register-card" (ngSubmit)="submit()">
+    <a routerLink="/" class="auth-brand" aria-label="PetRadar home">
+      <span aria-hidden="true">P</span>
+      PetRadar
+    </a>
+
+    <header>
+      <h1>Create your account</h1>
+      <p>Join neighbors helping animals every day.</p>
+    </header>
+
+    <div class="form-grid">
+      <label>
+        Full name
+        <input [(ngModel)]="form.name" name="name" placeholder="Your full name" />
+      </label>
+      <label>
+        Email address
+        <input [(ngModel)]="form.email" name="email" type="email" placeholder="you@example.com" />
+      </label>
+    </div>
+
+    <div class="form-grid">
+      <label>
+        Password
+        <span class="password-row">
+          <input
+            [(ngModel)]="form.password"
+            name="password"
+            [type]="showPassword() ? 'text' : 'password'"
+            placeholder="Create a password"
+          />
+          <button type="button" (click)="showPassword.set(!showPassword())">
+            {{ showPassword() ? 'Hide' : 'Show' }}
+          </button>
+        </span>
+      </label>
+      <label>
+        Confirm password
+        <input [(ngModel)]="form.confirmPassword" name="confirmPassword" type="password" />
+      </label>
+    </div>
+
+    <section class="role-preview" aria-label="Allowed public account types">
+      <article class="selected">
+        <strong>Reporter</strong>
+        <span>Report sightings and help animals in need.</span>
+      </article>
+      <article>
+        <strong>Pet Owner</strong>
+        <span>Look for lost pets and manage your cases.</span>
+      </article>
+    </section>
+
+    <label class="check-row">
+      <input [(ngModel)]="form.acceptedGuidelines" name="acceptedGuidelines" type="checkbox" />
+      I agree to use PetRadar responsibly and follow community guidelines.
+    </label>
+
+    @if (authState.lastResult(); as result) {
+      <pr-alert [title]="result.ok ? 'Registration success state' : 'Registration validation'" [tone]="result.ok ? 'success' : 'danger'">
+        {{ result.message }}
+      </pr-alert>
+    }
+
+    <pr-button type="submit" [fullWidth]="true" [disabled]="authState.loading()">
+      {{ authState.loading() ? 'Creating account...' : 'Create account' }}
+    </pr-button>
+
+    <p class="auth-switch">Already have an account? <a routerLink="/login">Log in</a></p>
+  </form>
+
+  <pr-privacy-banner />
+</section>
+

@@ -1,0 +1,38 @@
+.case-list-card,
+.case-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.case-list-card {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+h2,
+p {
+  margin: 0;
+}
+
+h2 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-2);
+}
+
+header span {
+  color: var(--color-primary);
+  font-weight: 900;
+}
+
+p {
+  color: var(--color-text-muted);
+}

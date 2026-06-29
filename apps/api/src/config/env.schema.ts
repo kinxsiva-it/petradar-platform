@@ -6,6 +6,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().url(),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_REFRESH_SECRET: z.string().min(32),
+  LOCATION_OBFUSCATION_SECRET: z.string().min(32),
   LOCATION_PRIVACY_RADIUS_METERS: z.coerce.number().int().min(100).max(2000).default(300),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),

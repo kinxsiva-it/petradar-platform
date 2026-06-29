@@ -1,0 +1,416 @@
+import type {
+  AdminActivity,
+  AdminManagedUser,
+  AdminReport,
+  AdminVolunteerCandidate,
+  AnalyticsSnapshot,
+  DuplicateSuggestion,
+  ExecutiveReportSnapshot,
+  HeatmapPointAggregate,
+  PrivacySettings,
+} from '../models/admin-workspace.model.js';
+
+const catPhoto =
+  'https://images.unsplash.com/photo-1574144611937-0df059b5ef3e?auto=format&fit=crop&w=900&q=80';
+const catPhotoTwo =
+  'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?auto=format&fit=crop&w=900&q=80';
+const dogPhoto =
+  'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=900&q=80';
+const dogPhotoTwo =
+  'https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=900&q=80';
+const avatarNicha =
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=320&q=80';
+const avatarSomchai =
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=320&q=80';
+
+export const adminActivityFixture: AdminActivity[] = [
+  {
+    actor: 'Admin Mai',
+    entity: 'CAT-00018',
+    id: 'act-001',
+    occurredAt: 'Today 09:42',
+    sensitive: false,
+    summary: 'Verified a community cat sighting after photo review.',
+    type: 'REPORT_APPROVED',
+  },
+  {
+    actor: 'Admin Mai',
+    entity: 'DOG-00014',
+    id: 'act-002',
+    occurredAt: 'Today 09:18',
+    sensitive: true,
+    summary: 'Escalated injured dog report to rescue workflow.',
+    type: 'RESCUE_CASE_CREATED',
+  },
+  {
+    actor: 'Admin Nicha',
+    entity: 'Privacy settings',
+    id: 'act-003',
+    occurredAt: 'Yesterday 17:20',
+    sensitive: true,
+    summary: 'Adjusted the prototype public radius from 200m to 250m.',
+    type: 'PRIVACY_SETTING_CHANGED',
+  },
+];
+
+const reporterNicha = {
+  avatarUrl: avatarNicha,
+  id: 'user-nicha',
+  name: 'Nicha P.',
+  reportCount: 24,
+  trustScore: 92,
+  verifiedCount: 18,
+};
+
+const reporterSomchai = {
+  avatarUrl: avatarSomchai,
+  id: 'user-somchai',
+  name: 'Somchai R.',
+  reportCount: 14,
+  trustScore: 74,
+  verifiedCount: 9,
+};
+
+export const adminReportsFixture: AdminReport[] = [
+  {
+    adminNotes: ['Possible lost pet match with Milo. Confirm before owner contact.'],
+    collar: 'Red collar with bell',
+    color: 'Orange',
+    condition: 'Normal stray',
+    count: 1,
+    description: 'Friendly orange cat resting near a condo entrance. Allows close approach.',
+    duplicateSuggestionId: 'dup-cat-00021',
+    history: [adminActivityFixture[0]!],
+    id: 'cat-00021',
+    lifecycle: 'POSSIBLE_MATCH',
+    location: {
+      accessPolicy: 'Admins and assigned rescue coordinators only.',
+      approximateLabel: 'Near Ari, Bangkok',
+      internalLabel: 'Internal mock area: Ari condo frontage, no residential address stored.',
+      radiusMeters: 250,
+    },
+    pattern: 'Orange tabby',
+    photoUrls: [catPhoto, catPhotoTwo, catPhoto],
+    possibleDuplicateCount: 2,
+    reference: 'CAT-00021',
+    reporter: reporterNicha,
+    seenAt: 'May 20, 2025 6:15 PM',
+    species: 'Cat',
+    submittedAt: 'May 20, 2025 6:20 PM',
+    title: 'Orange cat with red collar',
+    urgency: 'MEDIUM',
+    verification: 'PENDING',
+  },
+  {
+    adminNotes: ['Needs trained volunteer; avoid direct public approach.'],
+    collar: 'No collar',
+    color: 'White',
+    condition: 'Injured',
+    count: 1,
+    description: 'White dog limping near roadside. Appears tired and needs medical attention.',
+    history: [adminActivityFixture[1]!],
+    id: 'dog-00014',
+    lifecycle: 'NEEDS_RESCUE',
+    location: {
+      accessPolicy: 'Exact location visible to admins in this UI prototype only.',
+      approximateLabel: 'Near Victory Monument, Bangkok',
+      internalLabel: 'Internal mock area: Victory Monument service road.',
+      radiusMeters: 300,
+    },
+    pattern: 'Solid',
+    photoUrls: [dogPhoto, dogPhotoTwo],
+    possibleDuplicateCount: 1,
+    reference: 'DOG-00014',
+    reporter: reporterSomchai,
+    seenAt: 'May 20, 2025 5:40 PM',
+    species: 'Dog',
+    submittedAt: 'May 20, 2025 5:42 PM',
+    title: 'Injured white dog',
+    urgency: 'HIGH',
+    verification: 'NEEDS_REVIEW',
+  },
+  {
+    adminNotes: [],
+    collar: 'No collar',
+    color: 'Black and white',
+    condition: 'Newborn litter',
+    count: 4,
+    description: 'Four kittens under a parked car. Mother cat nearby.',
+    history: [],
+    id: 'cat-00018',
+    lifecycle: 'SIGHTING',
+    location: {
+      accessPolicy: 'Approximate public radius only.',
+      approximateLabel: 'Near Phahon Yothin, Bangkok',
+      internalLabel: 'Internal mock area: Phahon Yothin covered parking row.',
+      radiusMeters: 280,
+    },
+    pattern: 'Mixed',
+    photoUrls: [catPhotoTwo, catPhoto],
+    possibleDuplicateCount: 0,
+    reference: 'CAT-00018',
+    reporter: reporterNicha,
+    seenAt: 'May 20, 2025 4:45 PM',
+    species: 'Cat',
+    submittedAt: 'May 20, 2025 4:50 PM',
+    title: 'Black-white kitten litter',
+    urgency: 'MEDIUM',
+    verification: 'VERIFIED',
+  },
+];
+
+export const duplicateSuggestionsFixture: DuplicateSuggestion[] = [
+  {
+    approximateDistance: '320 meters',
+    candidateReportId: 'cat-00021',
+    differingTraits: ['Ear notch not visible in candidate', 'Lighting differs between photos'],
+    id: 'dup-cat-00021',
+    matchingTraits: ['Same species', 'Similar orange tabby color', 'Red collar with bell', 'Seen near Ari'],
+    primaryReportId: 'cat-00018',
+    similarityScore: 76,
+    state: 'OPEN',
+    timeDifference: '35 minutes',
+  },
+];
+
+export const adminVolunteersFixture: AdminVolunteerCandidate[] = [
+  {
+    assignedCount: 1,
+    availability: 'AVAILABLE',
+    avatarUrl: avatarNicha,
+    coverageArea: 'Ari, Phahon Yothin, Victory Monument',
+    email: 'nicha.owner@example.test',
+    id: 'vol-nicha',
+    name: 'Nicha P.',
+    phone: '+66 81 234 5678',
+    roleLabel: 'Rescue Coordinator',
+    skills: ['Transport', 'Foster coordination', 'Clinic coordination'],
+    verified: true,
+    verification: 'VERIFIED',
+  },
+  {
+    assignedCount: 1,
+    availability: 'BUSY',
+    avatarUrl: avatarSomchai,
+    coverageArea: 'Rama 9, Ratchada',
+    email: 'tom.volunteer@example.test',
+    id: 'vol-tom',
+    name: 'Tom K.',
+    phone: '+66 82 999 4433',
+    roleLabel: 'Field Volunteer',
+    skills: ['Transport', 'Large dogs'],
+    verified: true,
+    verification: 'VERIFIED',
+  },
+  {
+    assignedCount: 0,
+    availability: 'AVAILABLE',
+    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=320&q=80',
+    coverageArea: 'Lat Phrao, Chatuchak',
+    email: 'mai.volunteer@example.test',
+    id: 'vol-mai',
+    name: 'Mai S.',
+    phone: '+66 83 555 1122',
+    roleLabel: 'Clinic Liaison',
+    skills: ['Clinic coordination', 'Medication pickup'],
+    verified: false,
+    verification: 'PENDING',
+  },
+];
+
+export const privacySettingsFixture: PrivacySettings = {
+  defaultPublicRadiusMeters: 250,
+  exactLocationRequiresAssignedVolunteer: true,
+  exactLocationRequiresVerification: true,
+  lastSavedAt: 'Yesterday 17:20',
+  maxRadiusMeters: 800,
+  minRadiusMeters: 150,
+  rescueCaseExactAccess: 'ADMINS_AND_ASSIGNED_VOLUNTEERS',
+  sensitiveLocationProtection: true,
+};
+
+export const analyticsSnapshotFixture: AnalyticsSnapshot = {
+  conditionDistribution: [
+    { color: '#0f766e', label: 'Normal', value: 774 },
+    { color: '#ef4444', label: 'Injured', value: 190 },
+    { color: '#f59e0b', label: 'Needs rescue', value: 87 },
+    { color: '#8b5cf6', label: 'Possible match', value: 89 },
+  ],
+  matchDistribution: [
+    { color: '#22c55e', label: 'Strong', value: 41 },
+    { color: '#8b5cf6', label: 'Medium', value: 38 },
+    { color: '#6b7280', label: 'Low', value: 21 },
+  ],
+  metrics: [
+    { delta: '+18% vs last week', label: 'Total sightings', tone: 'success', value: '1,248' },
+    { delta: '+12% vs last week', label: 'Active lost pets', tone: 'success', value: '212' },
+    { delta: '+22% vs last week', label: 'Possible matches', tone: 'match', value: '89' },
+    { delta: '+8% vs last week', label: 'Open rescue cases', tone: 'warning', value: '156' },
+    { delta: '+15% vs last week', label: 'Resolved cases', tone: 'success', value: '243' },
+  ],
+  periodLabel: 'May 13 - May 19, 2025',
+  rescueStatusDistribution: [
+    { count: 64, percent: 41, status: 'NEEDS_RESCUE' },
+    { count: 38, percent: 24, status: 'VOLUNTEER_ASSIGNED' },
+    { count: 26, percent: 17, status: 'AT_CLINIC' },
+    { count: 18, percent: 12, status: 'FOSTER_NEEDED' },
+    { count: 10, percent: 6, status: 'REUNITED' },
+  ],
+  speciesDistribution: [
+    { color: '#0f766e', label: 'Cats', value: 734 },
+    { color: '#2563eb', label: 'Dogs', value: 390 },
+    { color: '#8b5cf6', label: 'Other', value: 87 },
+    { color: '#6b7280', label: 'Unknown', value: 37 },
+  ],
+  textualSummary:
+    'Mock analytics show cat sightings as the largest segment, while injured and needs-rescue reports are concentrated in three Bangkok areas.',
+  trend: [
+    { label: 'May 13', rescues: 18, sightings: 165 },
+    { label: 'May 14', rescues: 22, sightings: 230 },
+    { label: 'May 15', rescues: 28, sightings: 320 },
+    { label: 'May 16', rescues: 17, sightings: 190 },
+    { label: 'May 17', rescues: 21, sightings: 218 },
+    { label: 'May 18', rescues: 24, sightings: 240 },
+    { label: 'May 19', rescues: 31, sightings: 356 },
+  ],
+};
+
+export const heatmapPointsFixture: HeatmapPointAggregate[] = [
+  {
+    area: 'Ari - Phahon Yothin',
+    conditionDistribution: [
+      { color: '#0f766e', label: 'Normal stray', value: 128 },
+      { color: '#8b5cf6', label: 'Possible match', value: 74 },
+      { color: '#ef4444', label: 'Injured', value: 31 },
+    ],
+    densityScore: 92,
+    id: 'hotspot-ari',
+    injuredCount: 31,
+    lat: 13.782,
+    lng: 100.545,
+    recentTrend: '+27% cat reports this week',
+    reportCount: 312,
+    rescueNeedCount: 48,
+    severity: 'VERY_HIGH',
+    speciesDistribution: [
+      { color: '#0f766e', label: 'Cats', value: 211 },
+      { color: '#2563eb', label: 'Dogs', value: 82 },
+      { color: '#8b5cf6', label: 'Other', value: 19 },
+    ],
+    suggestedAction: 'Schedule cat-feeding route checks and volunteer poster review.',
+  },
+  {
+    area: 'Lat Phrao 71',
+    conditionDistribution: [
+      { color: '#ef4444', label: 'Injured', value: 52 },
+      { color: '#f59e0b', label: 'Needs rescue', value: 41 },
+    ],
+    densityScore: 78,
+    id: 'hotspot-latphrao',
+    injuredCount: 52,
+    lat: 13.806,
+    lng: 100.61,
+    recentTrend: '+12% injured dog reports',
+    reportCount: 198,
+    rescueNeedCount: 63,
+    severity: 'HIGH',
+    speciesDistribution: [
+      { color: '#2563eb', label: 'Dogs', value: 122 },
+      { color: '#0f766e', label: 'Cats', value: 66 },
+      { color: '#8b5cf6', label: 'Other', value: 10 },
+    ],
+    suggestedAction: 'Prepare clinic partner capacity and transport volunteers.',
+  },
+  {
+    area: 'Ratchada - Huai Khwang',
+    conditionDistribution: [
+      { color: '#0f766e', label: 'Normal stray', value: 86 },
+      { color: '#f59e0b', label: 'Needs rescue', value: 39 },
+    ],
+    densityScore: 65,
+    id: 'hotspot-ratchada',
+    injuredCount: 24,
+    lat: 13.77,
+    lng: 100.572,
+    recentTrend: '+8% repeated sightings',
+    reportCount: 166,
+    rescueNeedCount: 39,
+    severity: 'MEDIUM',
+    speciesDistribution: [
+      { color: '#0f766e', label: 'Cats', value: 98 },
+      { color: '#2563eb', label: 'Dogs', value: 62 },
+      { color: '#8b5cf6', label: 'Other', value: 6 },
+    ],
+    suggestedAction: 'Monitor repeated reports before escalating.',
+  },
+];
+
+export const executiveReportFixture: ExecutiveReportSnapshot = {
+  keyHotspots: [
+    { area: 'Ari - Phahon Yothin', reportCount: 312, severity: 'VERY_HIGH' },
+    { area: 'Lat Phrao 71', reportCount: 198, severity: 'HIGH' },
+    { area: 'Ratchada - Huai Khwang', reportCount: 166, severity: 'MEDIUM' },
+  ],
+  matchingSummary: 'Possible matches rose to 89; 41 are strong mock candidates ready for admin review.',
+  metrics: analyticsSnapshotFixture.metrics,
+  period: 'April 2025',
+  resolutionSummary: 'Resolved and reunited cases increased 15% in the mock period, driven by faster volunteer assignment.',
+  summary:
+    'This UI-only executive report summarizes fictional community report activity, rescue operations, and privacy-preserving hotspots.',
+  title: 'Executive Community Report',
+  volunteerSummary: 'Volunteer response time improved to 1h 24m in the fixture data.',
+};
+
+export const adminUsersFixture: AdminManagedUser[] = [
+  {
+    accountStatus: 'ACTIVE',
+    avatarUrl: avatarNicha,
+    email: 'nicha.owner@example.test',
+    id: 'user-nicha',
+    joinedAt: 'March 2023',
+    lastActivity: 'Today 09:45',
+    locationLabel: 'Ari, Bangkok',
+    lostPetCount: 3,
+    name: 'Nicha P.',
+    phone: '+66 81 234 5678',
+    reportCount: 24,
+    rescueParticipationCount: 86,
+    roles: ['REPORTER', 'PET_OWNER', 'VOLUNTEER', 'ADMIN'],
+    trustSummary: 'Trusted reporter and verified rescue coordinator.',
+    volunteerVerification: 'VERIFIED',
+  },
+  {
+    accountStatus: 'ACTIVE',
+    avatarUrl: avatarSomchai,
+    email: 'somchai@example.test',
+    id: 'user-somchai',
+    joinedAt: 'January 2024',
+    lastActivity: 'Yesterday 18:10',
+    locationLabel: 'Victory Monument, Bangkok',
+    lostPetCount: 1,
+    name: 'Somchai R.',
+    phone: '+66 82 456 1234',
+    reportCount: 14,
+    rescueParticipationCount: 2,
+    roles: ['REPORTER'],
+    trustSummary: 'Consistent reports, one moderation review cleared.',
+    volunteerVerification: 'NOT_APPLICABLE',
+  },
+  {
+    accountStatus: 'PENDING_REVIEW',
+    avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=320&q=80',
+    email: 'mai.volunteer@example.test',
+    id: 'user-mai',
+    joinedAt: 'May 2025',
+    lastActivity: 'Today 08:30',
+    locationLabel: 'Lat Phrao, Bangkok',
+    lostPetCount: 0,
+    name: 'Mai S.',
+    phone: '+66 83 555 1122',
+    reportCount: 3,
+    rescueParticipationCount: 0,
+    roles: ['REPORTER', 'VOLUNTEER'],
+    trustSummary: 'Volunteer application awaiting verification.',
+    volunteerVerification: 'PENDING',
+  },
+];

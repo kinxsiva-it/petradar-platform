@@ -1,0 +1,1 @@
+{ "name": "frontend-volunteer", "$schema": "../../../node_modules/nx/schemas/project-schema.json", "sourceRoot": "libs/frontend/volunteer/src", "projectType": "library", "tags": ["scope:frontend", "type:feature"] }

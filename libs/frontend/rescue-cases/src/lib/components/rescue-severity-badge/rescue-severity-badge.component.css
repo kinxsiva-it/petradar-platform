@@ -1,0 +1,29 @@
+.severity-badge {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+  padding: 0 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.low {
+  border-color: var(--color-success-subtle);
+  background: var(--color-success-subtle);
+  color: var(--color-primary);
+}
+
+.medium {
+  border-color: var(--color-warning-subtle);
+  background: var(--color-warning-subtle);
+  color: #a85f00;
+}
+
+.high,
+.emergency {
+  border-color: var(--color-danger-subtle);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+}

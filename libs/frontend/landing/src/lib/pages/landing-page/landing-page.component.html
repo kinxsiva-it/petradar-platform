@@ -1,0 +1,52 @@
+<section class="landing-hero">
+  <div class="hero-copy">
+    <h1>Find, report, and help animals around you.</h1>
+    <p>
+      A community-powered platform that connects people, technology, and compassion to
+      keep animals safe and bring them home.
+    </p>
+    <div class="hero-actions">
+      <a routerLink="/report-animal" class="action-link primary">Report an Animal</a>
+      <a routerLink="/lost-pets" class="action-link secondary">Search Lost Pets</a>
+    </div>
+  </div>
+
+  <div class="map-preview" aria-label="Illustrated approximate map preview">
+    <div class="map-grid"></div>
+    <div class="route-line"></div>
+    <span class="map-pin pin-sighting">P</span>
+    <span class="map-pin pin-match">M</span>
+    <span class="map-pin pin-rescue">R</span>
+    <span class="map-pin pin-heart">H</span>
+    <aside>
+      <strong>Live map preview</strong>
+      <span>Real sightings and reports from your community.</span>
+    </aside>
+  </div>
+</section>
+
+<section class="metrics-panel" aria-label="Community statistics">
+  @for (metric of metrics; track metric.label) {
+    <article>
+      <strong>{{ metric.value }}</strong>
+      <span>{{ metric.label }}</span>
+      <small>{{ metric.delta }}</small>
+    </article>
+  }
+</section>
+
+<section class="feature-section">
+  <h2>Powering a safer community for animals</h2>
+  <div class="feature-grid">
+    @for (feature of features; track feature.title) {
+      <article>
+        <span class="feature-icon" aria-hidden="true">{{ feature.icon }}</span>
+        <h3>{{ feature.title }}</h3>
+        <p>{{ feature.description }}</p>
+      </article>
+    }
+  </div>
+</section>
+
+<pr-privacy-banner />
+

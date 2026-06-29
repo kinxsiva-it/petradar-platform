@@ -1,0 +1,15 @@
+<section class="related-section">
+  <h2>Related nearby reports</h2>
+  <div class="related-grid">
+    @for (sighting of sightings(); track sighting.id) {
+      <a class="related-card" [routerLink]="['/sightings', sighting.id]">
+        <img [src]="sighting.photoUrls[0]" [alt]="sighting.title" />
+        <span>
+          <strong>{{ sighting.title }}</strong>
+          <small>{{ sighting.approximateLocation.label }} · {{ sighting.distanceLabel }}</small>
+          <pr-status-badge [label]="sighting.status" tone="default" />
+        </span>
+      </a>
+    }
+  </div>
+</section>

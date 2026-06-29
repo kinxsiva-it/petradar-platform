@@ -1,0 +1,85 @@
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgb(31 41 51 / 0.3);
+}
+
+.edit-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--z-drawer);
+  display: grid;
+  width: min(30rem, 100vw);
+  grid-template-rows: auto 1fr auto auto;
+  gap: 1rem;
+  overflow: auto;
+  background: var(--color-surface);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-panel);
+}
+
+header,
+footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+p,
+h2 {
+  margin: 0;
+}
+
+header p {
+  color: var(--color-primary);
+  font: var(--text-data);
+}
+
+h2 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-2);
+}
+
+label {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  font-weight: 750;
+}
+
+input,
+textarea {
+  width: 100%;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  padding: 0.75rem;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  min-height: 2.5rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: white;
+  padding: 0 0.9rem;
+  font-weight: 750;
+}
+
+header button {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.drawer-note {
+  border-radius: var(--radius-card);
+  background: var(--color-warning-subtle);
+  padding: 0.75rem;
+  color: var(--color-text-strong);
+}

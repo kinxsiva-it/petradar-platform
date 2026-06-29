@@ -1,0 +1,134 @@
+<section class="modern-map-page">
+  <pr-map-top-nav />
+
+  <main class="map-stage">
+    @if (uiState() === 'loading') {
+      <section class="state-panel">
+        <pr-empty-state
+          title="Map loading"
+          description="Loading approximate community reports and marker layers."
+          icon="..."
+        />
+      </section>
+    } @else if (uiState() === 'error') {
+      <section class="state-panel">
+        <pr-empty-state
+          title="Reports could not load"
+          description="Mock error state for the public map."
+          icon="!"
+        />
+      </section>
+    } @else if (uiState() === 'map-unavailable') {
+      <section class="state-panel">
+        <pr-empty-state
+          title="Map unavailable"
+          description="The map area is unavailable, but public result cards remain visible."
+          icon="i"
+        />
+        <pr-map-results-list
+          [sightings]="visibleSightings()"
+          [selectedId]="selectedId()"
+          (sightingSelected)="selectSighting($event)"
+        />
+      </section>
+    } @else {
+      <pr-map-canvas
+        [sightings]="visibleSightings()"
+        [selectedId]="selectedId()"
+        (markerSelected)="selectSighting($event)"
+      />
+
+      <section class="map-overlay top-overlay" aria-label="Map search and filters">
+        <pr-map-search-overlay
+          [query]="dataSource.currentSightingFilters().query"
+          (queryChanged)="updateSearch($event)"
+          (filtersOpened)="advancedFiltersOpen.set(true)"
+        />
+        <pr-map-filter-chips
+          [chips]="filterChips()"
+          (chipToggled)="toggleChip($event)"
+        />
+      </section>
+
+      <button
+        type="button"
+        class="near-me"
+        [class.denied]="nearMeState() === 'denied'"
+        [class.ready]="nearMeState() === 'ready'"
+        (click)="runNearMe()"
+      >
+        <span aria-hidden="true">L</span>
+        @if (nearMeState() === 'loading') {
+          Locating...
+        } @else if (nearMeState() === 'denied') {
+          Location unavailable
+        } @else {
+          Near me
+        }
+      </button>
+
+      <section class="summary-overlay">
+        <button type="button" class="summary-toggle" (click)="casesOpen.set(!casesOpen())">
+          {{ activeSummary().total }} active cases
+        </button>
+        <div class="summary-panel" [class.open]="casesOpen()">
+          <pr-active-case-summary
+            [summary]="activeSummary()"
+            (viewAll)="casesOpen.set(true)"
+          />
+        </div>
+      </section>
+
+      @if (hasFilteredEmpty() || uiState() === 'empty') {
+        <section class="empty-overlay">
+          <pr-empty-state
+            title="No active cases"
+            description="Clear filters or search a broader approximate area."
+            icon="0"
+          >
+            <button type="button" (click)="resetMapFilters()">Clear filters</button>
+          </pr-empty-state>
+        </section>
+      }
+
+      @if (nearMeState() === 'denied') {
+        <p class="location-message">
+          Location access is not available in this UI preview. Public map results stay approximate.
+        </p>
+      } @else if (nearMeState() === 'ready') {
+        <p class="location-message">
+          Showing mock nearby area. Exact location is never shown publicly.
+        </p>
+      }
+
+      @if (visibleSelected(); as selectedSighting) {
+        <section class="detail-overlay">
+          <pr-sighting-detail-drawer
+            [sighting]="selectedSighting"
+            (closed)="dataSource.clearSelectedSighting()"
+          />
+        </section>
+      }
+
+      <section class="bottom-count">
+        <pr-map-result-count [count]="visibleSightings().length" />
+      </section>
+
+      <section class="report-overlay">
+        <pr-map-report-cta />
+      </section>
+    }
+  </main>
+
+  @if (advancedFiltersOpen()) {
+    <div class="sheet-backdrop" (click)="advancedFiltersOpen.set(false)"></div>
+    <aside class="filter-sheet" aria-label="Advanced map filters">
+      <button type="button" class="sheet-close" (click)="advancedFiltersOpen.set(false)">Close</button>
+      <pr-map-filter-panel
+        [filters]="dataSource.currentSightingFilters()"
+        (filterChanged)="updateFilter($event)"
+        (clearFilters)="clearFilters()"
+      />
+    </aside>
+  }
+</section>

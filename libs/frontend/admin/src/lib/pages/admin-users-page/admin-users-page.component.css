@@ -1,0 +1,118 @@
+.users-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header,
+.filter-bar,
+.panel {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  box-shadow: var(--shadow-card);
+}
+
+.eyebrow,
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+.eyebrow {
+  color: var(--color-primary);
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+h1 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-1);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) repeat(3, minmax(8rem, 0.45fr)) auto;
+  gap: 0.7rem;
+}
+
+.filter-bar > * {
+  min-width: 0;
+}
+
+input,
+select,
+button,
+a {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  padding: 0 0.75rem;
+}
+
+button,
+a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.mobile-cards {
+  display: none;
+}
+
+.mobile-cards article {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr);
+  gap: 0.8rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  padding: 0.8rem;
+}
+
+.mobile-cards img {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.mobile-cards a {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1100px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .summary-grid,
+  .filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-cards {
+    display: grid;
+    gap: 0.8rem;
+  }
+}

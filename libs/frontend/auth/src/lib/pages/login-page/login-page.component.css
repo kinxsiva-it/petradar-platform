@@ -1,0 +1,124 @@
+.auth-page {
+  display: grid;
+  gap: 1.5rem;
+  justify-items: center;
+  padding: clamp(1rem, 5vw, 4rem) 0;
+}
+
+.auth-card {
+  display: grid;
+  gap: 1.1rem;
+  width: min(100%, 28rem);
+  padding: 2rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.auth-brand {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--color-primary);
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.auth-brand span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.8rem;
+}
+
+header {
+  text-align: center;
+}
+
+h1 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 1.7rem;
+}
+
+p {
+  margin: 0.35rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+label {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--color-text-strong);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+input {
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+}
+
+.password-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+}
+
+.password-row button,
+.form-row a {
+  color: var(--color-primary);
+  font-weight: 750;
+}
+
+.password-row button {
+  min-width: 4.5rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-muted);
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.88rem;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-default);
+  font-weight: 650;
+}
+
+.check-row input {
+  width: 1rem;
+  min-height: 1rem;
+}
+
+.auth-switch {
+  text-align: center;
+}
+
+.auth-switch a {
+  color: var(--color-primary);
+  font-weight: 800;
+  text-decoration: none;
+}
+

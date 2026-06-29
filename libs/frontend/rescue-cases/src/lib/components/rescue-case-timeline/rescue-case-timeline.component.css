@@ -1,0 +1,65 @@
+.timeline {
+  display: grid;
+  gap: 1rem;
+}
+
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h2 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-2);
+}
+
+article {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+}
+
+article > span {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+h3 {
+  color: var(--color-text-strong);
+  font-size: 1rem;
+}
+
+b {
+  border-radius: 999px;
+  background: var(--color-warning-subtle);
+  color: #a85f00;
+  padding: 0.15rem 0.45rem;
+  font-size: 0.7rem;
+}
+
+p,
+small {
+  color: var(--color-text-muted);
+}
+
+img {
+  width: 9rem;
+  aspect-ratio: 4 / 3;
+  margin-top: 0.5rem;
+  border-radius: var(--radius-card);
+  object-fit: cover;
+}

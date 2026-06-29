@@ -1,0 +1,13 @@
+<section class="chip-row" aria-label="Quick map filters">
+  @for (chip of chips(); track chip.label) {
+    <button
+      type="button"
+      [class]="chip.tone + ' chip' + (chip.active ? ' active' : '')"
+      [attr.aria-pressed]="chip.active"
+      (click)="chipToggled.emit(chip)"
+    >
+      <span aria-hidden="true">{{ chip.icon }}</span>
+      {{ chip.label }}
+    </button>
+  }
+</section>

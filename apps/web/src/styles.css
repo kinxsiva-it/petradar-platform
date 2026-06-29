@@ -1,13 +1,16 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 @theme {
   --color-background: #f8faf7;
   --color-background-warm: #f6f3ee;
   --color-surface: #ffffff;
   --color-surface-muted: #f3f7f5;
+  --color-surface-elevated: #ffffff;
   --color-text-strong: #1f2933;
   --color-text-default: #334155;
   --color-text-muted: #6b7280;
+  --color-text-inverse: #ffffff;
   --color-border-default: #d9e2df;
   --color-border-strong: #aab9b6;
   --color-primary: #0f766e;
@@ -23,6 +26,7 @@
   --color-match: #8b5cf6;
   --color-match-subtle: #ede9fe;
   --color-info: #2563eb;
+  --color-info-subtle: #dbeafe;
   --color-privacy: #dff7f2;
   --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -30,9 +34,63 @@
   --shadow-panel: 0 18px 50px rgb(31 41 51 / 0.12);
   --radius-control: 0.5rem;
   --radius-card: 0.5rem;
+  --radius-panel: 0.75rem;
 }
 
 :root {
+  --color-background: #f8faf7;
+  --color-background-warm: #f6f3ee;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f3f7f5;
+  --color-surface-elevated: #ffffff;
+  --color-text-strong: #1f2933;
+  --color-text-default: #334155;
+  --color-text-muted: #6b7280;
+  --color-text-inverse: #ffffff;
+  --color-border-default: #d9e2df;
+  --color-border-strong: #aab9b6;
+  --color-primary: #0f766e;
+  --color-primary-hover: #0b5f59;
+  --color-primary-active: #084c47;
+  --color-primary-subtle: #ddf7ec;
+  --color-warning: #f59e0b;
+  --color-warning-subtle: #fff4d6;
+  --color-danger: #ef4444;
+  --color-danger-subtle: #fee2e2;
+  --color-success: #22c55e;
+  --color-success-subtle: #dcfce7;
+  --color-match: #8b5cf6;
+  --color-match-subtle: #ede9fe;
+  --color-info: #2563eb;
+  --color-info-subtle: #dbeafe;
+  --color-privacy: #dff7f2;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --shadow-card: 0 10px 30px rgb(31 41 51 / 0.08);
+  --shadow-panel: 0 18px 50px rgb(31 41 51 / 0.12);
+  --radius-control: 0.5rem;
+  --radius-card: 0.5rem;
+  --radius-panel: 0.75rem;
+  --content-width: 90rem;
+  --content-width-narrow: 56rem;
+  --header-height: 4.5rem;
+  --sidebar-width: 17rem;
+  --space-page: clamp(1rem, 2.5vw, 2rem);
+  --text-display: 700 3.5rem/0.98 var(--font-sans);
+  --text-heading-1: 700 2.5rem/1.05 var(--font-sans);
+  --text-heading-2: 650 1.5rem/1.25 var(--font-sans);
+  --text-heading-3: 650 1.25rem/1.3 var(--font-sans);
+  --text-body: 400 1rem/1.6 var(--font-sans);
+  --text-body-small: 400 0.875rem/1.5 var(--font-sans);
+  --text-label: 700 0.82rem/1.25 var(--font-sans);
+  --text-caption: 500 0.75rem/1.35 var(--font-sans);
+  --text-data: 600 0.8125rem/1.25 var(--font-mono);
+  --z-base: 1;
+  --z-map-controls: 400;
+  --z-header: 700;
+  --z-overlay: 900;
+  --z-drawer: 950;
+  --z-sheet: 1000;
   color-scheme: light;
   font-family: var(--font-sans);
   background: var(--color-background);
@@ -59,9 +117,69 @@ textarea {
   font: inherit;
 }
 
+img {
+  max-width: 100%;
+}
+
+a {
+  text-underline-offset: 0.18em;
+}
+
 :focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-primary) 45%, white);
   outline-offset: 2px;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  font-family: var(--font-sans);
+  background: var(--color-surface-muted);
+}
+
+.leaflet-control-container {
+  position: relative;
+  z-index: var(--z-map-controls);
+}
+
+.pr-map-marker-host {
+  border: 0;
+  background: transparent;
+}
+
+.pr-map-marker {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border: 3px solid white;
+  border-radius: 50% 50% 50% 14%;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 900;
+  box-shadow: var(--shadow-card);
+  transform: rotate(-45deg);
+}
+
+.pr-map-marker::first-letter {
+  transform: rotate(45deg);
+}
+
+.pr-map-marker.sighting {
+  background: var(--color-primary);
+}
+
+.pr-map-marker.possible-match {
+  background: var(--color-match);
+}
+
+.pr-map-marker.needs-rescue {
+  background: var(--color-danger);
+}
+
+.pr-map-marker.reunited {
+  background: var(--color-success);
 }
 
 @media (prefers-reduced-motion: reduce) {

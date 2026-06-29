@@ -1,0 +1,51 @@
+<div class="volunteer-shell">
+  <aside class="volunteer-sidebar" aria-label="Volunteer navigation">
+    <a routerLink="/" class="volunteer-brand"><span>P</span>PetRadar</a>
+    <div class="volunteer-badge">Verified volunteer</div>
+    <nav>
+      @for (item of navItems; track item.route) {
+        <a [routerLink]="item.route" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: item.route === '/volunteer' }">
+          <span aria-hidden="true">{{ item.icon }}</span>
+          {{ item.label }}
+          @if (item.route === '/volunteer/rescue-cases' && rescue.assignedCases().length > 0) {
+            <b>{{ rescue.assignedCases().length }}</b>
+          }
+        </a>
+      }
+    </nav>
+    <section class="volunteer-profile-chip">
+      <img [src]="rescue.currentVolunteer.avatarUrl" alt="Mock volunteer avatar" />
+      <div>
+        <strong>{{ rescue.currentVolunteer.name }}</strong>
+        <span>{{ rescue.currentVolunteer.roleLabel }}</span>
+      </div>
+    </section>
+  </aside>
+
+  <div class="volunteer-main">
+    <header class="volunteer-topbar">
+      <a routerLink="/" class="volunteer-brand compact"><span>P</span>PetRadar</a>
+      <div class="topbar-actions">
+        <a routerLink="/notifications">Notifications <b>{{ workspace.unreadCount() }}</b></a>
+        <button type="button" (click)="signOutMock()">Sign out</button>
+      </div>
+    </header>
+
+    @if (rescue.toast(); as toast) {
+      <div class="volunteer-toast" role="status">{{ toast }}</div>
+    }
+
+    <main class="volunteer-content">
+      <router-outlet />
+    </main>
+
+    <nav class="volunteer-mobile-nav" aria-label="Mobile volunteer navigation">
+      @for (item of mobileItems; track item.route) {
+        <a [routerLink]="item.route" routerLinkActive="active">
+          <span aria-hidden="true">{{ item.icon }}</span>
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+  </div>
+</div>

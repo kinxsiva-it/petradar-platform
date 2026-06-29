@@ -1,0 +1,22 @@
+<div class="drawer-backdrop" (click)="closed.emit()"></div>
+<aside class="edit-drawer" role="dialog" aria-modal="true" aria-labelledby="edit-report-title">
+  <header>
+    <div>
+      <p>{{ report().reference }}</p>
+      <h2 id="edit-report-title">Edit pending report</h2>
+    </div>
+    <button type="button" (click)="closed.emit()">Close</button>
+  </header>
+  <label>
+    Public note
+    <textarea rows="5">{{ report().description }}</textarea>
+  </label>
+  <label>
+    Approximate public area
+    <input [value]="report().approximateLocationLabel" />
+  </label>
+  <p class="drawer-note">Verified or closed reports are locked in this mock UI.</p>
+  <footer>
+    <button type="button" (click)="saved.emit(report().id)">Save mock edit</button>
+  </footer>
+</aside>

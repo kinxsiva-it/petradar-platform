@@ -1,0 +1,60 @@
+<section class="privacy-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Location privacy controls</p>
+      <h1>Admin Privacy Control</h1>
+      <p>Configure mock location visibility and exact-location access presentation.</p>
+    </div>
+  </header>
+
+  @if (uiState() === 'loading') {
+    <section class="panel"><pr-loading-skeleton [rows]="8" /></section>
+  } @else if (uiState() === 'error') {
+    <pr-empty-state title="Privacy settings unavailable" description="The mock privacy settings could not render." icon="!" />
+  } @else {
+    <pr-alert title="UI-only prototype" tone="warning">
+      These controls do not enforce security. Exact-location protection must be implemented server-side before production use.
+    </pr-alert>
+
+    <section class="privacy-grid">
+      <article class="panel form-panel">
+        <h2>Location Visibility</h2>
+        <label>
+          Default public radius
+          <input
+            type="number"
+            [ngModel]="draft().defaultPublicRadiusMeters"
+            (ngModelChange)="update('defaultPublicRadiusMeters', +$event)"
+          />
+        </label>
+        <p>Minimum {{ draft().minRadiusMeters }}m · Maximum {{ draft().maxRadiusMeters }}m</p>
+        <label><input type="checkbox" [ngModel]="draft().sensitiveLocationProtection" (ngModelChange)="update('sensitiveLocationProtection', $event)" /> Sensitive-location protection</label>
+        <label><input type="checkbox" [ngModel]="draft().exactLocationRequiresAssignedVolunteer" (ngModelChange)="update('exactLocationRequiresAssignedVolunteer', $event)" /> Assigned volunteer required</label>
+        <label><input type="checkbox" [ngModel]="draft().exactLocationRequiresVerification" (ngModelChange)="update('exactLocationRequiresVerification', $event)" /> Verification required</label>
+        <label>
+          Rescue-case exact access
+          <select [ngModel]="draft().rescueCaseExactAccess" (ngModelChange)="update('rescueCaseExactAccess', $event)">
+            <option value="ADMINS_ONLY">Admins only</option>
+            <option value="ADMINS_AND_ASSIGNED_VOLUNTEERS">Admins and assigned volunteers</option>
+          </select>
+        </label>
+        <div class="button-row">
+          <button type="button" (click)="save()">Save mock settings</button>
+          <button type="button" class="secondary" (click)="reset()">Reset</button>
+        </div>
+      </article>
+
+      <article class="panel preview-panel">
+        <h2>Public Display Preview</h2>
+        <div class="map-preview public">Approximate area · {{ draft().defaultPublicRadiusMeters }}m radius</div>
+        <h2>Internal Display Preview</h2>
+        <div class="map-preview internal">Internal exact-location section · restricted mock display</div>
+      </article>
+
+      <article class="panel">
+        <h2>Location Access History</h2>
+        <pr-admin-activity-list [items]="admin.activity().slice(0, 4)" />
+      </article>
+    </section>
+  }
+</section>

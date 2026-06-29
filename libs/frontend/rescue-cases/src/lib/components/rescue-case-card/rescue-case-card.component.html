@@ -1,0 +1,28 @@
+<article class="case-card" [class.compact]="compact()">
+  <img [src]="caseItem().photoUrls[0]" [alt]="caseItem().animal.nameLabel" />
+  <div class="case-body">
+    <div class="case-top">
+      <div>
+        <strong>{{ caseItem().caseNumber }}</strong>
+        <h2>{{ caseItem().animal.nameLabel }}</h2>
+      </div>
+      <pr-rescue-severity-badge [severity]="caseItem().severity" />
+    </div>
+    <p>{{ caseItem().animal.species }} · {{ caseItem().animal.conditionSummary }}</p>
+    <p class="meta">{{ caseItem().approximateLocation.label }} · {{ caseItem().distanceLabel }}</p>
+    <div class="badge-row">
+      <pr-rescue-status-badge [status]="caseItem().status" />
+      @if (caseItem().assignedVolunteer) {
+        <span>Assigned</span>
+      } @else {
+        <span>Unassigned</span>
+      }
+    </div>
+  </div>
+  <footer>
+    <a [routerLink]="['/volunteer/rescue-cases', caseItem().id]">View case</a>
+    @if (!caseItem().assignedVolunteer) {
+      <button type="button" (click)="accepted.emit(caseItem().id)">Accept</button>
+    }
+  </footer>
+</article>

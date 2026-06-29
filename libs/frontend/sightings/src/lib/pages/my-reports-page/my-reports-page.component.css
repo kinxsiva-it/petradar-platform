@@ -1,0 +1,136 @@
+.reports-page,
+.reports-list {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.reports-page > *,
+.reports-list > * {
+  min-width: 0;
+}
+
+.page-header,
+.filter-bar,
+.panel {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  box-shadow: var(--shadow-card);
+}
+
+.page-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow,
+h1,
+p {
+  margin: 0;
+}
+
+.eyebrow {
+  color: var(--color-primary);
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+h1 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-1);
+}
+
+.page-header p {
+  margin-top: 0.35rem;
+  color: var(--color-text-muted);
+}
+
+.page-header a,
+.inline-action,
+.filter-bar button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: white;
+  padding: 0 1rem;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.summary-grid article {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  padding: 1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.summary-grid span {
+  display: block;
+  color: var(--color-primary);
+  font-size: 1.75rem;
+  font-weight: 850;
+}
+
+.summary-grid b {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
+.filter-bar {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1fr) repeat(3, minmax(8rem, 0.45fr)) auto;
+  gap: 0.75rem;
+}
+
+input,
+select {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  padding: 0 0.8rem;
+}
+
+.filter-bar button,
+.inline-action {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+@media (max-width: 1100px) {
+  .summary-grid,
+  .filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .page-header {
+    display: grid;
+  }
+
+  .summary-grid,
+  .filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .page-header a,
+  .filter-bar button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "frontend-mock-data",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/mock-data/src",
+  "projectType": "library",
+  "tags": ["scope:frontend", "type:mock-data"]
+}
+

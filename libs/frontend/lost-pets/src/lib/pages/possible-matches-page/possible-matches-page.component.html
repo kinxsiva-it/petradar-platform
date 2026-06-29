@@ -1,0 +1,44 @@
+<section class="matches-page">
+  @if (pet(); as pet) {
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">{{ pet.reference }}</p>
+        <h1>Possible Matches for {{ pet.petName }}</h1>
+        <p>{{ pet.approximateLastSeenLabel }} · {{ pet.possibleMatchCount }} possible matches</p>
+      </div>
+      <a routerLink="/my/lost-pets">Back to My Lost Pets</a>
+    </header>
+
+    <section class="lost-pet-summary">
+      <img [src]="pet.photoUrls[0]" [alt]="pet.petName" />
+      <div>
+        <h2>{{ pet.petName }}</h2>
+        <p>{{ pet.species }} · {{ pet.breed }} · {{ pet.color }} {{ pet.pattern }}</p>
+        <p>Exact last-seen location remains private. Match cards show approximate areas only.</p>
+      </div>
+      <select [(ngModel)]="level">
+        @for (item of levelOptions; track item) {
+          <option [ngValue]="item">{{ item }} match level</option>
+        }
+      </select>
+    </section>
+
+    @if (matches().length === 0) {
+      <pr-empty-state title="No matches at this level" description="We will notify you if another mock sighting appears." icon="0" />
+    } @else {
+      <section class="match-list">
+        @for (match of matches(); track match.id) {
+          @if (sighting(match.sightingId); as sightingItem) {
+            <pr-possible-match-card
+              [match]="match"
+              [sighting]="sightingItem"
+              (reviewRequested)="workspace.requestMatchReview($event)"
+            />
+          }
+        }
+      </section>
+    }
+  } @else {
+    <pr-empty-state title="Lost pet not found" description="This lost-pet post is not available in mock state." icon="?" />
+  }
+</section>

@@ -1,0 +1,25 @@
+<article class="match-card">
+  <img [src]="sighting().photoUrls[0]" [alt]="sighting().title" />
+  <div class="match-body">
+    <header>
+      <div>
+        <strong>Match Score {{ match().score }}%</strong>
+        <span>{{ match().level }} match · {{ match().distanceLabel }}</span>
+      </div>
+      <b>{{ match().verificationStatus }}</b>
+    </header>
+    <p>{{ match().seenAt }} · {{ match().approximateLocationLabel }}</p>
+    <ul>
+      @for (reason of match().reasons; track reason) {
+        <li>{{ reason }}</li>
+      }
+    </ul>
+  </div>
+  <footer>
+    <a [routerLink]="['/matches', match().id]">View match</a>
+    <a [routerLink]="['/sightings', sighting().id]" class="secondary">View sighting</a>
+    <button type="button" [disabled]="match().reviewRequested" (click)="reviewRequested.emit(match().id)">
+      {{ match().reviewRequested ? 'Review requested' : 'Request review' }}
+    </button>
+  </footer>
+</article>

@@ -1,0 +1,45 @@
+.status-stepper,
+.transition-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+header span,
+p {
+  color: var(--color-text-muted);
+}
+
+strong {
+  color: var(--color-primary);
+}
+
+button {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-default);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+button:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+b {
+  color: var(--color-text-strong);
+}
+
+button span {
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+}

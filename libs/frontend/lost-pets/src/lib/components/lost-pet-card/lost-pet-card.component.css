@@ -1,0 +1,106 @@
+.lost-pet-card {
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr) minmax(7rem, auto);
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+img {
+  width: 8rem;
+  aspect-ratio: 1;
+  border-radius: var(--radius-card);
+  object-fit: cover;
+}
+
+.card-body {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.title-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+h2,
+p {
+  margin: 0;
+}
+
+h2 {
+  color: var(--color-text-strong);
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+
+p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+p strong {
+  color: var(--color-text-strong);
+}
+
+aside {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  padding-left: 1rem;
+  border-left: 1px solid var(--color-border-default);
+  text-align: center;
+}
+
+aside span {
+  color: var(--color-match);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+aside strong {
+  display: grid;
+  min-width: 3rem;
+  min-height: 3rem;
+  place-items: center;
+  border-radius: var(--radius-card);
+  background: var(--color-match-subtle);
+  color: var(--color-match);
+  font-size: 1.4rem;
+}
+
+a {
+  color: var(--color-primary);
+  font-size: 0.86rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+@media (max-width: 700px) {
+  .lost-pet-card {
+    grid-template-columns: 5.5rem 1fr;
+  }
+
+  img {
+    width: 5.5rem;
+  }
+
+  aside {
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr auto auto;
+    justify-items: start;
+    width: 100%;
+    padding: 0.75rem 0 0;
+    border-top: 1px solid var(--color-border-default);
+    border-left: 0;
+  }
+}
+

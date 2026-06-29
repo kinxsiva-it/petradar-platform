@@ -1,0 +1,9 @@
+@if (unavailable()) {
+  <section class="map-fallback">
+    <h2>Map unavailable</h2>
+    <p>The map component could not load. Result cards are still available.</p>
+  </section>
+} @else {
+  <div class="map-shell" #mapHost aria-label="Public approximate animal sightings map"></div>
+}
+

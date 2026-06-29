@@ -1,0 +1,9 @@
+<section class="match-summary">
+  <div>
+    <span>Possible matches</span>
+    <strong>{{ count() }}</strong>
+  </div>
+  <p>Reports that may match this lost pet are reviewed with approximate-location privacy.</p>
+  <a [routerLink]="['/my/lost-pets', petId(), 'matches']">View all possible matches</a>
+</section>
+

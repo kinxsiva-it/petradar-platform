@@ -1,0 +1,36 @@
+<section class="list-header">
+  <div>
+    <p class="eyebrow">Public lost-pet posts</p>
+    <h1>Lost Pets</h1>
+    <p>Browse lost pets reported by the community. Exact contact and location details stay protected.</p>
+  </div>
+  <a routerLink="/lost-pets/new" class="create-action">Create Lost Pet</a>
+</section>
+
+<pr-lost-pet-filter-bar
+  [filters]="dataSource.currentLostPetFilters()"
+  (filterChanged)="updateFilter($event)"
+  (clearFilters)="dataSource.clearLostPetFilters()"
+/>
+
+@if (uiState() === 'loading') {
+  <pr-empty-state title="Loading lost pets" description="Loading public lost-pet posts." icon="..." />
+} @else if (uiState() === 'error') {
+  <pr-empty-state title="Lost pets could not load" description="Mock error state for the lost-pet list." icon="!" />
+} @else if (uiState() === 'empty') {
+  <pr-empty-state title="No lost pets yet" description="There are no mock lost-pet posts in this area." icon="0" />
+} @else if (dataSource.filteredLostPets().length === 0) {
+  <pr-empty-state title="No lost pets match filters" description="Clear filters or broaden your search." icon="0" />
+} @else {
+  <section class="results-header">
+    <span>{{ dataSource.filteredLostPets().length }} lost pets found</span>
+    <span>Sort by: Last seen</span>
+  </section>
+  <section class="pet-list">
+    @for (pet of dataSource.filteredLostPets(); track pet.id) {
+      <pr-lost-pet-card [pet]="pet" />
+    }
+  </section>
+  <button type="button" class="load-more">Load more mock posts</button>
+}
+

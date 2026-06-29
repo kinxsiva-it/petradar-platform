@@ -1,0 +1,65 @@
+<section class="dashboard-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Volunteer dashboard</p>
+      <h1>Hello, {{ rescue.currentVolunteer.name }}</h1>
+      <p>Assigned cases, urgent nearby reports, and availability controls. Access is mock-only.</p>
+    </div>
+    <nav>
+      <a routerLink="/volunteer/rescue-cases">View Rescue Cases</a>
+      <a routerLink="/map" class="secondary">Open Community Map</a>
+    </nav>
+  </header>
+
+  @if (uiState() === 'denied') {
+    <pr-empty-state title="Mock permission state" description="Switching real roles is not implemented. This is a frontend-only volunteer preview." icon="!" />
+  } @else if (uiState() === 'loading') {
+    <section class="panel"><pr-loading-skeleton [rows]="8" /></section>
+  } @else if (uiState() === 'error') {
+    <pr-empty-state title="Volunteer dashboard unavailable" description="Mock volunteer data could not render." icon="!" />
+  } @else {
+    <section class="stats-grid">
+      <pr-volunteer-stat-card [value]="rescue.dashboardSummary().active" label="Active cases" hint="Assigned to you" />
+      <pr-volunteer-stat-card [value]="rescue.dashboardSummary().completed" label="Completed cases" hint="Mock workflow complete" />
+      <pr-volunteer-stat-card [value]="rescue.dashboardSummary().responseTime" label="Avg. response" hint="Presentation only" />
+      <pr-volunteer-stat-card [value]="rescue.dashboardSummary().urgent" label="Nearby urgent" hint="Unassigned cases" />
+    </section>
+
+    <section class="dashboard-grid">
+      <div class="main-column">
+        @if (uiState() === 'empty') {
+          <pr-empty-state title="No assigned cases" description="Urgent nearby cases will appear when available." icon="0" />
+        } @else {
+          <pr-assigned-case-list
+            title="My assigned cases"
+            [cases]="rescue.assignedCases()"
+            emptyText="You do not have assigned mock cases."
+            (accepted)="rescue.acceptCase($event)"
+          />
+        }
+        <pr-assigned-case-list
+          title="Nearby urgent cases"
+          [cases]="rescue.nearbyUrgentCases()"
+          emptyText="No urgent nearby cases right now."
+          (accepted)="rescue.acceptCase($event)"
+        />
+      </div>
+
+      <aside class="side-column">
+        <pr-volunteer-availability-card
+          [availability]="rescue.volunteerProfile().availability"
+          (statusChanged)="rescue.updateAvailability($event)"
+        />
+        <article class="quick-card">
+          <h2>Quick actions</h2>
+          <a routerLink="/volunteer/rescue-cases">Open rescue board</a>
+          <a routerLink="/notifications">View notifications</a>
+          <a routerLink="/volunteer/profile">Volunteer profile</a>
+        </article>
+        <pr-alert title="Thank you for helping" tone="privacy">
+          Every mock update demonstrates how a real rescue workflow could coordinate safely.
+        </pr-alert>
+      </aside>
+    </section>
+  }
+</section>

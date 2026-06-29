@@ -1,0 +1,27 @@
+.pet-gallery {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.hero-photo {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-card);
+  object-fit: cover;
+  box-shadow: var(--shadow-card);
+}
+
+div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+div img {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  object-fit: cover;
+}
+

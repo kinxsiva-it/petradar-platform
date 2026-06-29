@@ -1,0 +1,13 @@
+<section class="case-list-card">
+  <header>
+    <h2>{{ title() }}</h2>
+    <span>{{ cases().length }}</span>
+  </header>
+  <div class="case-list">
+    @for (caseItem of cases(); track caseItem.id) {
+      <pr-rescue-case-card [caseItem]="caseItem" [compact]="true" (accepted)="accepted.emit($event)" />
+    } @empty {
+      <p>{{ emptyText() }}</p>
+    }
+  </div>
+</section>

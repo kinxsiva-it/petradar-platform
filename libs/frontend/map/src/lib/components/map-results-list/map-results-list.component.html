@@ -1,0 +1,18 @@
+<section class="results-list">
+  @for (sighting of sightings(); track sighting.id) {
+    <button
+      type="button"
+      class="result-card"
+      [class.active]="selectedId() === sighting.id"
+      (click)="sightingSelected.emit(sighting.id)"
+    >
+      <img [src]="sighting.photoUrls[0]" [alt]="sighting.title" loading="lazy" />
+      <span class="result-body">
+        <span class="result-title">{{ sighting.title }}</span>
+        <span class="result-meta">{{ sighting.approximateLocation.label }} · {{ sighting.distanceLabel }}</span>
+        <pr-status-badge [label]="sighting.status" [tone]="toneFor(sighting)" />
+      </span>
+    </button>
+  }
+</section>
+

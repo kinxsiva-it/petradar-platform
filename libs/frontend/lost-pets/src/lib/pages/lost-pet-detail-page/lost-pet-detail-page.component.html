@@ -1,0 +1,53 @@
+@if (uiState() === 'loading') {
+  <pr-empty-state title="Loading lost pet" description="Loading public lost-pet details." icon="..." />
+} @else if (uiState() === 'error') {
+  <pr-empty-state title="Lost pet could not load" description="Mock error state for lost-pet detail." icon="!" />
+} @else if (pet(); as item) {
+  <section class="detail-header">
+    <a routerLink="/lost-pets">Back to lost pets</a>
+    <div>
+      <p class="eyebrow">Lost pet detail</p>
+      <h1>{{ item.petName }}</h1>
+      <p>{{ item.species }} · {{ item.breed ?? 'Mixed breed' }} · {{ item.sex ?? 'Unknown sex' }} · {{ item.ageDescription ?? 'Age unknown' }}</p>
+    </div>
+  </section>
+
+  <section class="detail-layout">
+    <pr-lost-pet-photo-gallery [photos]="item.photoUrls" [alt]="item.petName" />
+
+    <article class="detail-card">
+      <div class="title-row">
+        <pr-status-badge [label]="item.status" [tone]="item.status === 'Possible match' ? 'match' : item.status === 'Reunited' ? 'success' : 'default'" />
+        <span>{{ item.reference }}</span>
+      </div>
+      <h2>{{ item.petName }}</h2>
+      <p>{{ item.description }}</p>
+
+      <dl>
+        <div><dt>Color</dt><dd>{{ item.color }}</dd></div>
+        <div><dt>Pattern</dt><dd>{{ item.pattern ?? 'Not listed' }}</dd></div>
+        <div><dt>Collar</dt><dd>{{ item.collarDescription ?? 'Not listed' }}</dd></div>
+        <div><dt>Last seen</dt><dd>{{ item.lastSeenAt }}</dd></div>
+        <div><dt>Approximate location</dt><dd>{{ item.approximateLastSeenLocation.label }}</dd></div>
+        <div><dt>Reward</dt><dd>{{ item.rewardLabel }}</dd></div>
+      </dl>
+
+      <section class="contact-panel">
+        <h3>Owner contact preference</h3>
+        <p>{{ item.contactPreference }}</p>
+      </section>
+
+      <pr-possible-match-summary [count]="item.possibleMatchCount" [petId]="item.id" />
+      <pr-privacy-banner />
+    </article>
+  </section>
+} @else {
+  <pr-empty-state
+    title="Lost pet not found"
+    description="This lost-pet post does not exist in the mock data source."
+    icon="?"
+  >
+    <a routerLink="/lost-pets" class="back-link">Back to lost pets</a>
+  </pr-empty-state>
+}
+

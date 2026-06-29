@@ -1,0 +1,51 @@
+<section class="user-detail-page">
+  <a class="back-link" routerLink="/admin/users">Back to users</a>
+
+  @if (uiState() === 'loading') {
+    <section class="panel"><pr-loading-skeleton [rows]="10" /></section>
+  } @else if (uiState() === 'error') {
+    <pr-empty-state title="User unavailable" description="The mock user detail could not render." icon="!" />
+  } @else if (!user()) {
+    <pr-empty-state title="User not found" description="Use user-nicha, user-somchai, or user-mai." icon="?" />
+  } @else {
+    @let item = user()!;
+    <header class="profile-header">
+      <img [src]="item.avatarUrl" alt="" />
+      <div>
+        <p class="eyebrow">Admin user detail</p>
+        <h1>{{ item.name }}</h1>
+        <p>{{ item.email }} · {{ item.phone }}</p>
+      </div>
+      <div class="badge-row">
+        <pr-status-badge [label]="item.accountStatus" [tone]="item.accountStatus === 'ACTIVE' ? 'success' : 'warning'" />
+        <pr-status-badge [label]="item.volunteerVerification" tone="match" />
+      </div>
+    </header>
+
+    <section class="detail-grid">
+      <div class="main-column">
+        <article class="panel">
+          <h2>Summary</h2>
+          <dl>
+            <div><dt>Joined</dt><dd>{{ item.joinedAt }}</dd></div>
+            <div><dt>Last activity</dt><dd>{{ item.lastActivity }}</dd></div>
+            <div><dt>Reports</dt><dd>{{ item.reportCount }}</dd></div>
+            <div><dt>Lost pets</dt><dd>{{ item.lostPetCount }}</dd></div>
+            <div><dt>Rescue participation</dt><dd>{{ item.rescueParticipationCount }}</dd></div>
+            <div><dt>Trust summary</dt><dd>{{ item.trustSummary }}</dd></div>
+          </dl>
+        </article>
+        <pr-admin-activity-list [items]="admin.activity()" title="Mock Admin activity touching users" />
+      </div>
+      <aside class="side-column">
+        <pr-role-editor [roles]="item.roles" (changed)="changeRole($event)" />
+        <pr-account-status-control
+          [accountStatus]="item.accountStatus"
+          [volunteerVerification]="item.volunteerVerification"
+          (accountChanged)="changeAccount($event)"
+          (volunteerChanged)="changeVolunteer($event)"
+        />
+      </aside>
+    </section>
+  }
+</section>

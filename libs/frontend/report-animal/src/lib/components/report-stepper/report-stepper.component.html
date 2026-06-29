@@ -1,0 +1,13 @@
+<nav class="stepper" aria-label="Report progress">
+  @for (step of steps(); track step; let index = $index) {
+    <button
+      type="button"
+      [class.active]="index === current()"
+      [class.done]="index < current()"
+      (click)="stepSelected.emit(index)"
+    >
+      <span>{{ index + 1 }}</span>
+      <b>{{ step }}</b>
+    </button>
+  }
+</nav>

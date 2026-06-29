@@ -1,0 +1,43 @@
+<section class="settings-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Account</p>
+      <h1>Settings</h1>
+      <p>Mock preferences for notifications, privacy, and community safety links.</p>
+    </div>
+  </header>
+
+  <section class="settings-grid">
+    <article>
+      <h2>Notification preferences</h2>
+      <label><input type="checkbox" [(ngModel)]="draft.emailNotifications" /> Email notifications</label>
+      <label><input type="checkbox" [(ngModel)]="draft.dailyDigest" /> Daily digest</label>
+      <label><input type="checkbox" [(ngModel)]="draft.smsUrgentAlerts" /> SMS urgent alerts</label>
+      <label><input type="checkbox" [(ngModel)]="draft.nearbyUrgentAlerts" /> Nearby urgent alerts</label>
+    </article>
+    <article>
+      <h2>Privacy preferences</h2>
+      <label><input type="checkbox" [(ngModel)]="draft.showApproximateLocation" /> Show approximate location</label>
+      <label><input type="checkbox" [(ngModel)]="draft.showPhoneToVerifiedUsers" /> Show phone to verified users</label>
+      <label><input type="checkbox" [(ngModel)]="draft.allowOwnerContact" /> Allow owner contact</label>
+      <label><input type="checkbox" [(ngModel)]="draft.allowVolunteerMessages" /> Allow volunteer messages</label>
+    </article>
+    <article>
+      <h2>Language</h2>
+      <select [(ngModel)]="draft.language">
+        <option ngValue="English">English</option>
+        <option ngValue="Thai">Thai</option>
+      </select>
+      <pr-alert title="UI-only setting" tone="info">Language selection is presentation only in this prototype.</pr-alert>
+    </article>
+    <article>
+      <h2>Account actions</h2>
+      <a routerLink="/community-guidelines">Safety and community guidelines</a>
+      <button type="button" class="secondary" (click)="reset()">Reset mock preferences</button>
+    </article>
+  </section>
+
+  <footer class="settings-actions">
+    <button type="button" (click)="save()">Save Settings</button>
+  </footer>
+</section>

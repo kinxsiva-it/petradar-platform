@@ -1,0 +1,181 @@
+.case-detail-page,
+.main-stack,
+.action-panel {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.case-header,
+.photo-panel,
+.summary-card,
+.location-card,
+.panel,
+.action-panel {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: clamp(1rem, 2.5vw, 1.4rem);
+  box-shadow: var(--shadow-card);
+}
+
+.case-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow,
+h1,
+h2,
+h3,
+p,
+dl {
+  margin: 0;
+}
+
+.eyebrow {
+  margin-top: 0.7rem;
+  color: var(--color-primary);
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+h1 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-1);
+}
+
+h2 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-2);
+}
+
+h3 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-3);
+}
+
+p,
+small {
+  color: var(--color-text-muted);
+}
+
+.case-header a {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+.badge-row,
+.thumb-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(20rem, 0.42fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.photo-panel > img {
+  width: 100%;
+  max-height: 28rem;
+  border-radius: var(--radius-card);
+  object-fit: cover;
+}
+
+.thumb-row {
+  margin-top: 0.75rem;
+}
+
+.thumb-row button {
+  width: 4.5rem;
+  height: 4.5rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius-card);
+  padding: 0;
+  overflow: hidden;
+}
+
+.thumb-row button.active {
+  border-color: var(--color-primary);
+}
+
+.thumb-row img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+dt {
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+dd {
+  margin: 0.15rem 0 0;
+  color: var(--color-text-strong);
+}
+
+.summary-card,
+.location-card {
+  display: grid;
+  gap: 1rem;
+}
+
+.location-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.location-grid section {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-muted);
+  padding: 1rem;
+}
+
+.action-panel {
+  position: sticky;
+  top: calc(var(--header-height) + 1rem);
+}
+
+button {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: white;
+  padding: 0 1rem;
+  font-weight: 850;
+}
+
+button.secondary {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+@media (max-width: 980px) {
+  .case-header,
+  .detail-grid,
+  .location-grid,
+  dl {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .action-panel {
+    position: static;
+  }
+}
