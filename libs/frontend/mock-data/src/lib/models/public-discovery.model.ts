@@ -4,11 +4,31 @@ export type AnimalCondition =
   | 'Injured'
   | 'Needs rescue'
   | 'Newborn litter'
-  | 'Possible lost pet';
-export type CollarStatus = 'No collar' | 'Red collar with bell' | 'Blue collar' | 'Unknown';
+  | 'Possible lost pet'
+  | 'Sick'
+  | 'Pregnant'
+  | 'Aggressive'
+  | 'Unknown';
+export type CollarStatus =
+  | 'No collar'
+  | 'Red collar with bell'
+  | 'Blue collar'
+  | 'Unknown'
+  | 'Other';
 export type UrgencyLevel = 'Low' | 'Medium' | 'High' | 'Emergency';
-export type VerificationStatus = 'Pending' | 'Verified' | 'Community verified' | 'Needs review';
-export type PublicSightingStatus = 'Sighting' | 'Possible match' | 'Needs rescue' | 'Reunited';
+export type VerificationStatus =
+  | 'Pending'
+  | 'Verified'
+  | 'Community verified'
+  | 'Needs review'
+  | 'Rejected'
+  | 'Duplicate';
+export type PublicSightingStatus =
+  | 'Sighting'
+  | 'Possible match'
+  | 'Needs rescue'
+  | 'Reunited'
+  | 'Closed';
 export type LostPetStatus = 'Active' | 'Possible match' | 'Reunited' | 'Closed';
 
 export interface ApproximatePublicLocation {
@@ -68,4 +88,3 @@ export interface DiscoveryFilters {
   status: 'All' | PublicSightingStatus | LostPetStatus;
   verification: 'All' | VerificationStatus;
 }
-

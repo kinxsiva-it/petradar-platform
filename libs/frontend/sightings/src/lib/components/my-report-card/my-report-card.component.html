@@ -6,17 +6,35 @@
         <p>{{ report().reference }}</p>
         <h2>{{ report().title }}</h2>
       </div>
-      <pr-status-badge [label]="report().verificationStatus" [tone]="tone(report().verificationStatus)" />
+      <pr-status-badge
+        [label]="report().verificationStatus"
+        [tone]="tone(report().verificationStatus)"
+      />
     </div>
     <dl>
-      <div><dt>Species</dt><dd>{{ report().species }}</dd></div>
-      <div><dt>Seen</dt><dd>{{ report().seenAt }}</dd></div>
-      <div><dt>Urgency</dt><dd>{{ report().urgency }}</dd></div>
-      <div><dt>Status</dt><dd>{{ report().lifecycleStatus }}</dd></div>
-      <div><dt>Area</dt><dd>{{ report().approximateLocationLabel }}</dd></div>
+      <div>
+        <dt>Species</dt>
+        <dd>{{ report().species }}</dd>
+      </div>
+      <div>
+        <dt>Seen</dt>
+        <dd>{{ report().seenAt }}</dd>
+      </div>
+      <div>
+        <dt>Urgency</dt>
+        <dd>{{ report().urgency }}</dd>
+      </div>
+      <div>
+        <dt>Status</dt>
+        <dd>{{ report().lifecycleStatus }}</dd>
+      </div>
+      <div>
+        <dt>Area</dt>
+        <dd>{{ report().approximateLocationLabel }}</dd>
+      </div>
     </dl>
     <div class="report-actions">
-      <a [routerLink]="['/sightings', report().reference]">View</a>
+      <a [routerLink]="['/sightings', report().id]">View</a>
       <button type="button" [disabled]="!report().editable" (click)="editRequested.emit(report())">
         {{ report().editable ? 'Edit' : 'Edit unavailable' }}
       </button>

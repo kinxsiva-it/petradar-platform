@@ -1,16 +1,24 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-
-import { AlertComponent, PrivacyBannerComponent, StatusBadgeComponent } from '@petradar/frontend/shared-ui';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
-  AnimalSpecies,
-  CollarStatus,
-  ReportAnimalSubmission,
-  UrgencyLevel,
-  UserReport,
-  UserWorkspaceDataSource,
-} from '@petradar/frontend/mock-data';
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+
+import {
+  AlertComponent,
+  PrivacyBannerComponent,
+  StatusBadgeComponent,
+} from '@petradar/frontend/shared-ui';
+import { AnimalSpecies, CollarStatus, UrgencyLevel } from '@petradar/frontend/mock-data';
+import { SightingsApiService, toCreateSightingRequest } from '@petradar/frontend/sightings';
 
 import { ReportStepperComponent } from '../../components/report-stepper/report-stepper.component.js';
 import { ReportSuccessComponent } from '../../components/report-success/report-success.component.js';
@@ -47,7 +55,8 @@ interface ConditionOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReportAnimalPageComponent implements OnDestroy {
-  private readonly workspace = inject(UserWorkspaceDataSource);
+  private readonly router = inject(Router);
+  private readonly sightingsApi = inject(SightingsApiService);
   private readonly objectUrls = new Set<string>();
   private exactLocation = { latitude: 13.7563, longitude: 100.5018 };
 
@@ -58,7 +67,7 @@ export class ReportAnimalPageComponent implements OnDestroy {
   readonly mapUnavailable = signal(false);
   readonly submitting = signal(false);
   readonly submitError = signal('');
-  readonly submittedReport = signal<UserReport | null>(null);
+  readonly submittedReference = signal<string | null>(null);
 
   readonly steps = ['Animal', 'Condition', 'Details', 'Photos', 'Location', 'Review'];
   readonly speciesOptions: AnimalSpecies[] = ['Dog', 'Cat', 'Other'];
@@ -67,11 +76,24 @@ export class ReportAnimalPageComponent implements OnDestroy {
     { description: 'Visible wound, limping, or bleeding.', label: 'Injured', urgent: true },
     { description: 'Weak, coughing, or showing illness.', label: 'Sick', urgent: true },
     { description: 'May need careful monitoring.', label: 'Pregnant', urgent: false },
-    { description: 'Young animals without a guardian nearby.', label: 'Newborn litter', urgent: true },
+    {
+      description: 'Young animals without a guardian nearby.',
+      label: 'Newborn litter',
+      urgent: true,
+    },
     { description: 'Do not approach. Keep distance.', label: 'Aggressive', urgent: true },
-    { description: 'Looks owned or recently displaced.', label: 'Possible lost pet', urgent: false },
+    {
+      description: 'Looks owned or recently displaced.',
+      label: 'Possible lost pet',
+      urgent: false,
+    },
   ];
-  readonly collarOptions: CollarStatus[] = ['No collar', 'Red collar with bell', 'Blue collar', 'Unknown'];
+  readonly collarOptions: CollarStatus[] = [
+    'No collar',
+    'Red collar with bell',
+    'Blue collar',
+    'Unknown',
+  ];
   readonly urgencyOptions: UrgencyLevel[] = ['Low', 'Medium', 'High', 'Emergency'];
   readonly radiusOptions = [200, 300, 500, 800];
 
@@ -145,7 +167,10 @@ export class ReportAnimalPageComponent implements OnDestroy {
   dropPinManually(): void {
     this.permissionDenied.set(false);
     this.mapUnavailable.set(false);
-    this.exactLocation = { latitude: this.exactLocation.latitude + 0.001, longitude: this.exactLocation.longitude + 0.001 };
+    this.exactLocation = {
+      latitude: this.exactLocation.latitude + 0.001,
+      longitude: this.exactLocation.longitude + 0.001,
+    };
     this.approximateLocationLabel = 'Near Ari, Bangkok';
   }
 
@@ -153,28 +178,41 @@ export class ReportAnimalPageComponent implements OnDestroy {
     this.mapUnavailable.set(true);
   }
 
-  submit(): void {
+  async submit(): Promise<void> {
+    if (this.submitting()) {
+      return;
+    }
+
+    const seenAt = this.parseSeenAt();
+    if (!seenAt) {
+      this.submitError.set('Enter a valid seen date and time before submitting.');
+      return;
+    }
+
     this.submitting.set(true);
     this.submitError.set('');
-    window.setTimeout(() => {
-      const submission: ReportAnimalSubmission = {
+    try {
+      const request = toCreateSightingRequest({
         animalCount: this.animalCount,
-        approximateLocationLabel: this.approximateLocationLabel,
         collarStatus: this.collarStatus,
         color: this.color,
         condition: this.condition,
         description: this.description,
-        photoUrls: this.photoUrls,
-        publicRadiusMeters: this.publicRadiusMeters,
-        seenDate: this.seenDate,
-        seenTime: this.seenTime,
+        latitude: this.exactLocation.latitude,
+        longitude: this.exactLocation.longitude,
+        pattern: this.pattern,
+        seenAt: seenAt.toISOString(),
         species: this.species,
         urgency: this.urgency,
-        pattern: this.pattern,
-      };
-      this.submittedReport.set(this.workspace.addReport(submission));
+      });
+      const created = await firstValueFrom(this.sightingsApi.create(request));
+      this.submittedReference.set(created.id);
+      await this.router.navigateByUrl('/my/reports');
+    } catch (error) {
+      this.submitError.set(toSubmitMessage(error));
+    } finally {
       this.submitting.set(false);
-    }, 450);
+    }
   }
 
   private processFiles(files: File[]): void {
@@ -200,4 +238,30 @@ export class ReportAnimalPageComponent implements OnDestroy {
     }
     this.uploadProgress.set(100);
   }
+
+  private parseSeenAt(): Date | null {
+    const date = new Date(`${this.seenDate} ${this.seenTime}`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+}
+
+function toSubmitMessage(error: unknown): string {
+  if (!(error instanceof HttpErrorResponse)) {
+    return 'The report could not be submitted. Please try again.';
+  }
+
+  if (error.status === 0) {
+    return 'The PetRadar API is unavailable. Please try again soon.';
+  }
+
+  const body = error.error as { message?: string | string[] } | null;
+  const message = body?.message;
+  if (Array.isArray(message) && message.length > 0) {
+    return message.join(' ');
+  }
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+
+  return 'Check the report details and try again.';
 }

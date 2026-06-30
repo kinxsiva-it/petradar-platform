@@ -9,10 +9,22 @@
   </header>
 
   <section class="summary-grid">
-    <article><span>{{ workspace.reportSummary().all }}</span><b>Total reports</b></article>
-    <article><span>{{ workspace.reportSummary().verified }}</span><b>Verified</b></article>
-    <article><span>{{ workspace.reportSummary().pending }}</span><b>Pending review</b></article>
-    <article><span>{{ workspace.reportSummary().matches }}</span><b>Possible matches</b></article>
+    <article>
+      <span>{{ reportSummary().all }}</span
+      ><b>Total reports</b>
+    </article>
+    <article>
+      <span>{{ reportSummary().verified }}</span
+      ><b>Verified</b>
+    </article>
+    <article>
+      <span>{{ reportSummary().pending }}</span
+      ><b>Pending review</b>
+    </article>
+    <article>
+      <span>{{ reportSummary().matches }}</span
+      ><b>Possible matches</b>
+    </article>
   </section>
 
   <section class="filter-bar">
@@ -38,13 +50,21 @@
   @if (uiState() === 'loading') {
     <section class="panel"><pr-loading-skeleton [rows]="6" /></section>
   } @else if (uiState() === 'error') {
-    <pr-empty-state title="Reports unavailable" description="Mock report state could not be displayed." icon="!" />
-  } @else if (workspace.userReports().length === 0) {
-    <pr-empty-state title="No reports yet" description="Create your first community report." icon="+">
+    <pr-empty-state title="Reports unavailable" [description]="errorMessage()" icon="!" />
+  } @else if (reports().length === 0) {
+    <pr-empty-state
+      title="No reports yet"
+      description="Create your first community report."
+      icon="+"
+    >
       <a routerLink="/report-animal" class="inline-action">Report Animal</a>
     </pr-empty-state>
   } @else if (filteredReports().length === 0) {
-    <pr-empty-state title="No matching reports" description="Try another search or filter." icon="0">
+    <pr-empty-state
+      title="No matching reports"
+      description="Try another search or filter."
+      icon="0"
+    >
       <button type="button" class="inline-action" (click)="clearFilters()">Change Filter</button>
     </pr-empty-state>
   } @else {
@@ -56,6 +76,10 @@
   }
 
   @if (editingReport(); as report) {
-    <pr-report-edit-drawer [report]="report" (closed)="editingReport.set(null)" (saved)="saveMockEdit($event)" />
+    <pr-report-edit-drawer
+      [report]="report"
+      (closed)="editingReport.set(null)"
+      (saved)="saveEdit($event)"
+    />
   }
 </section>

@@ -1,4 +1,9 @@
-<div class="drawer-backdrop" (click)="closed.emit()"></div>
+<button
+  type="button"
+  class="drawer-backdrop"
+  aria-label="Close edit drawer"
+  (click)="closed.emit()"
+></button>
 <aside class="edit-drawer" role="dialog" aria-modal="true" aria-labelledby="edit-report-title">
   <header>
     <div>
@@ -8,15 +13,25 @@
     <button type="button" (click)="closed.emit()">Close</button>
   </header>
   <label>
+    Color
+    <input [(ngModel)]="color" />
+  </label>
+  <label>
+    Pattern
+    <input [(ngModel)]="pattern" />
+  </label>
+  <label>
     Public note
-    <textarea rows="5">{{ report().description }}</textarea>
+    <textarea rows="5" [(ngModel)]="description"></textarea>
   </label>
   <label>
     Approximate public area
-    <input [value]="report().approximateLocationLabel" />
+    <input [value]="report().approximateLocationLabel" disabled />
   </label>
-  <p class="drawer-note">Verified or closed reports are locked in this mock UI.</p>
+  <p class="drawer-note">
+    Verified, duplicate, rescue, reunited, rejected, or closed reports are locked by the API.
+  </p>
   <footer>
-    <button type="button" (click)="saved.emit(report().id)">Save mock edit</button>
+    <button type="button" (click)="save()">Save edit</button>
   </footer>
 </aside>

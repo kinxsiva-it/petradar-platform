@@ -149,7 +149,9 @@ pr-map-canvas {
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
+  border: 0;
   background: rgb(31 41 51 / 0.34);
+  padding: 0;
 }
 
 .filter-sheet {

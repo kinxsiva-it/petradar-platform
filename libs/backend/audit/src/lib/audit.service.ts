@@ -42,9 +42,16 @@ export class AuditService {
   }
 
   create(input: AuditLogInput): Promise<AuditLog> {
+    return this.createWithClient(this.prisma, input);
+  }
+
+  createWithClient(
+    client: Pick<PrismaService, 'auditLog'> | Prisma.TransactionClient,
+    input: AuditLogInput,
+  ): Promise<AuditLog> {
     const metadata = this.sanitizeMetadata(input.metadata);
 
-    return this.prisma.auditLog.create({
+    return client.auditLog.create({
       data: {
         action: input.action,
         actorId: input.actorId,

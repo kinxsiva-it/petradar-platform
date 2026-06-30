@@ -1,5 +1,5 @@
-@if (submittedReport(); as report) {
-  <pr-report-success [reference]="report.reference" />
+@if (submittedReference(); as reference) {
+  <pr-report-success [reference]="reference" />
 } @else {
   <section class="wizard-page">
     <header class="wizard-header">
@@ -8,20 +8,33 @@
         <h1>{{ currentTitle() }}</h1>
         <p>Map-first community reporting with exact location protected in public views.</p>
       </div>
-      <pr-status-badge label="UI-only mock" tone="warning" />
+      <pr-status-badge label="API-backed" tone="success" />
     </header>
 
-    <pr-report-stepper [steps]="steps" [current]="currentStep()" (stepSelected)="goToStep($event)" />
+    <pr-report-stepper
+      [steps]="steps"
+      [current]="currentStep()"
+      (stepSelected)="goToStep($event)"
+    />
 
     <section class="wizard-card">
       @switch (currentStep()) {
         @case (0) {
           <div class="step-grid">
             @for (item of speciesOptions; track item) {
-              <button type="button" class="choice-card" [class.selected]="species === item" (click)="species = item">
+              <button
+                type="button"
+                class="choice-card"
+                [class.selected]="species === item"
+                (click)="species = item"
+              >
                 <span aria-hidden="true">{{ item.charAt(0) }}</span>
                 <strong>{{ item }}</strong>
-                <small>{{ item === 'Other' ? 'Rabbit, bird, or unknown animal' : 'Domestic ' + item.toLowerCase() }}</small>
+                <small>{{
+                  item === 'Other'
+                    ? 'Rabbit, bird, or unknown animal'
+                    : 'Domestic ' + item.toLowerCase()
+                }}</small>
               </button>
             }
           </div>
@@ -47,7 +60,8 @@
           </div>
           @if (condition === 'Injured' || condition === 'Aggressive') {
             <pr-alert title="Safety first" tone="danger">
-              Do not approach injured or aggressive animals. Keep distance and coordinate through verified helpers.
+              Do not approach injured or aggressive animals. Keep distance and coordinate through
+              verified helpers.
             </pr-alert>
           }
         }
@@ -55,14 +69,16 @@
           <div class="form-grid two">
             <label class="field">Color <input [(ngModel)]="color" /></label>
             <label class="field">Pattern <input [(ngModel)]="pattern" /></label>
-            <label class="field">Collar status
+            <label class="field"
+              >Collar status
               <select [(ngModel)]="collarStatus">
                 @for (item of collarOptions; track item) {
                   <option [ngValue]="item">{{ item }}</option>
                 }
               </select>
             </label>
-            <label class="field">Urgency
+            <label class="field"
+              >Urgency
               <select [(ngModel)]="urgency">
                 @for (item of urgencyOptions; track item) {
                   <option [ngValue]="item">{{ item }}</option>
@@ -78,10 +94,22 @@
           </label>
         }
         @case (3) {
-          <label class="upload-zone" (dragover)="$event.preventDefault()" (drop)="dropFiles($event)">
-            <input type="file" accept="image/png,image/jpeg,image/webp" multiple (change)="addFiles($event)" />
+          <label
+            class="upload-zone"
+            (dragover)="$event.preventDefault()"
+            (drop)="dropFiles($event)"
+          >
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              (change)="addFiles($event)"
+            />
             <strong>Upload photos</strong>
-            <span>Drag and drop or browse. JPG, PNG, WebP up to 10MB each.</span>
+            <span
+              >Photo upload is not active yet. You can preview images locally, but they will not be
+              submitted.</span
+            >
           </label>
           @if (uploadProgress() > 0) {
             <div class="progress"><span [style.width.%]="uploadProgress()"></span></div>
@@ -96,10 +124,14 @@
                 <button type="button" (click)="removePhoto(photo)">Remove</button>
               </figure>
             } @empty {
-              <p class="empty-note">No photos selected yet. You can continue with a mock placeholder.</p>
+              <p class="empty-note">
+                No photos selected yet. You can submit without photos while uploads are deferred.
+              </p>
             }
           </div>
-          <button type="button" class="link-button" (click)="simulateUploadFailure()">Preview upload failed state</button>
+          <button type="button" class="link-button" (click)="simulateUploadFailure()">
+            Preview upload unavailable state
+          </button>
         }
         @case (4) {
           <div class="location-grid">
@@ -113,8 +145,11 @@
               }
             </section>
             <section class="location-panel">
-              <label class="field">Approximate public area <input [(ngModel)]="approximateLocationLabel" /></label>
-              <label class="field">Privacy radius
+              <label class="field"
+                >Approximate public area <input [(ngModel)]="approximateLocationLabel"
+              /></label>
+              <label class="field"
+                >Privacy radius
                 <select [(ngModel)]="publicRadiusMeters">
                   @for (radius of radiusOptions; track radius) {
                     <option [ngValue]="radius">{{ radius }} meters</option>
@@ -124,10 +159,14 @@
               <div class="action-row">
                 <button type="button" (click)="useCurrentLocation()">Use current location</button>
                 <button type="button" (click)="dropPinManually()">Drop pin manually</button>
-                <button type="button" (click)="showMapUnavailable()">Preview map unavailable</button>
+                <button type="button" (click)="showMapUnavailable()">
+                  Preview map unavailable
+                </button>
               </div>
               @if (permissionDenied()) {
-                <p class="field-error">Location permission denied. Drop a marker manually or enter an approximate area.</p>
+                <p class="field-error">
+                  Location permission denied. Drop a marker manually or enter an approximate area.
+                </p>
               }
               <pr-privacy-banner />
             </section>
@@ -138,12 +177,30 @@
             <div>
               <h2>Review your report</h2>
               <dl>
-                <div><dt>Animal</dt><dd>{{ species }} x {{ animalCount }}</dd></div>
-                <div><dt>Condition</dt><dd>{{ condition }}</dd></div>
-                <div><dt>Appearance</dt><dd>{{ color }}, {{ pattern }}, {{ collarStatus }}</dd></div>
-                <div><dt>Seen</dt><dd>{{ seenDate }} at {{ seenTime }}</dd></div>
-                <div><dt>Public area</dt><dd>{{ approximateLocationLabel }} · {{ publicRadiusMeters }}m radius</dd></div>
-                <div><dt>Photos</dt><dd>{{ photoUrls.length || 1 }} preview image(s)</dd></div>
+                <div>
+                  <dt>Animal</dt>
+                  <dd>{{ species }} x {{ animalCount }}</dd>
+                </div>
+                <div>
+                  <dt>Condition</dt>
+                  <dd>{{ condition }}</dd>
+                </div>
+                <div>
+                  <dt>Appearance</dt>
+                  <dd>{{ color }}, {{ pattern }}, {{ collarStatus }}</dd>
+                </div>
+                <div>
+                  <dt>Seen</dt>
+                  <dd>{{ seenDate }} at {{ seenTime }}</dd>
+                </div>
+                <div>
+                  <dt>Public area</dt>
+                  <dd>{{ approximateLocationLabel }} · {{ publicRadiusMeters }}m radius</dd>
+                </div>
+                <div>
+                  <dt>Photos</dt>
+                  <dd>{{ photoUrls.length || 1 }} preview image(s)</dd>
+                </div>
               </dl>
             </div>
             <pr-privacy-banner />
@@ -155,7 +212,9 @@
       }
 
       <footer class="wizard-actions">
-        <button type="button" class="secondary" [disabled]="currentStep() === 0" (click)="back()">Back</button>
+        <button type="button" class="secondary" [disabled]="currentStep() === 0" (click)="back()">
+          Back
+        </button>
         @if (currentStep() === steps.length - 1) {
           <button type="button" (click)="submit()" [disabled]="submitting()">
             {{ submitting() ? 'Submitting...' : 'Submit Report' }}

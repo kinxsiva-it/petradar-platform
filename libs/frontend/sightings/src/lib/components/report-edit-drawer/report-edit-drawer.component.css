@@ -2,7 +2,9 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
+  border: 0;
   background: rgb(31 41 51 / 0.3);
+  padding: 0;
 }
 
 .edit-drawer {

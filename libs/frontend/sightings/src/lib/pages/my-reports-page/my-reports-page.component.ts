@@ -1,15 +1,29 @@
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
 import { EmptyStateComponent, LoadingSkeletonComponent } from '@petradar/frontend/shared-ui';
-import { AnimalSpecies, UserReport, UserWorkspaceDataSource, VerificationStatus } from '@petradar/frontend/mock-data';
+import { AnimalSpecies, UserReport, VerificationStatus } from '@petradar/frontend/mock-data';
 
 import { MyReportCardComponent } from '../../components/my-report-card/my-report-card.component.js';
 import { ReportEditDrawerComponent } from '../../components/report-edit-drawer/report-edit-drawer.component.js';
+import {
+  SightingsApiService,
+  toUpdateSightingRequest,
+  toUserReportView,
+} from '../../data-access/index.js';
+import type { UpdateSightingRequest } from '../../data-access/sightings-api.models.js';
 
-type ReportStatusFilter = 'All' | 'Draft' | 'Submitted' | 'Needs rescue' | 'Possible match' | 'Closed';
+type ReportStatusFilter =
+  | 'All'
+  | 'Draft'
+  | 'Submitted'
+  | 'Needs rescue'
+  | 'Possible match'
+  | 'Closed';
 
 @Component({
   selector: 'pr-my-reports-page',
@@ -28,11 +42,24 @@ type ReportStatusFilter = 'All' | 'Draft' | 'Submitted' | 'Needs rescue' | 'Poss
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyReportsPageComponent {
-  readonly workspace = inject(UserWorkspaceDataSource);
+  private readonly sightingsApi = inject(SightingsApiService);
   readonly editingReport = signal<UserReport | null>(null);
-  readonly uiState = signal<'default' | 'loading' | 'error'>('default');
-  readonly statusOptions: ReportStatusFilter[] = ['All', 'Submitted', 'Needs rescue', 'Possible match', 'Closed'];
-  readonly verificationOptions: ('All' | VerificationStatus)[] = ['All', 'Pending', 'Verified', 'Needs review'];
+  readonly reports = signal<UserReport[]>([]);
+  readonly uiState = signal<'default' | 'loading' | 'error'>('loading');
+  readonly errorMessage = signal('');
+  readonly statusOptions: ReportStatusFilter[] = [
+    'All',
+    'Submitted',
+    'Needs rescue',
+    'Possible match',
+    'Closed',
+  ];
+  readonly verificationOptions: ('All' | VerificationStatus)[] = [
+    'All',
+    'Pending',
+    'Verified',
+    'Needs review',
+  ];
   readonly speciesOptions: ('All' | AnimalSpecies)[] = ['All', 'Cat', 'Dog', 'Other'];
 
   query = '';
@@ -40,9 +67,17 @@ export class MyReportsPageComponent {
   verification: 'All' | VerificationStatus = 'All';
   species: 'All' | AnimalSpecies = 'All';
 
+  readonly reportSummary = computed(() => ({
+    all: this.reports().length,
+    matches: this.reports().reduce((total, report) => total + report.matchCount, 0),
+    pending: this.reports().filter((report) => report.verificationStatus === 'Pending').length,
+    verified: this.reports().filter((report) => report.verificationStatus === 'Verified').length,
+  }));
+
   readonly filteredReports = computed(() =>
-    this.workspace.userReports().filter((report) => {
-      const query = `${report.reference} ${report.title} ${report.approximateLocationLabel}`.toLowerCase();
+    this.reports().filter((report) => {
+      const query =
+        `${report.reference} ${report.title} ${report.approximateLocationLabel}`.toLowerCase();
       return (
         query.includes(this.query.trim().toLowerCase()) &&
         (this.status === 'All' || report.lifecycleStatus === this.status) &&
@@ -52,6 +87,10 @@ export class MyReportsPageComponent {
     }),
   );
 
+  constructor() {
+    void this.loadReports();
+  }
+
   clearFilters(): void {
     this.query = '';
     this.status = 'All';
@@ -59,8 +98,63 @@ export class MyReportsPageComponent {
     this.species = 'All';
   }
 
-  saveMockEdit(id: string): void {
-    this.workspace.showToast(`Mock edit saved for ${id}.`);
-    this.editingReport.set(null);
+  async loadReports(): Promise<void> {
+    this.uiState.set('loading');
+    this.errorMessage.set('');
+    try {
+      const response = await firstValueFrom(this.sightingsApi.mySightings({ pageSize: 50 }));
+      this.reports.set(response.items.map(toUserReportView));
+      this.uiState.set('default');
+    } catch (error) {
+      this.errorMessage.set(toUserMessage(error));
+      this.uiState.set('error');
+    }
   }
+
+  async saveEdit(event: { id: string; changes: UpdateSightingRequest }): Promise<void> {
+    const report = this.editingReport();
+    if (!report?.editable) {
+      return;
+    }
+
+    try {
+      await firstValueFrom(
+        this.sightingsApi.update(
+          event.id,
+          toUpdateSightingRequest({
+            color: event.changes.color ?? report.color,
+            description: event.changes.description ?? report.description,
+            pattern: event.changes.pattern ?? report.pattern,
+          }),
+        ),
+      );
+      this.editingReport.set(null);
+      await this.loadReports();
+    } catch (error) {
+      this.errorMessage.set(toUserMessage(error));
+      this.uiState.set('error');
+      this.editingReport.set(null);
+    }
+  }
+}
+
+function toUserMessage(error: unknown): string {
+  if (!(error instanceof HttpErrorResponse)) {
+    return 'Reports could not be loaded. Please try again.';
+  }
+
+  if (error.status === 0) {
+    return 'The PetRadar API is unavailable. Please try again soon.';
+  }
+
+  const body = error.error as { message?: string | string[] } | null;
+  const message = body?.message;
+  if (Array.isArray(message) && message.length > 0) {
+    return message.join(' ');
+  }
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+
+  return 'Reports could not be loaded. Please try again.';
 }

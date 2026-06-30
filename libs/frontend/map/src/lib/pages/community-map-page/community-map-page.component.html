@@ -12,11 +12,7 @@
       </section>
     } @else if (uiState() === 'error') {
       <section class="state-panel">
-        <pr-empty-state
-          title="Reports could not load"
-          description="Mock error state for the public map."
-          icon="!"
-        />
+        <pr-empty-state title="Reports could not load" [description]="errorMessage()" icon="!" />
       </section>
     } @else if (uiState() === 'map-unavailable') {
       <section class="state-panel">
@@ -40,14 +36,11 @@
 
       <section class="map-overlay top-overlay" aria-label="Map search and filters">
         <pr-map-search-overlay
-          [query]="dataSource.currentSightingFilters().query"
+          [query]="currentSightingFilters().query"
           (queryChanged)="updateSearch($event)"
           (filtersOpened)="advancedFiltersOpen.set(true)"
         />
-        <pr-map-filter-chips
-          [chips]="filterChips()"
-          (chipToggled)="toggleChip($event)"
-        />
+        <pr-map-filter-chips [chips]="filterChips()" (chipToggled)="toggleChip($event)" />
       </section>
 
       <button
@@ -72,10 +65,7 @@
           {{ activeSummary().total }} active cases
         </button>
         <div class="summary-panel" [class.open]="casesOpen()">
-          <pr-active-case-summary
-            [summary]="activeSummary()"
-            (viewAll)="casesOpen.set(true)"
-          />
+          <pr-active-case-summary [summary]="activeSummary()" (viewAll)="casesOpen.set(true)" />
         </div>
       </section>
 
@@ -105,7 +95,7 @@
         <section class="detail-overlay">
           <pr-sighting-detail-drawer
             [sighting]="selectedSighting"
-            (closed)="dataSource.clearSelectedSighting()"
+            (closed)="selectedSightingId.set(null)"
           />
         </section>
       }
@@ -121,11 +111,18 @@
   </main>
 
   @if (advancedFiltersOpen()) {
-    <div class="sheet-backdrop" (click)="advancedFiltersOpen.set(false)"></div>
+    <button
+      type="button"
+      class="sheet-backdrop"
+      aria-label="Close filters"
+      (click)="advancedFiltersOpen.set(false)"
+    ></button>
     <aside class="filter-sheet" aria-label="Advanced map filters">
-      <button type="button" class="sheet-close" (click)="advancedFiltersOpen.set(false)">Close</button>
+      <button type="button" class="sheet-close" (click)="advancedFiltersOpen.set(false)">
+        Close
+      </button>
       <pr-map-filter-panel
-        [filters]="dataSource.currentSightingFilters()"
+        [filters]="currentSightingFilters()"
         (filterChanged)="updateFilter($event)"
         (clearFilters)="clearFilters()"
       />
