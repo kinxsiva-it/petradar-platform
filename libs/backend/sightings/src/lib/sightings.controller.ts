@@ -1,28 +1,41 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Header,
   Patch,
   Param,
   ParseUUIDPipe,
   Post,
   Query,
   Req,
+  Res,
+  StreamableFile,
   UnauthorizedException,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import type { Request, Response } from 'express';
 
 import { CurrentUser, JwtAuthGuard, type AuthenticatedUser } from '@petradar/backend/auth';
 
 import { CreateSightingDto } from './dto/create-sighting.dto.js';
 import { ListSightingsQueryDto } from './dto/list-sightings-query.dto.js';
 import { UpdateSightingDto } from './dto/update-sighting.dto.js';
+import {
+  maxSightingPhotoBytes,
+  maxSightingPhotosPerRequest,
+  type UploadedSightingPhotoFile,
+} from './photos/sighting-photo-validation.js';
 import type {
   AuthorizedSightingResponse,
   PaginatedSightingsResponse,
   PublicSightingResponse,
+  SightingPhotoResponse,
 } from './sighting-response.mapper.js';
 import { SightingsService } from './sightings.service.js';
 
@@ -74,6 +87,17 @@ export class SightingsController {
     return this.sightings.findMine(this.requireUser(user), id, this.contextFromRequest(request));
   }
 
+  @Get('photos/:photoId/file')
+  @Header('Cache-Control', 'public, max-age=300')
+  async readPublicPhoto(
+    @Param('photoId', ParseUUIDPipe) photoId: string,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<StreamableFile> {
+    const file = await this.sightings.readPublicPhoto(photoId);
+    response.contentType(file.mimeType);
+    return new StreamableFile(file.buffer);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Return one public-safe animal sighting.' })
   findPublic(@Param('id', ParseUUIDPipe) id: string): Promise<PublicSightingResponse> {
@@ -94,6 +118,50 @@ export class SightingsController {
       this.requireUser(user),
       id,
       body,
+      this.contextFromRequest(request),
+    );
+  }
+
+  @Post(':id/photos')
+  @UseGuards(JwtAuthGuard)
+  @UseInterceptors(
+    FilesInterceptor('photos', maxSightingPhotosPerRequest, {
+      limits: {
+        fileSize: maxSightingPhotoBytes,
+        files: maxSightingPhotosPerRequest,
+      },
+    }),
+  )
+  @ApiBearerAuth()
+  @ApiCreatedResponse({ description: 'Upload photos for an editable owned animal sighting.' })
+  uploadPhotos(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFiles() files: UploadedSightingPhotoFile[] | undefined,
+    @Req() request: Request,
+  ): Promise<{ photos: SightingPhotoResponse[] }> {
+    return this.sightings.uploadPhotos(
+      this.requireUser(user),
+      id,
+      files ?? [],
+      this.contextFromRequest(request),
+    );
+  }
+
+  @Delete(':id/photos/:photoId')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: 'Delete one photo from an editable owned animal sighting.' })
+  deletePhoto(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('photoId', ParseUUIDPipe) photoId: string,
+    @Req() request: Request,
+  ): Promise<{ success: true }> {
+    return this.sightings.deletePhoto(
+      this.requireUser(user),
+      id,
+      photoId,
       this.contextFromRequest(request),
     );
   }

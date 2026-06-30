@@ -9,7 +9,11 @@ import {
 
 import type { GeographicPoint } from '@petradar/backend/shared';
 import { isOwnerEditableSighting } from './sighting-policies.js';
-import type { PaginatedSightingsRecord, SightingRecord } from './sightings.repository.js';
+import type {
+  PaginatedSightingsRecord,
+  SightingPhotoRecord,
+  SightingRecord,
+} from './sightings.repository.js';
 
 export interface SightingResponseSource {
   id: string;
@@ -28,9 +32,19 @@ export interface SightingResponseSource {
   publicLocation: GeographicPoint;
   publicRadiusMeters: number;
   exactLocation?: GeographicPoint;
+  photos: SightingPhotoRecord[];
   createdAt: Date;
   updatedAt: Date;
   distanceMeters?: number;
+}
+
+export interface SightingPhotoResponse {
+  id: string;
+  url: string;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+  sortOrder: number;
+  createdAt: string;
 }
 
 export interface PublicSightingResponse {
@@ -47,6 +61,7 @@ export interface PublicSightingResponse {
   lifecycleStatus: SightingLifecycleStatus;
   verificationStatus: VerificationStatus;
   publicLocation: GeographicPoint & { radiusMeters: number };
+  photos: SightingPhotoResponse[];
   createdAt: string;
   updatedAt: string;
   distanceMeters?: number;
@@ -76,6 +91,7 @@ export function toPublicSightingResponse(source: SightingResponseSource): Public
     id: source.id,
     lifecycleStatus: source.lifecycleStatus,
     pattern: source.pattern,
+    photos: source.photos.map(toSightingPhotoResponse),
     publicLocation: {
       latitude: source.publicLocation.latitude,
       longitude: source.publicLocation.longitude,
@@ -148,6 +164,7 @@ export function toResponseSource(record: SightingRecord): SightingResponseSource
     id: record.id,
     lifecycleStatus: record.lifecycleStatus,
     pattern: record.pattern,
+    photos: record.photos,
     publicLocation: record.publicLocation,
     publicRadiusMeters: record.publicRadiusMeters,
     reporterId: record.reporterId,
@@ -156,5 +173,16 @@ export function toResponseSource(record: SightingRecord): SightingResponseSource
     updatedAt: record.updatedAt,
     urgency: record.urgency,
     verificationStatus: record.verificationStatus,
+  };
+}
+
+export function toSightingPhotoResponse(photo: SightingPhotoRecord): SightingPhotoResponse {
+  return {
+    createdAt: photo.createdAt.toISOString(),
+    fileSizeBytes: photo.fileSizeBytes,
+    id: photo.id,
+    mimeType: photo.mimeType,
+    sortOrder: photo.sortOrder,
+    url: photo.url,
   };
 }

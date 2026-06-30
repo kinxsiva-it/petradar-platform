@@ -4,6 +4,7 @@ import {
   AnimalCondition,
   AnimalSpecies,
   CollarStatus,
+  PhotoStorageProvider,
   Prisma,
   SightingLifecycleStatus,
   UrgencyLevel,
@@ -74,9 +75,32 @@ export interface SightingRecord {
     latitude: number;
     longitude: number;
   };
+  photos: SightingPhotoRecord[];
   createdAt: Date;
   updatedAt: Date;
   distanceMeters?: number;
+}
+
+export interface SightingPhotoRecord {
+  id: string;
+  sightingId: string;
+  storageProvider: PhotoStorageProvider;
+  storageKey: string | null;
+  url: string;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+  sortOrder: number;
+  createdAt: Date;
+}
+
+export interface CreateSightingPhotoInput {
+  id: string;
+  fileSizeBytes: number;
+  mimeType: string;
+  sortOrder: number;
+  storageKey: string;
+  storageProvider: PhotoStorageProvider;
+  url: string;
 }
 
 export interface PaginatedSightingsRecord {
@@ -125,7 +149,19 @@ interface NearbySightingRow {
   distance_meters: number;
 }
 
-type SightingDbClient = Pick<PrismaService, '$executeRaw' | '$queryRaw'>;
+interface SightingPhotoRow {
+  id: string;
+  sightingId: string;
+  storageProvider: PhotoStorageProvider;
+  storageKey: string | null;
+  url: string;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+  sortOrder: number;
+  createdAt: Date;
+}
+
+type SightingDbClient = Pick<PrismaService, '$executeRaw' | '$queryRaw' | 'sightingPhoto'>;
 
 @Injectable()
 export class SightingsRepository {
@@ -251,7 +287,8 @@ export class SightingsRepository {
       LIMIT 1
     `);
 
-    return rows[0] ? mapRow(rows[0]) : null;
+    const sightings = await this.attachPhotos(rows.map(mapRow), client);
+    return sightings[0] ?? null;
   }
 
   async list(
@@ -291,7 +328,7 @@ export class SightingsRepository {
     const total = typeof totalValue === 'bigint' ? Number(totalValue) : totalValue;
 
     return {
-      items: rows.map(mapRow),
+      items: await this.attachPhotos(rows.map(mapRow), client),
       page,
       pageSize,
       total,
@@ -334,6 +371,71 @@ export class SightingsRepository {
       distanceMeters: row.distance_meters,
       id: row.id,
     }));
+  }
+
+  async countPhotosForSighting(
+    sightingId: string,
+    client: SightingDbClient = this.prisma,
+  ): Promise<number> {
+    return client.sightingPhoto.count({ where: { sightingId } });
+  }
+
+  async createPhotos(
+    sightingId: string,
+    photos: readonly CreateSightingPhotoInput[],
+    client: SightingDbClient = this.prisma,
+  ): Promise<SightingPhotoRecord[]> {
+    if (photos.length === 0) {
+      return [];
+    }
+
+    await client.sightingPhoto.createMany({
+      data: photos.map((photo) => ({
+        fileSizeBytes: photo.fileSizeBytes,
+        id: photo.id,
+        mimeType: photo.mimeType,
+        sightingId,
+        sortOrder: photo.sortOrder,
+        storageKey: photo.storageKey,
+        storageProvider: photo.storageProvider,
+        url: photo.url,
+      })),
+    });
+
+    return this.findPhotosForSighting(sightingId, client);
+  }
+
+  async findPhotoById(
+    photoId: string,
+    client: SightingDbClient = this.prisma,
+  ): Promise<SightingPhotoRecord | null> {
+    const photo = await client.sightingPhoto.findUnique({ where: { id: photoId } });
+    return photo ? mapPhoto(photo) : null;
+  }
+
+  async findPhotosForSighting(
+    sightingId: string,
+    client: SightingDbClient = this.prisma,
+  ): Promise<SightingPhotoRecord[]> {
+    const photos = await client.sightingPhoto.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+      where: { sightingId },
+    });
+
+    return photos.map(mapPhoto);
+  }
+
+  async deletePhoto(
+    photoId: string,
+    client: SightingDbClient = this.prisma,
+  ): Promise<SightingPhotoRecord | null> {
+    const photo = await this.findPhotoById(photoId, client);
+    if (!photo) {
+      return null;
+    }
+
+    await client.sightingPhoto.delete({ where: { id: photoId } });
+    return photo;
   }
 
   private listWhere(input: ListSightingsInput): Prisma.Sql[] {
@@ -413,6 +515,43 @@ export class SightingsRepository {
 
     return where.length > 0 ? where : [Prisma.sql`TRUE`];
   }
+
+  private async attachPhotos(
+    sightings: SightingRecord[],
+    client: SightingDbClient,
+  ): Promise<SightingRecord[]> {
+    if (sightings.length === 0) {
+      return sightings;
+    }
+
+    const ids = sightings.map((sighting) => Prisma.sql`CAST(${sighting.id} AS uuid)`);
+    const rows = await client.$queryRaw<SightingPhotoRow[]>(Prisma.sql`
+      SELECT
+        "id"::text AS "id",
+        "sighting_id"::text AS "sightingId",
+        "storage_provider" AS "storageProvider",
+        "storage_key" AS "storageKey",
+        "url" AS "url",
+        "mime_type" AS "mimeType",
+        "file_size_bytes" AS "fileSizeBytes",
+        "sort_order" AS "sortOrder",
+        "created_at" AS "createdAt"
+      FROM "sighting_photos"
+      WHERE "sighting_id" IN (${Prisma.join(ids)})
+      ORDER BY "sighting_id" ASC, "sort_order" ASC, "created_at" ASC, "id" ASC
+    `);
+    const photosBySighting = new Map<string, SightingPhotoRecord[]>();
+    for (const row of rows) {
+      const photos = photosBySighting.get(row.sightingId) ?? [];
+      photos.push(mapPhoto(row));
+      photosBySighting.set(row.sightingId, photos);
+    }
+
+    return sightings.map((sighting) => ({
+      ...sighting,
+      photos: photosBySighting.get(sighting.id) ?? [],
+    }));
+  }
 }
 
 function publicVisibilityWhere(): Prisma.Sql[] {
@@ -488,6 +627,7 @@ function mapRow(row: SightingRow): SightingRecord {
     id: row.id,
     lifecycleStatus: row.lifecycleStatus,
     pattern: row.pattern,
+    photos: [],
     publicLocation: {
       latitude: row.publicLatitude,
       longitude: row.publicLongitude,
@@ -499,5 +639,19 @@ function mapRow(row: SightingRow): SightingRecord {
     updatedAt: row.updatedAt,
     urgency: row.urgency,
     verificationStatus: row.verificationStatus,
+  };
+}
+
+function mapPhoto(row: SightingPhotoRow): SightingPhotoRecord {
+  return {
+    createdAt: row.createdAt,
+    fileSizeBytes: row.fileSizeBytes,
+    id: row.id,
+    mimeType: row.mimeType,
+    sightingId: row.sightingId,
+    sortOrder: row.sortOrder,
+    storageKey: row.storageKey,
+    storageProvider: row.storageProvider,
+    url: row.url,
   };
 }

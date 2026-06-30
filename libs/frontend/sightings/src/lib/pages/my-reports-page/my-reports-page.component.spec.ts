@@ -45,9 +45,28 @@ describe('MyReportsPageComponent API integration', () => {
     expect(mySightings).toHaveBeenCalledTimes(2);
     expect(component.editingReport()).toBeNull();
   });
+
+  it('deletes editable report photos through the API and refreshes owner data', async () => {
+    const mySightings = vi
+      .fn()
+      .mockReturnValue(
+        of({ items: [ownerResponse()], page: 1, pageSize: 50, total: 1, totalPages: 1 }),
+      );
+    const deletePhoto = vi.fn().mockReturnValue(of({ success: true }));
+    const component = createComponent({ deletePhoto, mySightings });
+    await Promise.resolve();
+    component.editingReport.set(component.reports()[0] ?? null);
+
+    await component.deletePhoto({ id: ownerResponse().id, photoId: 'photo-id' });
+
+    expect(deletePhoto).toHaveBeenCalledWith(ownerResponse().id, 'photo-id');
+    expect(mySightings).toHaveBeenCalledTimes(2);
+    expect(component.editingReport()?.id).toBe(ownerResponse().id);
+  });
 });
 
 function createComponent(overrides: {
+  deletePhoto?: ReturnType<typeof vi.fn>;
   mySightings?: ReturnType<typeof vi.fn>;
   update?: ReturnType<typeof vi.fn>;
 }): MyReportsPageComponent {
@@ -62,6 +81,7 @@ function createComponent(overrides: {
             vi
               .fn()
               .mockReturnValue(of({ items: [], page: 1, pageSize: 50, total: 0, totalPages: 0 })),
+          deletePhoto: overrides.deletePhoto ?? vi.fn().mockReturnValue(of({ success: true })),
           update: overrides.update ?? vi.fn().mockReturnValue(of(ownerResponse())),
         },
       },
@@ -86,6 +106,16 @@ function ownerResponse(
     id: '11111111-1111-4111-8111-111111111111',
     lifecycleStatus: 'SIGHTING',
     pattern: 'Solid',
+    photos: [
+      {
+        createdAt: '2026-06-30T00:00:00.000Z',
+        fileSizeBytes: 123,
+        id: 'photo-id',
+        mimeType: 'image/jpeg',
+        sortOrder: 0,
+        url: '/api/v1/sightings/photos/photo-id/file',
+      },
+    ],
     publicLocation: { latitude: 13.751, longitude: 100.502, radiusMeters: 300 },
     seenAt: '2026-06-30T01:00:00.000Z',
     species: 'DOG',

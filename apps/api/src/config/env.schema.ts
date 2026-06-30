@@ -11,9 +11,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
-  SUPABASE_STORAGE_BUCKET: z.string().min(1),
-  SUPABASE_URL: z.string().url(),
+  SIGHTING_PHOTO_LOCAL_ROOT: z.string().min(1).optional(),
+  SIGHTING_PHOTO_STORAGE_PROVIDER: z.enum(['auto', 'local', 'supabase']).default('auto'),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  SUPABASE_STORAGE_BUCKET: z.string().min(1).optional(),
+  SUPABASE_URL: z.string().url().optional(),
   WEB_ORIGIN: z.string().url().default('http://localhost:4200'),
 });
 

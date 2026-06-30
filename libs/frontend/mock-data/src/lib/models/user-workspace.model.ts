@@ -45,6 +45,7 @@ export interface UserReport {
   pattern: string;
   collarStatus: CollarStatus;
   description: string;
+  photos?: UserReportPhoto[];
   photoUrls: string[];
   approximateLocationLabel: string;
   publicRadiusMeters: number;
@@ -54,6 +55,12 @@ export interface UserReport {
   verificationStatus: VerificationStatus;
   matchCount: number;
   editable: boolean;
+}
+
+export interface UserReportPhoto {
+  id: string;
+  url: string;
+  sortOrder: number;
 }
 
 export interface UserLostPet {

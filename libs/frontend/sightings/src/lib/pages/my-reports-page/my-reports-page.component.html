@@ -79,6 +79,7 @@
     <pr-report-edit-drawer
       [report]="report"
       (closed)="editingReport.set(null)"
+      (photoDeleted)="deletePhoto($event)"
       (saved)="saveEdit($event)"
     />
   }

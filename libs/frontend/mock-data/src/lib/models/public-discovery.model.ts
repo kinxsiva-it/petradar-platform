@@ -49,6 +49,7 @@ export interface PublicSighting {
   pattern?: string;
   collarStatus: CollarStatus;
   description: string;
+  photos?: PublicSightingPhoto[];
   photoUrls: string[];
   approximateLocation: ApproximatePublicLocation;
   seenAt: string;
@@ -58,6 +59,12 @@ export interface PublicSighting {
   status: PublicSightingStatus;
   reporterLabel: string;
   matchConfidence?: number;
+}
+
+export interface PublicSightingPhoto {
+  id: string;
+  url: string;
+  sortOrder: number;
 }
 
 export interface PublicLostPet {

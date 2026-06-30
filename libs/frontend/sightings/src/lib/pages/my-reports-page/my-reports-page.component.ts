@@ -136,6 +136,24 @@ export class MyReportsPageComponent {
       this.editingReport.set(null);
     }
   }
+
+  async deletePhoto(event: { id: string; photoId: string }): Promise<void> {
+    const report = this.editingReport();
+    if (!report?.editable || report.id !== event.id) {
+      return;
+    }
+
+    try {
+      await firstValueFrom(this.sightingsApi.deletePhoto(event.id, event.photoId));
+      await this.loadReports();
+      const refreshed = this.reports().find((item) => item.id === event.id) ?? null;
+      this.editingReport.set(refreshed);
+    } catch (error) {
+      this.errorMessage.set(toUserMessage(error));
+      this.uiState.set('error');
+      this.editingReport.set(null);
+    }
+  }
 }
 
 function toUserMessage(error: unknown): string {

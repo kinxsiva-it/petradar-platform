@@ -66,9 +66,19 @@ export interface PublicSightingApiResponse {
   lifecycleStatus: ApiSightingLifecycleStatus;
   verificationStatus: ApiVerificationStatus;
   publicLocation: PublicSightingLocation;
+  photos: SightingPhotoApiResponse[];
   createdAt: string;
   updatedAt: string;
   distanceMeters?: number;
+}
+
+export interface SightingPhotoApiResponse {
+  id: string;
+  url: string;
+  mimeType: string | null;
+  fileSizeBytes: number | null;
+  sortOrder: number;
+  createdAt: string;
 }
 
 export interface OwnerSightingApiResponse extends PublicSightingApiResponse {
@@ -77,6 +87,14 @@ export interface OwnerSightingApiResponse extends PublicSightingApiResponse {
     latitude: number;
     longitude: number;
   };
+}
+
+export interface UploadSightingPhotosResponse {
+  photos: SightingPhotoApiResponse[];
+}
+
+export interface DeleteSightingPhotoResponse {
+  success: true;
 }
 
 export interface PaginatedSightingsApiResponse<TItem> {

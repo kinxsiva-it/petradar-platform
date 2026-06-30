@@ -15,6 +15,7 @@ import type { UpdateSightingRequest } from '../../data-access/sightings-api.mode
 export class ReportEditDrawerComponent {
   readonly report = input.required<UserReport>();
   readonly closed = output();
+  readonly photoDeleted = output<{ id: string; photoId: string }>();
   readonly saved = output<{ id: string; changes: UpdateSightingRequest }>();
 
   color = '';
@@ -39,5 +40,13 @@ export class ReportEditDrawerComponent {
       },
       id: this.report().id,
     });
+  }
+
+  deletePhoto(photoId: string): void {
+    if (!this.report().editable) {
+      return;
+    }
+
+    this.photoDeleted.emit({ id: this.report().id, photoId });
   }
 }

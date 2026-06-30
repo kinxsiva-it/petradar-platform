@@ -6,11 +6,13 @@ import { API_BASE_PATH } from '@petradar/frontend/core';
 
 import type {
   CreateSightingRequest,
+  DeleteSightingPhotoResponse,
   OwnerSightingApiResponse,
   PaginatedSightingsApiResponse,
   PublicSightingApiResponse,
   SightingListFilters,
   UpdateSightingRequest,
+  UploadSightingPhotosResponse,
 } from './sightings-api.models.js';
 
 @Injectable({ providedIn: 'root' })
@@ -51,6 +53,24 @@ export class SightingsApiService {
 
   update(id: string, request: UpdateSightingRequest): Observable<OwnerSightingApiResponse> {
     return this.http.patch<OwnerSightingApiResponse>(`${this.sightingsBasePath}/${id}`, request);
+  }
+
+  uploadPhotos(id: string, files: readonly File[]): Observable<UploadSightingPhotosResponse> {
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append('photos', file);
+    }
+
+    return this.http.post<UploadSightingPhotosResponse>(
+      `${this.sightingsBasePath}/${id}/photos`,
+      formData,
+    );
+  }
+
+  deletePhoto(id: string, photoId: string): Observable<DeleteSightingPhotoResponse> {
+    return this.http.delete<DeleteSightingPhotoResponse>(
+      `${this.sightingsBasePath}/${id}/photos/${photoId}`,
+    );
   }
 }
 

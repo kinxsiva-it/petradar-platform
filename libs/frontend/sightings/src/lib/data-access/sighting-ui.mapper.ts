@@ -35,7 +35,8 @@ export function toPublicSightingView(sighting: PublicSightingApiResponse): Publi
         ? `${String(sighting.publicLocation.radiusMeters)} m public radius`
         : `${String(Math.round(sighting.distanceMeters))} m away`,
     id: sighting.id,
-    photoUrls: [placeholderPhotoUrl],
+    photos: photoMetadataFor(sighting),
+    photoUrls: photoUrlsFor(sighting),
     pattern: sighting.pattern ?? undefined,
     reference: referenceFor(sighting),
     reporterLabel: 'Community reporter',
@@ -61,7 +62,7 @@ export function toUserReportView(sighting: OwnerSightingApiResponse): UserReport
     lifecycleStatus: toUserLifecycleStatus(sighting.lifecycleStatus),
     matchCount: sighting.lifecycleStatus === 'POSSIBLE_MATCH' ? 1 : 0,
     pattern: sighting.pattern ?? '',
-    photoUrls: [placeholderPhotoUrl],
+    photoUrls: photoUrlsFor(sighting),
     publicRadiusMeters: sighting.publicLocation.radiusMeters,
     reference: referenceFor(sighting),
     seenAt: formatDateTime(sighting.seenAt),
@@ -154,6 +155,26 @@ function referenceFor(sighting: PublicSightingApiResponse): string {
 
 function titleFor(sighting: PublicSightingApiResponse): string {
   return `${sighting.color ?? 'Unknown'} ${fromApiSpecies(sighting.species).toLowerCase()} sighting`;
+}
+
+function photoUrlsFor(sighting: PublicSightingApiResponse): string[] {
+  const urls = orderedPhotos(sighting)
+    .map((photo) => photo.url)
+    .filter((url) => url.trim().length > 0);
+
+  return urls.length > 0 ? urls : [placeholderPhotoUrl];
+}
+
+function photoMetadataFor(sighting: PublicSightingApiResponse) {
+  return orderedPhotos(sighting).map((photo) => ({
+    id: photo.id,
+    sortOrder: photo.sortOrder,
+    url: photo.url,
+  }));
+}
+
+function orderedPhotos(sighting: PublicSightingApiResponse) {
+  return sighting.photos.slice().sort((left, right) => left.sortOrder - right.sortOrder);
 }
 
 function formatDateTime(value: string): string {

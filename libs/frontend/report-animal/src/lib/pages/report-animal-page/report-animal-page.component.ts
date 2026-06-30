@@ -38,6 +38,15 @@ interface ConditionOption {
   urgent: boolean;
 }
 
+interface SelectedPhoto {
+  file: File;
+  url: string;
+}
+
+const acceptedPhotoTypes = ['image/jpeg', 'image/png', 'image/webp'];
+const maxPhotoBytes = 8 * 1024 * 1024;
+const maxPhotos = 5;
+
 @Component({
   selector: 'pr-report-animal-page',
   standalone: true,
@@ -68,6 +77,8 @@ export class ReportAnimalPageComponent implements OnDestroy {
   readonly submitting = signal(false);
   readonly submitError = signal('');
   readonly submittedReference = signal<string | null>(null);
+  private createdSightingId: string | null = null;
+  private selectedPhotos: SelectedPhoto[] = [];
 
   readonly steps = ['Animal', 'Condition', 'Details', 'Photos', 'Location', 'Review'];
   readonly speciesOptions: AnimalSpecies[] = ['Dog', 'Cat', 'Other'];
@@ -149,15 +160,11 @@ export class ReportAnimalPageComponent implements OnDestroy {
 
   removePhoto(url: string): void {
     this.photoUrls = this.photoUrls.filter((item) => item !== url);
+    this.selectedPhotos = this.selectedPhotos.filter((item) => item.url !== url);
     if (this.objectUrls.has(url)) {
       URL.revokeObjectURL(url);
       this.objectUrls.delete(url);
     }
-  }
-
-  simulateUploadFailure(): void {
-    this.uploadError.set('Upload failed presentation: try a different image file.');
-    this.uploadProgress.set(0);
   }
 
   useCurrentLocation(): void {
@@ -191,25 +198,47 @@ export class ReportAnimalPageComponent implements OnDestroy {
 
     this.submitting.set(true);
     this.submitError.set('');
+    this.uploadError.set('');
     try {
-      const request = toCreateSightingRequest({
-        animalCount: this.animalCount,
-        collarStatus: this.collarStatus,
-        color: this.color,
-        condition: this.condition,
-        description: this.description,
-        latitude: this.exactLocation.latitude,
-        longitude: this.exactLocation.longitude,
-        pattern: this.pattern,
-        seenAt: seenAt.toISOString(),
-        species: this.species,
-        urgency: this.urgency,
-      });
-      const created = await firstValueFrom(this.sightingsApi.create(request));
-      this.submittedReference.set(created.id);
+      if (!this.createdSightingId) {
+        const request = toCreateSightingRequest({
+          animalCount: this.animalCount,
+          collarStatus: this.collarStatus,
+          color: this.color,
+          condition: this.condition,
+          description: this.description,
+          latitude: this.exactLocation.latitude,
+          longitude: this.exactLocation.longitude,
+          pattern: this.pattern,
+          seenAt: seenAt.toISOString(),
+          species: this.species,
+          urgency: this.urgency,
+        });
+        const created = await firstValueFrom(this.sightingsApi.create(request));
+        this.createdSightingId = created.id;
+        this.submittedReference.set(created.id);
+      }
+
+      if (this.selectedPhotos.length > 0) {
+        this.uploadProgress.set(35);
+        await firstValueFrom(
+          this.sightingsApi.uploadPhotos(
+            this.createdSightingId,
+            this.selectedPhotos.map((photo) => photo.file),
+          ),
+        );
+        this.uploadProgress.set(100);
+      }
+
       await this.router.navigateByUrl('/my/reports');
     } catch (error) {
-      this.submitError.set(toSubmitMessage(error));
+      if (this.createdSightingId) {
+        this.uploadError.set(
+          `${toSubmitMessage(error)} Your sighting was saved; retry photo upload before leaving this page.`,
+        );
+      } else {
+        this.submitError.set(toSubmitMessage(error));
+      }
     } finally {
       this.submitting.set(false);
     }
@@ -217,13 +246,24 @@ export class ReportAnimalPageComponent implements OnDestroy {
 
   private processFiles(files: File[]): void {
     this.uploadError.set('');
+    this.uploadProgress.set(0);
+    const availableSlots = maxPhotos - this.selectedPhotos.length;
+    if (availableSlots <= 0) {
+      this.uploadError.set('A sighting can have at most 5 photos.');
+      return;
+    }
+
     const accepted = files.filter((file) => {
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-        this.uploadError.set('Only JPG, PNG, or WebP images are accepted in this mock UI.');
+      if (!acceptedPhotoTypes.includes(file.type)) {
+        this.uploadError.set('Only JPG, PNG, or WebP images are accepted.');
         return false;
       }
-      if (file.size > 10 * 1024 * 1024) {
-        this.uploadError.set('Each mock photo must be 10MB or smaller.');
+      if (file.size <= 0) {
+        this.uploadError.set('Empty image files are not accepted.');
+        return false;
+      }
+      if (file.size > maxPhotoBytes) {
+        this.uploadError.set('Each photo must be 8 MB or smaller.');
         return false;
       }
       return true;
@@ -231,12 +271,16 @@ export class ReportAnimalPageComponent implements OnDestroy {
     if (accepted.length === 0) {
       return;
     }
-    for (const file of accepted.slice(0, Math.max(0, 6 - this.photoUrls.length))) {
+    if (accepted.length > availableSlots) {
+      this.uploadError.set('A sighting can have at most 5 photos.');
+    }
+
+    for (const file of accepted.slice(0, availableSlots)) {
       const url = URL.createObjectURL(file);
       this.objectUrls.add(url);
+      this.selectedPhotos = [...this.selectedPhotos, { file, url }];
       this.photoUrls = [...this.photoUrls, url];
     }
-    this.uploadProgress.set(100);
   }
 
   private parseSeenAt(): Date | null {

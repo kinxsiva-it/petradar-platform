@@ -106,10 +106,7 @@
               (change)="addFiles($event)"
             />
             <strong>Upload photos</strong>
-            <span
-              >Photo upload is not active yet. You can preview images locally, but they will not be
-              submitted.</span
-            >
+            <span>JPG, PNG, or WebP. Up to 5 photos, 8 MB each.</span>
           </label>
           @if (uploadProgress() > 0) {
             <div class="progress"><span [style.width.%]="uploadProgress()"></span></div>
@@ -125,13 +122,10 @@
               </figure>
             } @empty {
               <p class="empty-note">
-                No photos selected yet. You can submit without photos while uploads are deferred.
+                No photos selected yet. You can submit without photos.
               </p>
             }
           </div>
-          <button type="button" class="link-button" (click)="simulateUploadFailure()">
-            Preview upload unavailable state
-          </button>
         }
         @case (4) {
           <div class="location-grid">
@@ -199,7 +193,7 @@
                 </div>
                 <div>
                   <dt>Photos</dt>
-                  <dd>{{ photoUrls.length || 1 }} preview image(s)</dd>
+                  <dd>{{ photoUrls.length }} selected image(s)</dd>
                 </div>
               </dl>
             </div>

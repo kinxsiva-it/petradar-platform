@@ -19,6 +19,7 @@ describe('ReportAnimalPageComponent API submission', () => {
         id: 'sighting-id',
         lifecycleStatus: 'SIGHTING',
         pattern: 'Solid white',
+        photos: [],
         publicLocation: { latitude: 13.751, longitude: 100.502, radiusMeters: 300 },
         seenAt: '2026-06-30T01:00:00.000Z',
         species: 'DOG',
@@ -59,18 +60,117 @@ describe('ReportAnimalPageComponent API submission', () => {
     expect(component.submitError()).toContain('could not be submitted');
     expect(navigateByUrl).not.toHaveBeenCalled();
   });
+
+  it('creates a sighting before uploading selected photos with the created ID', async () => {
+    const create = vi.fn().mockReturnValue(
+      of({
+        animalCount: 1,
+        collarStatus: 'NO_COLLAR',
+        color: 'White',
+        condition: 'NORMAL_STRAY',
+        createdAt: '2026-06-30T00:00:00.000Z',
+        editable: true,
+        id: 'created-sighting-id',
+        lifecycleStatus: 'SIGHTING',
+        pattern: 'Solid white',
+        photos: [],
+        publicLocation: { latitude: 13.751, longitude: 100.502, radiusMeters: 300 },
+        seenAt: '2026-06-30T01:00:00.000Z',
+        species: 'DOG',
+        updatedAt: '2026-06-30T02:00:00.000Z',
+        urgency: 'MEDIUM',
+        verificationStatus: 'PENDING',
+      }),
+    );
+    const uploadPhotos = vi.fn().mockReturnValue(of({ photos: [] }));
+    const navigateByUrl = vi.fn().mockResolvedValue(true);
+    const component = createComponent(create, navigateByUrl, uploadPhotos);
+    mockObjectUrls();
+
+    component.addFiles(fileInputEvent([new File([jpegBytes()], 'dog.jpg', { type: 'image/jpeg' })]));
+    await component.submit();
+
+    expect(create.mock.invocationCallOrder[0]).toBeLessThan(uploadPhotos.mock.invocationCallOrder[0] ?? 0);
+    expect(uploadPhotos).toHaveBeenCalledWith('created-sighting-id', [expect.any(File)]);
+    expect(navigateByUrl).toHaveBeenCalledWith('/my/reports');
+  });
+
+  it('does not create a duplicate sighting when retrying failed photo upload', async () => {
+    const create = vi.fn().mockReturnValue(
+      of({
+        animalCount: 1,
+        collarStatus: 'NO_COLLAR',
+        color: 'White',
+        condition: 'NORMAL_STRAY',
+        createdAt: '2026-06-30T00:00:00.000Z',
+        editable: true,
+        id: 'created-sighting-id',
+        lifecycleStatus: 'SIGHTING',
+        pattern: 'Solid white',
+        photos: [],
+        publicLocation: { latitude: 13.751, longitude: 100.502, radiusMeters: 300 },
+        seenAt: '2026-06-30T01:00:00.000Z',
+        species: 'DOG',
+        updatedAt: '2026-06-30T02:00:00.000Z',
+        urgency: 'MEDIUM',
+        verificationStatus: 'PENDING',
+      }),
+    );
+    const uploadPhotos = vi
+      .fn()
+      .mockReturnValueOnce(throwError(() => new Error('upload failed')))
+      .mockReturnValueOnce(of({ photos: [] }));
+    const navigateByUrl = vi.fn().mockResolvedValue(true);
+    const component = createComponent(create, navigateByUrl, uploadPhotos);
+    mockObjectUrls();
+
+    component.addFiles(fileInputEvent([new File([jpegBytes()], 'dog.jpg', { type: 'image/jpeg' })]));
+    await component.submit();
+    expect(component.uploadError()).toContain('saved');
+    await component.submit();
+
+    expect(create).toHaveBeenCalledTimes(1);
+    expect(uploadPhotos).toHaveBeenCalledTimes(2);
+    expect(navigateByUrl).toHaveBeenCalledWith('/my/reports');
+  });
+
+  it('rejects unsupported, oversized, and excess selected photos before upload', () => {
+    const create = vi.fn();
+    const navigateByUrl = vi.fn();
+    const component = createComponent(create, navigateByUrl);
+    mockObjectUrls();
+
+    component.addFiles(fileInputEvent([new File(['x'], 'bad.svg', { type: 'image/svg+xml' })]));
+    expect(component.uploadError()).toContain('Only JPG');
+
+    component.addFiles(
+      fileInputEvent([new File([new Uint8Array(8 * 1024 * 1024 + 1)], 'big.jpg', { type: 'image/jpeg' })]),
+    );
+    expect(component.uploadError()).toContain('8 MB');
+
+    component.addFiles(
+      fileInputEvent(
+        Array.from({ length: 6 }, (_, index) =>
+          new File([jpegBytes()], `photo-${String(index)}.jpg`, { type: 'image/jpeg' }),
+        ),
+      ),
+    );
+    expect(component.photoUrls).toHaveLength(5);
+    expect(component.uploadError()).toContain('at most 5');
+  });
 });
 
 function createComponent(
   create: ReturnType<typeof vi.fn>,
   navigateByUrl: ReturnType<typeof vi.fn>,
+  uploadPhotos: ReturnType<typeof vi.fn> = vi.fn().mockReturnValue(of({ photos: [] })),
 ): ReportAnimalPageComponent {
   const injector = Injector.create({
     providers: [
       ReportAnimalPageComponent,
       {
         provide: SightingsApiService,
-        useValue: { create },
+        useValue: { create, uploadPhotos },
       },
       {
         provide: Router,
@@ -80,6 +180,24 @@ function createComponent(
   });
 
   return runInInjectionContext(injector, () => injector.get(ReportAnimalPageComponent));
+}
+
+function mockObjectUrls(): void {
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue(`blob:test-${String(Math.random())}`);
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+}
+
+function fileInputEvent(files: File[]): Event {
+  return {
+    target: {
+      files,
+      value: '',
+    },
+  } as unknown as Event;
+}
+
+function jpegBytes(): Uint8Array {
+  return new Uint8Array([0xff, 0xd8, 0xff, 0xda, 0x00, 0x04, 0x11, 0x22, 0xff, 0xd9]);
 }
 
 function createRequest(create: ReturnType<typeof vi.fn>): CreateSightingRequest {

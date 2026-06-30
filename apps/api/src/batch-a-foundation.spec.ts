@@ -117,6 +117,7 @@ describe('Batch A sighting response mappers', () => {
     id: 'sighting-id',
     lifecycleStatus: SightingLifecycleStatus.SIGHTING,
     pattern: 'Tabby',
+    photos: [],
     publicLocation: { latitude: 13.751, longitude: 100.501 },
     publicRadiusMeters: 300,
     seenAt: new Date('2026-06-29T00:10:00.000Z'),

@@ -28,6 +28,18 @@
     Approximate public area
     <input [value]="report().approximateLocationLabel" disabled />
   </label>
+  @if ((report().photos ?? []).length > 0) {
+    <section class="photo-editor" aria-label="Report photos">
+      @for (photo of report().photos ?? []; track photo.id) {
+        <figure>
+          <img [src]="photo.url" [alt]="report().title + ' photo'" loading="lazy" />
+          <button type="button" [disabled]="!report().editable" (click)="deletePhoto(photo.id)">
+            Delete photo
+          </button>
+        </figure>
+      }
+    </section>
+  }
   <p class="drawer-note">
     Verified, duplicate, rescue, reunited, rejected, or closed reports are locked by the API.
   </p>

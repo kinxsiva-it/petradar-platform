@@ -1,10 +1,13 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { PhotoStorageProvider, Prisma, UserRole } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 
 import { AuditService } from '@petradar/backend/audit';
 import { AuthorizationPolicyService, type AuthenticatedUser } from '@petradar/backend/auth';
@@ -19,12 +22,27 @@ import {
   toPaginatedPublicSightingsResponse,
   toPublicSightingResponse,
   toResponseSource,
+  toSightingPhotoResponse,
   type AuthorizedSightingResponse,
   type PaginatedSightingsResponse,
   type PublicSightingResponse,
+  type SightingPhotoResponse,
 } from './sighting-response.mapper.js';
 import { isOwnerEditableSighting } from './sighting-policies.js';
-import { SightingsRepository, type SightingRecord } from './sightings.repository.js';
+import {
+  SightingsRepository,
+  type CreateSightingPhotoInput,
+  type SightingRecord,
+} from './sightings.repository.js';
+import {
+  maxSightingPhotosPerSighting,
+  SightingPhotoValidationService,
+  type UploadedSightingPhotoFile,
+} from './photos/sighting-photo-validation.js';
+import {
+  SIGHTING_PHOTO_STORAGE,
+  type SightingPhotoStorage,
+} from './photos/sighting-photo-storage.js';
 
 interface RequestContext {
   requestId?: string | null;
@@ -40,6 +58,8 @@ export class SightingsService {
     private readonly authorization: AuthorizationPolicyService,
     private readonly prisma: PrismaService,
     private readonly sightings: SightingsRepository,
+    private readonly photoValidation: SightingPhotoValidationService,
+    @Inject(SIGHTING_PHOTO_STORAGE) private readonly photoStorage: SightingPhotoStorage,
   ) {}
 
   async create(
@@ -228,6 +248,144 @@ export class SightingsService {
     });
   }
 
+  async uploadPhotos(
+    user: AuthenticatedUser,
+    id: string,
+    files: readonly UploadedSightingPhotoFile[],
+    context: RequestContext = {},
+  ): Promise<{ photos: SightingPhotoResponse[] }> {
+    const sighting = await this.loadPhotoManageableSighting(user, id, context);
+    if (!isOwnerEditableSighting(sighting)) {
+      throw new ForbiddenException('This sighting can no longer be edited.');
+    }
+
+    const validatedFiles = this.photoValidation.validate(files);
+    const existingCount = await this.sightings.countPhotosForSighting(id);
+    if (existingCount + validatedFiles.length > maxSightingPhotosPerSighting) {
+      throw new BadRequestException('A sighting can have at most 5 photos.');
+    }
+
+    const storedPhotos: CreateSightingPhotoInput[] = [];
+    try {
+      for (const [index, file] of validatedFiles.entries()) {
+        const photoId = randomUUID();
+        const storageKey = `${id}/${photoId}.${file.extension}`;
+        await this.photoStorage.store({
+          buffer: file.buffer,
+          mimeType: file.mimeType,
+          storageKey,
+        });
+        storedPhotos.push({
+          fileSizeBytes: file.fileSizeBytes,
+          id: photoId,
+          mimeType: file.mimeType,
+          sortOrder: existingCount + index,
+          storageKey,
+          storageProvider: storageProviderFor(this.photoStorage.provider),
+          url: `/api/v1/sightings/photos/${photoId}/file`,
+        });
+      }
+
+      const photos = await this.prisma.$transaction(async (tx) => {
+        const created = await this.sightings.createPhotos(id, storedPhotos, tx);
+
+        await this.audit.createWithClient(tx, {
+          action: 'SIGHTING_PHOTOS_UPLOADED',
+          actorId: user.id,
+          entityId: id,
+          entityType: 'AnimalSighting',
+          metadata: {
+            actorId: user.id,
+            fileSizes: created.map((photo) => photo.fileSizeBytes ?? 0),
+            mimeTypes: created.map((photo) => photo.mimeType ?? 'unknown'),
+            photoCount: created.length,
+            photoIds: created.map((photo) => photo.id),
+            sightingId: id,
+          },
+          requestId: context.requestId,
+        });
+
+        return created;
+      });
+
+      return { photos: photos.map(toSightingPhotoResponse) };
+    } catch (error) {
+      await this.cleanupStoredPhotos(storedPhotos, user.id, id, context);
+      throw error;
+    }
+  }
+
+  async deletePhoto(
+    user: AuthenticatedUser,
+    id: string,
+    photoId: string,
+    context: RequestContext = {},
+  ): Promise<{ success: true }> {
+    const sighting = await this.loadPhotoManageableSighting(user, id, context);
+    if (!isOwnerEditableSighting(sighting)) {
+      throw new ForbiddenException('This sighting can no longer be edited.');
+    }
+
+    const photo = await this.sightings.findPhotoById(photoId);
+    if (photo?.sightingId !== id) {
+      throw new NotFoundException('Photo not found.');
+    }
+
+    const deleted = await this.prisma.$transaction(async (tx) => {
+      const removed = await this.sightings.deletePhoto(photoId, tx);
+      await this.audit.createWithClient(tx, {
+        action: 'SIGHTING_PHOTO_DELETED',
+        actorId: user.id,
+        entityId: id,
+        entityType: 'AnimalSighting',
+        metadata: {
+          actorId: user.id,
+          mimeType: photo.mimeType,
+          photoId,
+          sightingId: id,
+        },
+        requestId: context.requestId,
+      });
+      return removed;
+    });
+
+    if (deleted?.storageKey) {
+      try {
+        await this.photoStorage.delete(deleted.storageKey);
+      } catch {
+        await this.audit.create({
+          action: 'SIGHTING_PHOTO_STORAGE_DELETE_FAILED',
+          actorId: user.id,
+          entityId: id,
+          entityType: 'AnimalSighting',
+          metadata: { actorId: user.id, photoId, sightingId: id },
+          requestId: context.requestId,
+        });
+        throw new ServiceUnavailableException('The photo was removed but storage cleanup failed.');
+      }
+    }
+
+    return { success: true };
+  }
+
+  async readPublicPhoto(photoId: string): Promise<{ buffer: Buffer; mimeType: string }> {
+    const photo = await this.sightings.findPhotoById(photoId);
+    if (!photo) {
+      throw new NotFoundException('Photo not found.');
+    }
+
+    const sighting = await this.sightings.findById(photo.sightingId, { publicOnly: true });
+    if (!sighting || !photo.storageKey) {
+      throw new NotFoundException('Photo not found.');
+    }
+
+    const file = await this.photoStorage.read(photo.storageKey);
+    return {
+      buffer: file.buffer,
+      mimeType: photo.mimeType ?? file.mimeType,
+    };
+  }
+
   private async loadOwnedSighting(
     user: AuthenticatedUser,
     id: string,
@@ -252,6 +410,58 @@ export class SightingsService {
     }
 
     return sighting;
+  }
+
+  private async loadPhotoManageableSighting(
+    user: AuthenticatedUser,
+    id: string,
+    context: RequestContext,
+  ): Promise<SightingRecord> {
+    const sighting = await this.sightings.findById(id, { includeExactLocation: false });
+    if (!sighting) {
+      throw new NotFoundException('Sighting not found.');
+    }
+
+    if (sighting.reporterId === user.id || user.roles.includes(UserRole.ADMIN)) {
+      return sighting;
+    }
+
+    await this.audit.create({
+      action: 'SIGHTING_PHOTO_OWNERSHIP_DENIED',
+      actorId: user.id,
+      entityId: id,
+      entityType: 'AnimalSighting',
+      metadata: { actorId: user.id, reason: 'not_owner', sightingId: id },
+      requestId: context.requestId,
+    });
+    throw new ForbiddenException('Sighting access denied.');
+  }
+
+  private async cleanupStoredPhotos(
+    photos: readonly CreateSightingPhotoInput[],
+    actorId: string,
+    sightingId: string,
+    context: RequestContext,
+  ): Promise<void> {
+    const failedPhotoIds: string[] = [];
+    for (const photo of photos) {
+      try {
+        await this.photoStorage.delete(photo.storageKey);
+      } catch {
+        failedPhotoIds.push(photo.id);
+      }
+    }
+
+    if (failedPhotoIds.length > 0) {
+      await this.audit.create({
+        action: 'SIGHTING_PHOTO_COMPENSATION_FAILED',
+        actorId,
+        entityId: sightingId,
+        entityType: 'AnimalSighting',
+        metadata: { actorId, failedPhotoIds, sightingId },
+        requestId: context.requestId,
+      });
+    }
   }
 
   private toListInput(
@@ -286,6 +496,10 @@ export class SightingsService {
       verificationStatus: query.verificationStatus,
     };
   }
+}
+
+function storageProviderFor(provider: SightingPhotoStorage['provider']): PhotoStorageProvider {
+  return provider === 'supabase' ? PhotoStorageProvider.SUPABASE : PhotoStorageProvider.LOCAL_PLACEHOLDER;
 }
 
 function cleanText(value: string | undefined | null): string | null {

@@ -4,6 +4,7 @@ coverage/
 .angular/
 .nx/
 .pnpm-store/
+.local-storage/
 .agents/
 .codex/
 .env

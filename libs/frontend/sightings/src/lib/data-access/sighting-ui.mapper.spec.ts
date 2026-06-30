@@ -20,6 +20,7 @@ const publicSighting: PublicSightingApiResponse = {
   id: '11111111-1111-4111-8111-111111111111',
   lifecycleStatus: 'SIGHTING',
   pattern: 'Solid',
+  photos: [],
   publicLocation: { latitude: 13.751, longitude: 100.502, radiusMeters: 300 },
   seenAt: '2026-06-30T01:00:00.000Z',
   species: 'DOG',
@@ -80,6 +81,35 @@ describe('sighting UI mappers', () => {
     expect(view.editable).toBe(false);
     expect(view.lifecycleStatus).toBe('Submitted');
     expect(view.verificationStatus).toBe('Pending');
+  });
+
+  it('uses ordered uploaded photos before fallback thumbnails', () => {
+    const view = toPublicSightingView({
+      ...publicSighting,
+      photos: [
+        {
+          createdAt: '2026-06-30T00:00:00.000Z',
+          fileSizeBytes: 2,
+          id: 'second',
+          mimeType: 'image/png',
+          sortOrder: 1,
+          url: '/api/v1/sightings/photos/second/file',
+        },
+        {
+          createdAt: '2026-06-30T00:00:00.000Z',
+          fileSizeBytes: 1,
+          id: 'first',
+          mimeType: 'image/jpeg',
+          sortOrder: 0,
+          url: '/api/v1/sightings/photos/first/file',
+        },
+      ],
+    });
+
+    expect(view.photoUrls).toEqual([
+      '/api/v1/sightings/photos/first/file',
+      '/api/v1/sightings/photos/second/file',
+    ]);
   });
 
   it('translates map filter selections into API query parameters', () => {

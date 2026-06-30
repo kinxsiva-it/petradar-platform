@@ -12,6 +12,7 @@ interface HttpOptionsWithParams {
 }
 
 let http: {
+  delete: ReturnType<typeof vi.fn>;
   get: ReturnType<typeof vi.fn>;
   patch: ReturnType<typeof vi.fn>;
   post: ReturnType<typeof vi.fn>;
@@ -22,6 +23,7 @@ describe('SightingsApiService', () => {
 
   beforeEach(() => {
     http = {
+      delete: vi.fn().mockReturnValue(of({ success: true })),
       get: vi
         .fn()
         .mockReturnValue(of({ items: [], page: 1, pageSize: 50, total: 0, totalPages: 0 })),
@@ -92,6 +94,26 @@ describe('SightingsApiService', () => {
     service.update('sighting-id', { color: 'Black' }).subscribe();
     expect(http.patch).toHaveBeenCalledWith('/api/v1/sightings/sighting-id', { color: 'Black' });
   });
+
+  it('uploads photos with FormData and no manual multipart headers', () => {
+    const file = new File([new Uint8Array([1, 2, 3])], 'photo.jpg', { type: 'image/jpeg' });
+
+    service.uploadPhotos('sighting-id', [file]).subscribe();
+
+    expect(http.post).toHaveBeenCalledWith(
+      '/api/v1/sightings/sighting-id/photos',
+      expect.any(FormData),
+    );
+    const body = http.post.mock.calls.at(-1)?.[1] as FormData | undefined;
+    expect(body?.getAll('photos')).toEqual([file]);
+    expect(http.post.mock.calls.at(-1)?.[2]).toBeUndefined();
+  });
+
+  it('deletes photos through the owned sighting photo endpoint', () => {
+    service.deletePhoto('sighting-id', 'photo-id').subscribe();
+
+    expect(http.delete).toHaveBeenCalledWith('/api/v1/sightings/sighting-id/photos/photo-id');
+  });
 });
 
 function postBody(): CreateSightingRequest {
@@ -144,6 +166,7 @@ function baseResponse() {
     id: 'sighting-id',
     lifecycleStatus: 'SIGHTING',
     pattern: null,
+    photos: [],
     publicLocation: { latitude: 13.751, longitude: 100.502, radiusMeters: 300 },
     seenAt: '2026-06-30T01:00:00.000Z',
     species: 'DOG',

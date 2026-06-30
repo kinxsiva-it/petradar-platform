@@ -43,6 +43,7 @@ const record: SightingRecord = {
   id: '11111111-1111-4111-8111-111111111111',
   lifecycleStatus: SightingLifecycleStatus.SIGHTING,
   pattern: 'Solid',
+  photos: [],
   publicLocation: { latitude: 13.751, longitude: 100.502 },
   publicRadiusMeters: 300,
   reporterId: user.id,
@@ -89,8 +90,24 @@ function createService(
     ),
     ...overrides.prisma,
   };
+  const photoValidation = {
+    validate: jest.fn().mockReturnValue([]),
+  };
+  const photoStorage = {
+    delete: jest.fn().mockResolvedValue(undefined),
+    provider: 'local',
+    read: jest.fn(),
+    store: jest.fn(),
+  };
 
-  return new SightingsService(audit as never, authorization, prisma as never, repository as never);
+  return new SightingsService(
+    audit as never,
+    authorization,
+    prisma as never,
+    repository as never,
+    photoValidation as never,
+    photoStorage as never,
+  );
 }
 
 function createDto(overrides: Partial<CreateSightingDto> = {}): CreateSightingDto {
