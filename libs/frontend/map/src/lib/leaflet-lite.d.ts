@@ -6,7 +6,11 @@ declare module 'leaflet' {
   }
 
   export interface Map {
+    getCenter(): { lat: number; lng: number };
+    getZoom(): number;
     invalidateSize(): this;
+    off(eventName: 'moveend' | 'zoomend', handler: () => void): this;
+    on(eventName: 'moveend' | 'zoomend', handler: () => void): this;
     removeLayer(layer: Layer): this;
     remove(): void;
     setView(center: LatLngExpression, zoom: number): this;
@@ -39,7 +43,7 @@ declare module 'leaflet' {
 
   export interface DivIconOptions {
     className?: string;
-    html?: string;
+    html?: HTMLElement | string;
     iconAnchor?: [number, number];
     iconSize?: [number, number];
   }

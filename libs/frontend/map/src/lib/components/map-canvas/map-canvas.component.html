@@ -4,9 +4,53 @@
     <p>The map component could not load. Result cards are still available.</p>
   </section>
 } @else {
-  <div
-    class="map-shell"
-    #mapHost
-    aria-label="Public approximate animal sightings map"
-  ></div>
+  @if (providerState.activeProvider() === 'google') {
+    <pr-google-map-renderer
+      [markers]="markers()"
+      [selectedId]="selectedId()"
+      [viewport]="viewport()"
+      (markerSelected)="markerSelected.emit($event)"
+      (viewportChanged)="updateViewport($event)"
+      (loadFailed)="handleRendererFailure('google')"
+    />
+  } @else {
+    <pr-leaflet-map-renderer
+      [markers]="markers()"
+      [selectedId]="selectedId()"
+      [viewport]="viewport()"
+      (markerSelected)="markerSelected.emit($event)"
+      (viewportChanged)="updateViewport($event)"
+      (loadFailed)="handleRendererFailure('leaflet')"
+    />
+  }
+
+  <section class="map-provider-switch" aria-label="Map provider">
+    <button
+      type="button"
+      [class.active]="providerState.activeProvider() === 'leaflet'"
+      [attr.aria-pressed]="providerState.activeProvider() === 'leaflet'"
+      (click)="selectProvider('leaflet')"
+    >
+      OpenStreetMap
+    </button>
+    <button
+      type="button"
+      [class.active]="providerState.activeProvider() === 'google'"
+      [class.unavailable]="!providerState.googleConfigured()"
+      [disabled]="!providerState.googleConfigured()"
+      [attr.aria-pressed]="providerState.activeProvider() === 'google'"
+      [attr.aria-describedby]="providerState.googleConfigured() ? null : 'google-maps-disabled'"
+      (click)="selectProvider('google')"
+    >
+      Google Maps
+    </button>
+  </section>
+
+  @if (!providerState.googleConfigured()) {
+    <p id="google-maps-disabled" class="map-provider-hint">
+      Add a local Google Maps browser key to enable Google Maps.
+    </p>
+  } @else if (providerState.message(); as message) {
+    <p class="map-provider-hint" aria-live="polite">{{ message }}</p>
+  }
 }

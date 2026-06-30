@@ -7,3 +7,5 @@ export * from './lib/auth/auth.models.js';
 export * from './lib/layouts/public-layout.component.js';
 export * from './lib/layouts/authenticated-layout.component.js';
 export * from './lib/layouts/volunteer-layout.component.js';
+export * from './lib/runtime-config/runtime-config.model.js';
+export * from './lib/runtime-config/runtime-config.service.js';
