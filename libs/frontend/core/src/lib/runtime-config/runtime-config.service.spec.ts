@@ -89,7 +89,10 @@ describe('runtime config loading', () => {
 
   it('loads the local runtime config script before exposing the Google Maps key', async () => {
     const { appendedScript, document } = setupBrowser({
-      runtimeConfig: { googleMapsApiKey: ' local-browser-key ' },
+      runtimeConfig: {
+        googleMaps3dMapId: ' local-3d-map-id ',
+        googleMapsApiKey: ' local-browser-key ',
+      },
     });
 
     const load = loadPetRadarRuntimeConfig();
@@ -99,6 +102,7 @@ describe('runtime config loading', () => {
     expect(document.head.append).toHaveBeenCalledTimes(1);
     expect(appendedScript()?.src).toBe('/runtime-config.js');
     expect(appendedScript()?.async).toBe(false);
+    expect(currentPetRadarRuntimeConfig().googleMaps3dMapId).toBe('local-3d-map-id');
     expect(currentPetRadarRuntimeConfig().googleMapsApiKey).toBe('local-browser-key');
   });
 
@@ -114,7 +118,7 @@ describe('runtime config loading', () => {
 
   it('treats whitespace-only keys as unconfigured', async () => {
     const { appendedScript } = setupBrowser({
-      runtimeConfig: { googleMapsApiKey: '   ' },
+      runtimeConfig: { googleMaps3dMapId: '   ', googleMapsApiKey: '   ' },
     });
 
     const load = loadPetRadarRuntimeConfig();
@@ -123,6 +127,7 @@ describe('runtime config loading', () => {
 
     const service = createRuntimeConfigService();
 
+    expect(service.googleMaps3dMapId()).toBeNull();
     expect(service.googleMapsApiKey()).toBeNull();
   });
 

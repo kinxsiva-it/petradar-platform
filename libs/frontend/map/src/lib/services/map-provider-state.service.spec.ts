@@ -2,7 +2,7 @@ import { Injector, runInInjectionContext } from '@angular/core';
 
 import { RuntimeConfigService } from '@petradar/frontend/core';
 
-import { MapProviderStateService } from './map-provider-state.service.js';
+import { MapProviderStateService } from './map-provider-state.service';
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
@@ -75,6 +75,18 @@ describe('MapProviderStateService', () => {
     expect(service.activeProvider()).toBe('google');
   });
 
+  it('restores a saved Google 3D preference only when a key is configured', () => {
+    const { service } = setup({ googleKey: 'local-browser-key', storedProvider: 'google3d' });
+
+    expect(service.activeProvider()).toBe('google3d');
+  });
+
+  it('falls back to Leaflet for unknown saved providers', () => {
+    const { service } = setup({ googleKey: 'local-browser-key', storedProvider: 'unknown' });
+
+    expect(service.activeProvider()).toBe('leaflet');
+  });
+
   it('updates signal state and stores only the provider preference', () => {
     const { service, storage } = setup({ googleKey: 'local-browser-key' });
 
@@ -96,6 +108,16 @@ describe('MapProviderStateService', () => {
     expect(service.message()).toContain('Google Maps');
   });
 
+  it('handles a missing Google key safely for Google 3D', () => {
+    const { service, storage } = setup();
+
+    expect(service.selectProvider('google3d')).toBe(false);
+
+    expect(service.activeProvider()).toBe('leaflet');
+    expect(storage.getItem('petradar.mapProvider')).toBe('leaflet');
+    expect(service.message()).toContain('Google 3D');
+  });
+
   it('falls back to Leaflet after a Google load failure', () => {
     const { service } = setup({ googleKey: 'local-browser-key', storedProvider: 'google' });
 
@@ -103,6 +125,16 @@ describe('MapProviderStateService', () => {
 
     expect(service.activeProvider()).toBe('leaflet');
     expect(service.message()).toBe('Google Maps could not load.');
+  });
+
+  it('falls back from Google 3D to Google Maps when Google is configured', () => {
+    const { service } = setup({ googleKey: 'local-browser-key', storedProvider: 'google3d' });
+
+    service.fallbackFromGoogle3d('Google 3D is unavailable.');
+
+    expect(service.activeProvider()).toBe('google');
+    expect(service.storedPreferenceForTest()).toBe('google');
+    expect(service.message()).toBe('Google 3D is unavailable.');
   });
 });
 

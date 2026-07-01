@@ -2,9 +2,13 @@ import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '@petradar/frontend/core';
 
-import type { GoogleMapsNamespace } from './google-maps.types.js';
+import type { GoogleMaps3DLibrary, GoogleMapsNamespace } from './google-maps.types';
 
-export type GoogleMapsLoadFailure = 'missing-key' | 'missing-browser' | 'load-failed';
+export type GoogleMapsLoadFailure =
+  | 'load-failed'
+  | 'maps3d-unavailable'
+  | 'missing-browser'
+  | 'missing-key';
 
 export class GoogleMapsLoadError extends Error {
   constructor(readonly reason: GoogleMapsLoadFailure) {
@@ -16,6 +20,7 @@ export class GoogleMapsLoadError extends Error {
 export class GoogleMapsLoaderService {
   private readonly runtimeConfig = inject(RuntimeConfigService);
   private loadPromise: Promise<GoogleMapsNamespace> | null = null;
+  private maps3dPromise: Promise<GoogleMaps3DLibrary> | null = null;
 
   load(): Promise<GoogleMapsNamespace> {
     if (typeof window !== 'undefined' && window.google?.maps.Map) {
@@ -68,12 +73,47 @@ export class GoogleMapsLoaderService {
     return this.loadPromise;
   }
 
+  loadMaps3d(): Promise<GoogleMaps3DLibrary> {
+    if (this.maps3dPromise) {
+      return this.maps3dPromise;
+    }
+
+    this.maps3dPromise = this.load()
+      .then((api) => {
+        if (!api.maps.importLibrary) {
+          throw new GoogleMapsLoadError('maps3d-unavailable');
+        }
+
+        return api.maps.importLibrary('maps3d');
+      })
+      .then((library: Partial<GoogleMaps3DLibrary>) => {
+        if (
+          typeof library.Map3DElement !== 'function' ||
+          typeof library.Marker3DInteractiveElement !== 'function'
+        ) {
+          throw new GoogleMapsLoadError('maps3d-unavailable');
+        }
+
+        return library as GoogleMaps3DLibrary;
+      })
+      .catch((error: unknown) => {
+        this.maps3dPromise = null;
+        if (error instanceof GoogleMapsLoadError) {
+          throw error;
+        }
+
+        throw new GoogleMapsLoadError('maps3d-unavailable');
+      });
+
+    return this.maps3dPromise;
+  }
+
   private googleMapsUrl(key: string): string {
     const params = new URLSearchParams({
       callback: '__petradarGoogleMapsReady',
       key,
       libraries: 'marker',
-      v: 'weekly',
+      v: 'alpha',
     });
 
     return `https://maps.googleapis.com/maps/api/js?${params.toString()}`;

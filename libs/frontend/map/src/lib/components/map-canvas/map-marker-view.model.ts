@@ -1,6 +1,6 @@
 import type { PublicSighting } from '@petradar/frontend/mock-data';
 
-export type MapProvider = 'leaflet' | 'google';
+export type MapProvider = 'google' | 'google3d' | 'leaflet';
 
 export interface MapViewport {
   latitude: number;

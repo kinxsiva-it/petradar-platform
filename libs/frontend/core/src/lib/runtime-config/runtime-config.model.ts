@@ -1,4 +1,5 @@
 export interface PetRadarRuntimeConfig {
+  googleMaps3dMapId?: string;
   googleMapsApiKey?: string;
 }
 

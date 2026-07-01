@@ -4,7 +4,15 @@
     <p>The map component could not load. Result cards are still available.</p>
   </section>
 } @else {
-  @if (providerState.activeProvider() === 'google') {
+  @if (providerState.activeProvider() === 'google3d') {
+    <pr-google-3d-map-renderer
+      [markers]="markers()"
+      [selectedId]="selectedId()"
+      [viewport]="viewport()"
+      (markerSelected)="markerSelected.emit($event)"
+      (loadFailed)="handleRendererFailure('google3d')"
+    />
+  } @else if (providerState.activeProvider() === 'google') {
     <pr-google-map-renderer
       [markers]="markers()"
       [selectedId]="selectedId()"
@@ -44,13 +52,31 @@
     >
       Google Maps
     </button>
+    <button
+      type="button"
+      [class.active]="providerState.activeProvider() === 'google3d'"
+      [class.unavailable]="!providerState.googleConfigured()"
+      [disabled]="!providerState.googleConfigured()"
+      [attr.aria-pressed]="providerState.activeProvider() === 'google3d'"
+      [attr.aria-describedby]="providerState.googleConfigured() ? null : 'google-maps-disabled'"
+      (click)="selectProvider('google3d')"
+    >
+      Google 3D
+    </button>
   </section>
 
   @if (!providerState.googleConfigured()) {
-    <p id="google-maps-disabled" class="map-provider-hint">
-      Add a local Google Maps browser key to enable Google Maps.
-    </p>
+    <section id="google-maps-disabled" class="map-provider-hint" aria-live="polite">
+      Add a local Google Maps browser key to enable Google Maps and Google 3D.
+    </section>
   } @else if (providerState.message(); as message) {
-    <p class="map-provider-hint" aria-live="polite">{{ message }}</p>
+    <section class="map-provider-hint" aria-live="polite">
+      <span>{{ message }}</span>
+      <div class="map-provider-hint__actions">
+        <button type="button" aria-label="Dismiss map provider message" (click)="dismissProviderMessage()">
+          Dismiss
+        </button>
+      </div>
+    </section>
   }
 }

@@ -34,39 +34,54 @@
         (markerSelected)="selectSighting($event)"
       />
 
-      <section class="map-overlay top-overlay" aria-label="Map search and filters">
-        <pr-map-search-overlay
-          [query]="currentSightingFilters().query"
-          (queryChanged)="updateSearch($event)"
-          (filtersOpened)="advancedFiltersOpen.set(true)"
-        />
-        <pr-map-filter-chips [chips]="filterChips()" (chipToggled)="toggleChip($event)" />
-      </section>
+      <section class="map-hud" aria-label="Map controls">
+        <section class="map-hud__top" aria-label="Map search and filters">
+          <div class="map-hud__search-row">
+            <pr-map-search-overlay
+              [query]="currentSightingFilters().query"
+              (queryChanged)="updateSearch($event)"
+              (filtersOpened)="advancedFiltersOpen.set(true)"
+            />
+            <button
+              type="button"
+              class="near-me"
+              [class.denied]="nearMeState() === 'denied'"
+              [class.ready]="nearMeState() === 'ready'"
+              [disabled]="nearMeState() === 'loading'"
+              [attr.aria-busy]="nearMeState() === 'loading'"
+              (click)="runNearMe()"
+            >
+              @if (nearMeState() === 'loading') {
+                <svg
+                  lucideLoaderCircle
+                  class="near-me-spinner"
+                  size="18"
+                  strokeWidth="2.2"
+                  aria-hidden="true"
+                ></svg>
+                <span>Locating...</span>
+              } @else if (nearMeState() === 'denied') {
+                <svg lucideMapPinOff size="18" strokeWidth="2.2" aria-hidden="true"></svg>
+                <span>Location unavailable</span>
+              } @else {
+                <svg lucideLocateFixed size="18" strokeWidth="2.2" aria-hidden="true"></svg>
+                <span>Near me</span>
+              }
+            </button>
+          </div>
+          <div class="map-hud__filters">
+            <pr-map-filter-chips [chips]="filterChips()" (chipToggled)="toggleChip($event)" />
+          </div>
+        </section>
 
-      <button
-        type="button"
-        class="near-me"
-        [class.denied]="nearMeState() === 'denied'"
-        [class.ready]="nearMeState() === 'ready'"
-        (click)="runNearMe()"
-      >
-        <span aria-hidden="true">L</span>
-        @if (nearMeState() === 'loading') {
-          Locating...
-        } @else if (nearMeState() === 'denied') {
-          Location unavailable
-        } @else {
-          Near me
-        }
-      </button>
-
-      <section class="summary-overlay">
-        <button type="button" class="summary-toggle" (click)="casesOpen.set(!casesOpen())">
-          {{ activeSummary().total }} active cases
-        </button>
-        <div class="summary-panel" [class.open]="casesOpen()">
-          <pr-active-case-summary [summary]="activeSummary()" (viewAll)="casesOpen.set(true)" />
-        </div>
+        <section class="map-hud__left summary-overlay">
+          <button type="button" class="summary-toggle" (click)="casesOpen.set(!casesOpen())">
+            {{ activeSummary().total }} active cases
+          </button>
+          <div class="summary-panel" [class.open]="casesOpen()">
+            <pr-active-case-summary [summary]="activeSummary()" (viewAll)="casesOpen.set(true)" />
+          </div>
+        </section>
       </section>
 
       @if (hasFilteredEmpty() || uiState() === 'empty') {

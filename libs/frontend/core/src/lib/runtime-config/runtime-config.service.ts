@@ -16,6 +16,17 @@ export const PETRADAR_RUNTIME_CONFIG = new InjectionToken<PetRadarRuntimeConfig>
 export class RuntimeConfigService {
   private readonly initialConfig = inject(PETRADAR_RUNTIME_CONFIG);
 
+  googleMaps3dMapId(): string | null {
+    const mapId = (
+      currentPetRadarRuntimeConfig().googleMaps3dMapId ?? this.initialConfig.googleMaps3dMapId
+    )?.trim();
+    if (!mapId) {
+      return null;
+    }
+
+    return mapId;
+  }
+
   googleMapsApiKey(): string | null {
     const key = (
       currentPetRadarRuntimeConfig().googleMapsApiKey ?? this.initialConfig.googleMapsApiKey
@@ -74,6 +85,8 @@ export function resetPetRadarRuntimeConfigForTest(): void {
 
 function normalizeRuntimeConfig(config: PetRadarRuntimeConfig): PetRadarRuntimeConfig {
   return {
+    googleMaps3dMapId:
+      typeof config.googleMaps3dMapId === 'string' ? config.googleMaps3dMapId.trim() : undefined,
     googleMapsApiKey:
       typeof config.googleMapsApiKey === 'string' ? config.googleMapsApiKey.trim() : undefined,
   };

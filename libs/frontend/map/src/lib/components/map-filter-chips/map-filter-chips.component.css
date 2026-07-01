@@ -1,9 +1,10 @@
 :host {
   display: block;
+  min-width: 0;
 }
 .chip-row {
   display: flex;
-  max-width: calc(100vw - 3rem);
+  max-width: 100%;
   gap: 0.5rem;
   overflow-x: auto;
   padding: 0.2rem 0.2rem 0.55rem;

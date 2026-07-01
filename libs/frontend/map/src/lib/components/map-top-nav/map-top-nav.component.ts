@@ -7,7 +7,6 @@ import {
   LucideHeart,
   LucideMap,
   LucidePawPrint,
-  LucidePlus,
 } from '@lucide/angular';
 @Component({
   selector: 'pr-map-top-nav',
@@ -21,7 +20,6 @@ import {
     LucideHeart,
     LucideMap,
     LucidePawPrint,
-    LucidePlus,
   ],
   templateUrl: './map-top-nav.component.html',
   styleUrl: './map-top-nav.component.css',

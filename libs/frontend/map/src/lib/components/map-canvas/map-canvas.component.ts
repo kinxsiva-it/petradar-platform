@@ -11,20 +11,25 @@ import {
 
 import type { PublicSighting } from '@petradar/frontend/mock-data';
 
-import { GoogleMapRendererComponent } from './google-map-renderer.component.js';
-import { LeafletMapRendererComponent } from './leaflet-map-renderer.component.js';
-import { MapProviderStateService } from '../../services/map-provider-state.service.js';
+import { Google3DMapRendererComponent } from './google-3d-map-renderer.component';
+import { GoogleMapRendererComponent } from './google-map-renderer.component';
+import { LeafletMapRendererComponent } from './leaflet-map-renderer.component';
+import { MapProviderStateService } from '../../services/map-provider-state.service';
 import {
   defaultMapViewport,
   toMapMarkers,
   type MapProvider,
   type MapViewport,
-} from './map-marker-view.model.js';
+} from './map-marker-view.model';
 
 @Component({
   selector: 'pr-map-canvas',
   standalone: true,
-  imports: [GoogleMapRendererComponent, LeafletMapRendererComponent],
+  imports: [
+    Google3DMapRendererComponent,
+    GoogleMapRendererComponent,
+    LeafletMapRendererComponent,
+  ],
   templateUrl: './map-canvas.component.html',
   styleUrl: './map-canvas.component.css',
   encapsulation: ViewEncapsulation.None,
@@ -44,9 +49,22 @@ export class MapCanvasComponent {
     this.providerState.selectProvider(provider);
   }
 
+  dismissProviderMessage(): void {
+    this.providerState.clearMessage();
+  }
+
   handleRendererFailure(provider: MapProvider): void {
     if (provider === 'google') {
       this.providerState.fallbackToLeaflet('Google Maps could not load. OpenStreetMap is still available.');
+      return;
+    }
+
+    if (provider === 'google3d') {
+      this.providerState.fallbackFromGoogle3d(
+        this.providerState.googleConfigured()
+          ? 'Google 3D is unavailable on this device. Switched to Google Maps.'
+          : 'Google 3D could not load. OpenStreetMap is still available.',
+      );
       return;
     }
 

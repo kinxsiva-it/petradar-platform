@@ -8,6 +8,9 @@ import {
   LucideDog,
   LucideHeartPulse,
   LucideLifeBuoy,
+  LucideLoaderCircle,
+  LucideLocateFixed,
+  LucideMapPinOff,
   LucidePawPrint,
   LucideStar,
 } from '@lucide/angular';
@@ -49,6 +52,9 @@ const defaultSightingFilters: DiscoveryFilters = {
   imports: [
     ActiveCaseSummaryComponent,
     EmptyStateComponent,
+    LucideLoaderCircle,
+    LucideLocateFixed,
+    LucideMapPinOff,
     MapCanvasComponent,
     MapFilterChipsComponent,
     MapFilterPanelComponent,

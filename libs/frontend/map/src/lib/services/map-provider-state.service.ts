@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { RuntimeConfigService } from '@petradar/frontend/core';
 
-import type { MapProvider } from '../components/map-canvas/map-marker-view.model.js';
+import type { MapProvider } from '../components/map-canvas/map-marker-view.model';
 
 const storageKey = 'petradar.mapProvider';
 
@@ -17,8 +17,8 @@ export class MapProviderStateService {
   readonly googleConfigured = computed(() => Boolean(this.runtimeConfig.googleMapsApiKey()));
 
   selectProvider(provider: MapProvider): boolean {
-    if (provider === 'google' && !this.googleConfigured()) {
-      this.messageState.set('Add a local Google Maps browser key to enable Google Maps.');
+    if (isGoogleProvider(provider) && !this.googleConfigured()) {
+      this.messageState.set('Add a local Google Maps browser key to enable Google Maps and Google 3D.');
       this.provider.set('leaflet');
       this.storeProvider('leaflet');
       return false;
@@ -36,6 +36,13 @@ export class MapProviderStateService {
     this.storeProvider('leaflet');
   }
 
+  fallbackFromGoogle3d(message: string): void {
+    const provider: MapProvider = this.googleConfigured() ? 'google' : 'leaflet';
+    this.provider.set(provider);
+    this.messageState.set(message);
+    this.storeProvider(provider);
+  }
+
   clearMessage(): void {
     this.messageState.set(null);
   }
@@ -46,8 +53,8 @@ export class MapProviderStateService {
 
   private initialProvider(): MapProvider {
     const stored = this.storage()?.getItem(storageKey);
-    if (stored === 'google' && this.runtimeConfig.googleMapsApiKey()) {
-      return 'google';
+    if (isGoogleProvider(stored) && this.runtimeConfig.googleMapsApiKey()) {
+      return stored;
     }
 
     return 'leaflet';
@@ -64,5 +71,11 @@ export class MapProviderStateService {
       return null;
     }
   }
+}
+
+function isGoogleProvider(
+  provider: string | null | undefined,
+): provider is 'google' | 'google3d' {
+  return provider === 'google' || provider === 'google3d';
 }
 

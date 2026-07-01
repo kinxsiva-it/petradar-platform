@@ -1,9 +1,14 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
 .search-box {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.9rem;
-  width: min(61rem, calc(100vw - 3rem));
+  width: 100%;
   min-height: 4.25rem;
   border: 1px solid color-mix(in srgb, var(--color-border-default) 80%, transparent);
   border-radius: 1.35rem;
@@ -89,7 +94,6 @@ button:focus-visible {
 
 @media (max-width: 680px) {
   .search-box {
-    width: calc(100vw - 1.5rem);
     min-height: 3.5rem;
     border-radius: 1rem;
     padding: 0 0.75rem;

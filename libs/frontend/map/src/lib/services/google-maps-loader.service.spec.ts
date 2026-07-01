@@ -2,8 +2,11 @@ import { Injector, runInInjectionContext } from '@angular/core';
 
 import { RuntimeConfigService } from '@petradar/frontend/core';
 
-import { GoogleMapsLoadError, GoogleMapsLoaderService } from './google-maps-loader.service.js';
-import type { GoogleMapsNamespace } from './google-maps.types.js';
+import { GoogleMapsLoadError, GoogleMapsLoaderService } from './google-maps-loader.service';
+import type {
+  GoogleMaps3DLibrary,
+  GoogleMapsNamespace,
+} from './google-maps.types';
 
 interface FakeScript {
   async: boolean;
@@ -119,9 +122,69 @@ describe('GoogleMapsLoaderService', () => {
 
     expect(document.head.append).toHaveBeenCalledTimes(2);
   });
+
+  it('loads maps3d only through the lazy 3D library path', async () => {
+    const { appendedScript, document, loader, window } = setup('local-browser-key');
+    const library = fakeMaps3dLibrary();
+    const importLibrary = vi.fn(() => Promise.resolve(library));
+
+    const load = loader.loadMaps3d();
+    window.google = fakeGoogleMaps(importLibrary);
+    window.__petradarGoogleMapsReady?.();
+
+    await expect(load).resolves.toBe(library);
+    expect(document.head.append).toHaveBeenCalledTimes(1);
+    expect(appendedScript()?.src).toContain('libraries=marker');
+    expect(importLibrary).toHaveBeenCalledWith('maps3d');
+  });
+
+  it('imports maps3d once for concurrent 3D loads', async () => {
+    const library = fakeMaps3dLibrary();
+    const importLibrary = vi.fn(() => Promise.resolve(library));
+    const { document, loader, window } = setup('local-browser-key');
+
+    const firstLoad = loader.loadMaps3d();
+    const secondLoad = loader.loadMaps3d();
+    window.google = fakeGoogleMaps(importLibrary);
+    window.__petradarGoogleMapsReady?.();
+
+    await expect(firstLoad).resolves.toBe(library);
+    await expect(secondLoad).resolves.toBe(library);
+    expect(document.head.append).toHaveBeenCalledTimes(1);
+    expect(importLibrary).toHaveBeenCalledTimes(1);
+  });
+
+  it('shares the base Google loader between 2D and 3D requests', async () => {
+    const library = fakeMaps3dLibrary();
+    const importLibrary = vi.fn(() => Promise.resolve(library));
+    const { document, loader, window } = setup('local-browser-key');
+
+    const twoDimensionalLoad = loader.load();
+    const threeDimensionalLoad = loader.loadMaps3d();
+    window.google = fakeGoogleMaps(importLibrary);
+    window.__petradarGoogleMapsReady?.();
+
+    await expect(twoDimensionalLoad).resolves.toBe(window.google);
+    await expect(threeDimensionalLoad).resolves.toBe(library);
+    expect(document.head.append).toHaveBeenCalledTimes(1);
+    expect(importLibrary).toHaveBeenCalledTimes(1);
+  });
+
+  it('reports a safe 3D unavailable error without disabling 2D loading', async () => {
+    const { loader, window } = setup('local-browser-key');
+
+    const threeDimensionalLoad = loader.loadMaps3d();
+    window.google = fakeGoogleMaps();
+    window.__petradarGoogleMapsReady?.();
+
+    await expect(threeDimensionalLoad).rejects.toMatchObject({ reason: 'maps3d-unavailable' });
+    await expect(loader.load()).resolves.toBe(window.google);
+  });
 });
 
-function fakeGoogleMaps(): GoogleMapsNamespace {
+function fakeGoogleMaps(
+  importLibrary?: (name: 'maps3d') => Promise<GoogleMaps3DLibrary>,
+): GoogleMapsNamespace {
   return {
     maps: {
       Circle: vi.fn(),
@@ -133,6 +196,14 @@ function fakeGoogleMaps(): GoogleMapsNamespace {
       event: {
         clearInstanceListeners: vi.fn(),
       },
+      importLibrary,
     },
+  };
+}
+
+function fakeMaps3dLibrary(): GoogleMaps3DLibrary {
+  return {
+    Map3DElement: vi.fn(),
+    Marker3DInteractiveElement: vi.fn(),
   };
 }
