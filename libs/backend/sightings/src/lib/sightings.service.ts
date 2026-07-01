@@ -144,7 +144,11 @@ export class SightingsService {
       reporterId: user.id,
     });
 
-    return toPaginatedAuthorizedSightingsResponse(await this.sightings.list(listInput));
+    const response = await this.sightings.list(listInput);
+    return toPaginatedAuthorizedSightingsResponse({
+      ...response,
+      items: await this.attachOwnerRejectionReasons(response.items),
+    });
   }
 
   async findMine(
@@ -180,7 +184,9 @@ export class SightingsService {
       requestId: context.requestId,
     });
 
-    return toAuthorizedSightingResponse(toResponseSource(sighting), {
+    const [withRejectionReason] = await this.attachOwnerRejectionReasons([sighting]);
+
+    return toAuthorizedSightingResponse(toResponseSource(withRejectionReason ?? sighting), {
       includeExactLocation,
     });
   }
@@ -464,6 +470,43 @@ export class SightingsService {
     }
   }
 
+  private async attachOwnerRejectionReasons(
+    sightings: readonly SightingRecord[],
+  ): Promise<SightingRecord[]> {
+    const rejectedIds = sightings
+      .filter((sighting) => sighting.verificationStatus === 'REJECTED')
+      .map((sighting) => sighting.id);
+
+    if (rejectedIds.length === 0) {
+      return sightings.map((sighting) => ({ ...sighting, rejectionReason: null }));
+    }
+
+    const logs = await this.prisma.auditLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      where: {
+        action: 'SIGHTING_REJECTED',
+        entityId: { in: rejectedIds },
+        entityType: 'AnimalSighting',
+      },
+    });
+
+    const reasonsBySighting = new Map<string, string>();
+    for (const log of logs) {
+      if (reasonsBySighting.has(log.entityId)) {
+        continue;
+      }
+      const reason = rejectionReasonFromMetadata(log.metadata);
+      if (reason) {
+        reasonsBySighting.set(log.entityId, reason);
+      }
+    }
+
+    return sightings.map((sighting) => ({
+      ...sighting,
+      rejectionReason: reasonsBySighting.get(sighting.id) ?? null,
+    }));
+  }
+
   private toListInput(
     query: ListSightingsQueryDto,
     options: { publicOnly: boolean; reporterId?: string },
@@ -555,4 +598,13 @@ function changedSafeFields(
   }
 
   return changed;
+}
+
+function rejectionReasonFromMetadata(metadata: Prisma.JsonValue): string | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const reason = (metadata as Record<string, Prisma.JsonValue>)['rejectionReason'];
+  return typeof reason === 'string' && reason.trim() ? reason.trim() : null;
 }

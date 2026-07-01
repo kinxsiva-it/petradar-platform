@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 
 import { AuditModule } from '@petradar/backend/audit';
+import { AdminModule } from '@petradar/backend/admin';
 import { SightingsModule } from '@petradar/backend/sightings';
 import { BackendUsersModule } from '@petradar/backend/users';
 
@@ -19,6 +20,7 @@ import { validateEnv } from './config/env.schema.js';
       validate: validateEnv,
     }),
     HealthModule,
+    AdminModule,
     AuthModule,
     UsersModule,
     BackendUsersModule,

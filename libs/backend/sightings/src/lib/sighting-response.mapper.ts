@@ -33,6 +33,7 @@ export interface SightingResponseSource {
   publicRadiusMeters: number;
   exactLocation?: GeographicPoint;
   photos: SightingPhotoRecord[];
+  rejectionReason?: string | null;
   createdAt: Date;
   updatedAt: Date;
   distanceMeters?: number;
@@ -70,6 +71,7 @@ export interface PublicSightingResponse {
 export interface AuthorizedSightingResponse extends PublicSightingResponse {
   editable: boolean;
   exactLocation?: GeographicPoint;
+  rejectionReason?: string;
 }
 
 export interface PaginatedSightingsResponse<TItem> {
@@ -122,6 +124,13 @@ export function toAuthorizedSightingResponse(
     };
   }
 
+  if (
+    source.verificationStatus === VerificationStatus.REJECTED &&
+    source.rejectionReason?.trim()
+  ) {
+    response.rejectionReason = source.rejectionReason.trim();
+  }
+
   return response;
 }
 
@@ -167,6 +176,7 @@ export function toResponseSource(record: SightingRecord): SightingResponseSource
     photos: record.photos,
     publicLocation: record.publicLocation,
     publicRadiusMeters: record.publicRadiusMeters,
+    rejectionReason: record.rejectionReason,
     reporterId: record.reporterId,
     seenAt: record.seenAt,
     species: record.species,

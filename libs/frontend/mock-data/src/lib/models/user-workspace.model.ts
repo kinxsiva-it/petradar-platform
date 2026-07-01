@@ -53,6 +53,7 @@ export interface UserReport {
   urgency: UrgencyLevel;
   lifecycleStatus: UserReportStatus;
   verificationStatus: VerificationStatus;
+  rejectionReason?: string;
   matchCount: number;
   editable: boolean;
 }

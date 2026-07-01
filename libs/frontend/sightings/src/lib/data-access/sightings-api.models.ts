@@ -87,6 +87,7 @@ export interface OwnerSightingApiResponse extends PublicSightingApiResponse {
     latitude: number;
     longitude: number;
   };
+  rejectionReason?: string;
 }
 
 export interface UploadSightingPhotosResponse {

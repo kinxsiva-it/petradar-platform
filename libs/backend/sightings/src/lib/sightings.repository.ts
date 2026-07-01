@@ -76,6 +76,7 @@ export interface SightingRecord {
     longitude: number;
   };
   photos: SightingPhotoRecord[];
+  rejectionReason?: string | null;
   createdAt: Date;
   updatedAt: Date;
   distanceMeters?: number;
@@ -358,11 +359,19 @@ export class SightingsRepository {
           ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326)::geography
         )::float8 AS "distance_meters"
       FROM "animal_sightings"
-      WHERE ST_DWithin(
-        "public_location",
-        ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326)::geography,
-        ${input.radiusMeters}
-      )
+      WHERE ${Prisma.join(
+        [
+          ...publicVisibilityWhere(),
+          Prisma.sql`
+            ST_DWithin(
+              "public_location",
+              ST_SetSRID(ST_MakePoint(${input.longitude}, ${input.latitude}), 4326)::geography,
+              ${input.radiusMeters}
+            )
+          `,
+        ],
+        ' AND ',
+      )}
       ORDER BY "distance_meters" ASC
       LIMIT ${limit}
     `);
@@ -628,6 +637,7 @@ function mapRow(row: SightingRow): SightingRecord {
     lifecycleStatus: row.lifecycleStatus,
     pattern: row.pattern,
     photos: [],
+    rejectionReason: null,
     publicLocation: {
       latitude: row.publicLatitude,
       longitude: row.publicLongitude,

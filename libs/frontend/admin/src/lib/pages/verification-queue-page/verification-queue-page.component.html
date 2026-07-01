@@ -3,54 +3,61 @@
     <div>
       <p class="eyebrow">Admin verification queue</p>
       <h1>Verification Queue</h1>
-      <p>Review and verify recent animal reports using approximate public locations and mock Admin actions.</p>
+      <p>Review and verify recent animal reports using public-safe queue data.</p>
     </div>
     <a routerLink="/admin/privacy">Privacy controls</a>
   </header>
 
-  @if (uiState() === 'denied') {
-    <pr-empty-state title="Unauthorized access" description="The current mock role cannot view Admin verification." icon="L" />
-  } @else if (uiState() === 'loading') {
+  @if (uiState() === 'loading') {
     <section class="panel"><pr-loading-skeleton [rows]="10" /></section>
   } @else if (uiState() === 'error') {
-    <pr-empty-state title="Verification queue unavailable" description="The frontend mock queue failed to render." icon="!" />
+    <pr-empty-state title="Verification queue unavailable" [description]="errorMessage()" icon="!" />
   } @else {
     <section class="summary-grid">
-      <pr-admin-summary-card label="Pending reports" [value]="admin.pendingReports().length" detail="Awaiting Admin review" />
-      <pr-admin-summary-card label="High urgency" [value]="admin.urgentReports().length" detail="Prioritize these first" />
-      <pr-admin-summary-card label="Duplicate risk" [value]="admin.openDuplicates().length" detail="Open suggestions" />
-      <pr-admin-summary-card label="Verified today" value="18" detail="Fixture value" />
+      <pr-admin-summary-card label="Pending reports" [value]="pendingCount()" detail="Awaiting Admin review" />
+      <pr-admin-summary-card label="High urgency" [value]="urgentCount()" detail="Prioritize these first" />
+      <pr-admin-summary-card label="Page" [value]="response()?.page ?? 1" detail="Current queue page" />
+      <pr-admin-summary-card label="Total pages" [value]="response()?.totalPages ?? 1" detail="Deterministic pagination" />
     </section>
 
-    <pr-alert title="UI-only Admin preview" tone="privacy">
-      Frontend role simulation is not a security boundary. Exact-location and approval decisions must be enforced server-side later.
-    </pr-alert>
+    @if (actionMessage()) {
+      <pr-alert title="Moderation updated" tone="success">{{ actionMessage() }}</pr-alert>
+    }
 
-    <pr-verification-filter-bar />
+    <pr-verification-filter-bar
+      [filters]="filters()"
+      (filtersChanged)="updateFilters($event)"
+      (cleared)="clearFilters()"
+    />
 
-    @if (uiState() === 'empty' || admin.pendingReports().length === 0) {
-      <pr-empty-state title="No pending reports" description="The mock verification queue is empty." icon="0" />
-    } @else if (admin.filteredReports().length === 0) {
+    @if ((response()?.items?.length ?? 0) === 0) {
       <pr-empty-state title="No reports match these filters" description="Clear filters or choose another verification status." icon="0">
-        <button type="button" (click)="admin.clearReportFilters()">Clear filters</button>
+        <button type="button" (click)="clearFilters()">Clear filters</button>
       </pr-empty-state>
     } @else {
       <section class="queue-layout">
         <div class="queue-list">
-          <pr-verification-table [reports]="admin.filteredReports()" (reviewed)="selected.set($event)" />
+          <pr-verification-table [reports]="response()?.items ?? []" (reviewed)="selected.set($event)" />
           <section class="mobile-cards" aria-label="Verification cards">
-            @for (item of admin.filteredReports(); track item.id) {
+            @for (item of response()?.items ?? []; track item.id) {
               <article>
-                <img [src]="item.photoUrls[0]" [alt]="item.title" />
+                @if (item.thumbnailPhoto) {
+                  <img [src]="item.thumbnailPhoto.url" [alt]="item.reference" />
+                }
                 <div>
                   <h2>{{ item.reference }}</h2>
-                  <p>{{ item.species }} · {{ item.condition }} · {{ item.location.approximateLabel }}</p>
-                  <pr-status-badge [label]="item.urgency" [tone]="item.urgency === 'HIGH' ? 'danger' : 'warning'" />
+                  <p>{{ item.species }} · {{ item.condition }} · {{ item.reporter.displayName }}</p>
+                  <pr-status-badge [label]="item.urgency" [tone]="item.urgency === 'HIGH' || item.urgency === 'EMERGENCY' ? 'danger' : 'warning'" />
                 </div>
                 <button type="button" (click)="selected.set(item)">Review</button>
               </article>
             }
           </section>
+          <div class="pagination" aria-label="Queue pagination">
+            <button type="button" [disabled]="(response()?.page ?? 1) <= 1" (click)="previousPage()">Previous</button>
+            <span>Page {{ response()?.page ?? 1 }} of {{ response()?.totalPages ?? 1 }}</span>
+            <button type="button" [disabled]="(response()?.page ?? 1) >= (response()?.totalPages ?? 1)" (click)="nextPage()">Next</button>
+          </div>
         </div>
         <pr-report-review-panel
           [report]="selected()"

@@ -1,36 +1,40 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import type { AdminReport } from '@petradar/frontend/mock-data';
 import { AlertComponent, StatusBadgeComponent } from '@petradar/frontend/shared-ui';
+
+import type { AdminModerationQueueItem } from '../../data-access/admin-sightings-api.models.js';
 
 @Component({
   selector: 'pr-report-review-panel',
   standalone: true,
-  imports: [AlertComponent, RouterLink, StatusBadgeComponent],
+  imports: [AlertComponent, DatePipe, RouterLink, StatusBadgeComponent],
   template: `
     @if (report(); as item) {
       <aside class="review-panel" role="dialog" aria-label="Report review panel">
         <button type="button" class="close" (click)="closed.emit()">Close</button>
-        <img [src]="item.photoUrls[0]" [alt]="item.title" />
+        @if (item.thumbnailPhoto) {
+          <img [src]="item.thumbnailPhoto.url" [alt]="item.reference" />
+        }
         <div class="panel-heading">
           <p>{{ item.reference }}</p>
-          <h2>{{ item.title }}</h2>
-          <pr-status-badge [label]="item.verification" tone="match" />
+          <h2>{{ item.species }} sighting</h2>
+          <pr-status-badge [label]="item.verificationStatus" tone="match" />
         </div>
         <dl>
           <div><dt>Species</dt><dd>{{ item.species }}</dd></div>
           <div><dt>Condition</dt><dd>{{ item.condition }}</dd></div>
           <div><dt>Urgency</dt><dd>{{ item.urgency }}</dd></div>
-          <div><dt>Approximate area</dt><dd>{{ item.location.approximateLabel }}</dd></div>
-          <div><dt>Reporter</dt><dd>{{ item.reporter.name }} · Trust {{ item.reporter.trustScore }}</dd></div>
+          <div><dt>Seen</dt><dd>{{ item.seenAt | date: 'medium' }}</dd></div>
+          <div><dt>Reporter</dt><dd>{{ item.reporter.displayName }}</dd></div>
         </dl>
         <pr-alert title="Sensitive location warning" tone="warning">
-          Internal location text is mock-only and must be protected by server authorization later.
+          Queue cards contain public-safe summary data. Exact reported location is available only on the Admin detail response.
         </pr-alert>
         <div class="actions">
           <a [routerLink]="['/admin/verification', item.id]">Open full detail</a>
-          <button type="button" (click)="approved.emit(item.id)">Approve</button>
+          <button type="button" (click)="approved.emit(item.id)">Verify</button>
           <button type="button" class="danger" (click)="rejected.emit(item.id)">Reject</button>
         </div>
       </aside>
@@ -146,7 +150,7 @@ import { AlertComponent, StatusBadgeComponent } from '@petradar/frontend/shared-
 })
 export class ReportReviewPanelComponent {
   readonly approved = output<string>();
-  readonly closed = output<void>();
+  readonly closed = output();
   readonly rejected = output<string>();
-  readonly report = input<AdminReport | undefined>();
+  readonly report = input<AdminModerationQueueItem | undefined>();
 }

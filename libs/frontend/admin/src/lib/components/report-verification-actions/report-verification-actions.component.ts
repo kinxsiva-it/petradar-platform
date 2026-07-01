@@ -8,21 +8,33 @@ import { FormsModule } from '@angular/forms';
   template: `
     <section class="actions-panel">
       <h2>Admin Decision</h2>
-      <label>
-        Admin note
-        <textarea [(ngModel)]="note" rows="3"></textarea>
-      </label>
+      @if (errorMessage()) {
+        <p class="error">{{ errorMessage() }}</p>
+      }
       <div class="button-row">
-        <button type="button" (click)="confirm.set('approve')">Approve</button>
-        <button type="button" class="danger" (click)="confirm.set('reject')">Reject</button>
-        <button type="button" class="secondary" (click)="duplicate.emit()">Mark duplicate</button>
-        <button type="button" class="secondary" (click)="rescue.emit()">Convert to rescue</button>
+        <button
+          type="button"
+          [disabled]="processing() || !canVerify()"
+          (click)="confirm.set('verify')"
+        >
+          Verify
+        </button>
+        <button
+          type="button"
+          class="danger"
+          [disabled]="processing() || !canReject()"
+          (click)="confirm.set('reject')"
+        >
+          Reject
+        </button>
       </div>
 
-      @if (confirm() === 'approve') {
-        <div class="confirm" role="dialog" aria-label="Approve report">
-          <p>Approve this report in frontend mock state with current privacy settings?</p>
-          <button type="button" (click)="approved.emit(note); confirm.set(null)">Confirm approve</button>
+      @if (confirm() === 'verify') {
+        <div class="confirm" role="dialog" aria-label="Verify report">
+          <p>Verify this animal sighting?</p>
+          <button type="button" [disabled]="processing()" (click)="approved.emit(); confirm.set(null)">
+            Confirm verify
+          </button>
         </div>
       }
 
@@ -30,12 +42,14 @@ import { FormsModule } from '@angular/forms';
         <div class="confirm" role="dialog" aria-label="Reject report">
           <label>
             Required rejection reason
-            <input [(ngModel)]="reason" />
+            <input [(ngModel)]="reason" maxlength="600" />
           </label>
           @if (error()) {
             <small>{{ error() }}</small>
           }
-          <button type="button" class="danger" (click)="reject()">Confirm reject</button>
+          <button type="button" class="danger" [disabled]="processing()" (click)="reject()">
+            Confirm reject
+          </button>
         </div>
       }
     </section>
@@ -70,7 +84,6 @@ import { FormsModule } from '@angular/forms';
         font-weight: 750;
       }
 
-      textarea,
       input {
         min-width: 0;
         border: 1px solid var(--color-border-default);
@@ -94,9 +107,9 @@ import { FormsModule } from '@angular/forms';
         font-weight: 800;
       }
 
-      .secondary {
-        background: var(--color-surface);
-        color: var(--color-primary);
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
       }
 
       .danger {
@@ -104,7 +117,8 @@ import { FormsModule } from '@angular/forms';
         background: var(--color-danger);
       }
 
-      small {
+      small,
+      .error {
         color: var(--color-danger);
       }
 
@@ -118,23 +132,27 @@ import { FormsModule } from '@angular/forms';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReportVerificationActionsComponent {
-  readonly reportId = input.required<string>();
-  readonly approved = output<string>();
-  readonly rejected = output<{ reason: string; note: string }>();
-  readonly duplicate = output<void>();
-  readonly rescue = output<void>();
-  readonly confirm = signal<'approve' | 'reject' | null>(null);
+  readonly approved = output();
+  readonly rejected = output<string>();
+  readonly canReject = input(true);
+  readonly canVerify = input(true);
+  readonly errorMessage = input('');
+  readonly processing = input(false);
+  readonly confirm = signal<'verify' | 'reject' | null>(null);
   readonly error = signal('');
-  note = '';
   reason = '';
 
   reject(): void {
-    if (!this.reason.trim()) {
-      this.error.set('A rejection reason is required.');
+    const trimmed = this.reason.trim();
+    if (trimmed.length < 8) {
+      this.error.set('Use at least 8 characters.');
       return;
     }
-    this.rejected.emit({ note: this.note, reason: this.reason });
+    if (trimmed.length > 600) {
+      this.error.set('Use 600 characters or fewer.');
+      return;
+    }
     this.error.set('');
-    this.confirm.set(null);
+    this.rejected.emit(trimmed);
   }
 }

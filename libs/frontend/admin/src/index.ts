@@ -1,4 +1,6 @@
 export * from './lib/admin.routes.js';
+export * from './lib/data-access/admin-sightings-api.models.js';
+export * from './lib/data-access/admin-sightings-api.service.js';
 export * from './lib/layout/admin-layout.component.js';
 export * from './lib/components/admin-summary-card/admin-summary-card.component.js';
 export * from './lib/components/admin-activity-list/admin-activity-list.component.js';

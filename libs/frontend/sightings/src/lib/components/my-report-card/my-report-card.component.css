@@ -42,6 +42,12 @@ p {
   font: var(--text-data);
 }
 
+.rejection-reason {
+  border-left: 3px solid var(--color-danger);
+  color: var(--color-text-strong);
+  padding-left: 0.75rem;
+}
+
 h2 {
   color: var(--color-text-strong);
   font: var(--text-heading-3);

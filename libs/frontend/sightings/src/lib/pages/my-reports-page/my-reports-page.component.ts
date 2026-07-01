@@ -59,6 +59,7 @@ export class MyReportsPageComponent {
     'Pending',
     'Verified',
     'Needs review',
+    'Rejected',
   ];
   readonly speciesOptions: ('All' | AnimalSpecies)[] = ['All', 'Cat', 'Dog', 'Other'];
 
@@ -71,6 +72,7 @@ export class MyReportsPageComponent {
     all: this.reports().length,
     matches: this.reports().reduce((total, report) => total + report.matchCount, 0),
     pending: this.reports().filter((report) => report.verificationStatus === 'Pending').length,
+    rejected: this.reports().filter((report) => report.verificationStatus === 'Rejected').length,
     verified: this.reports().filter((report) => report.verificationStatus === 'Verified').length,
   }));
 

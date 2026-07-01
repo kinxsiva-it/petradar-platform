@@ -18,7 +18,13 @@ export class MyReportCardComponent {
 
   tone(value: string): 'danger' | 'default' | 'match' | 'success' | 'warning' {
     const lower = value.toLowerCase();
-    if (lower.includes('high') || lower.includes('injured') || lower.includes('rescue')) return 'danger';
+    if (
+      lower.includes('high') ||
+      lower.includes('injured') ||
+      lower.includes('rescue') ||
+      lower.includes('rejected') ||
+      lower.includes('duplicate')
+    ) return 'danger';
     if (lower.includes('pending') || lower.includes('review')) return 'warning';
     if (lower.includes('match')) return 'match';
     if (lower.includes('verified')) return 'success';

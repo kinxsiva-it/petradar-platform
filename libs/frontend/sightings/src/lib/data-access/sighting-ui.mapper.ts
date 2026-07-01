@@ -65,6 +65,7 @@ export function toUserReportView(sighting: OwnerSightingApiResponse): UserReport
     photoUrls: photoUrlsFor(sighting),
     publicRadiusMeters: sighting.publicLocation.radiusMeters,
     reference: referenceFor(sighting),
+    rejectionReason: sighting.rejectionReason,
     seenAt: formatDateTime(sighting.seenAt),
     species: fromApiSpecies(sighting.species),
     title: titleFor(sighting),

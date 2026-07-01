@@ -83,6 +83,19 @@ describe('sighting UI mappers', () => {
     expect(view.verificationStatus).toBe('Pending');
   });
 
+  it('maps rejected owner responses with a safe rejection reason and locked editing', () => {
+    const view = toUserReportView({
+      ...publicSighting,
+      editable: false,
+      rejectionReason: 'Photo is too unclear for moderation.',
+      verificationStatus: 'REJECTED',
+    } satisfies OwnerSightingApiResponse);
+
+    expect(view.editable).toBe(false);
+    expect(view.rejectionReason).toBe('Photo is too unclear for moderation.');
+    expect(view.verificationStatus).toBe('Rejected');
+  });
+
   it('uses ordered uploaded photos before fallback thumbnails', () => {
     const view = toPublicSightingView({
       ...publicSighting,

@@ -1,13 +1,15 @@
+import { DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import type { AdminReport } from '@petradar/frontend/mock-data';
 import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
+
+import type { AdminModerationQueueItem } from '../../data-access/admin-sightings-api.models.js';
 
 @Component({
   selector: 'pr-verification-table',
   standalone: true,
-  imports: [RouterLink, StatusBadgeComponent],
+  imports: [DatePipe, RouterLink, StatusBadgeComponent],
   template: `
     <section class="table-card">
       <table>
@@ -19,7 +21,7 @@ import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
             <th scope="col">Condition</th>
             <th scope="col">Area</th>
             <th scope="col">Reporter</th>
-            <th scope="col">Duplicate</th>
+            <th scope="col">Seen</th>
             <th scope="col">Urgency</th>
             <th scope="col">Status</th>
             <th scope="col">Review</th>
@@ -29,14 +31,20 @@ import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
           @for (item of reports(); track item.id) {
             <tr>
               <td><a [routerLink]="['/admin/verification', item.id]">{{ item.reference }}</a></td>
-              <td><img [src]="item.photoUrls[0]" [alt]="item.title" /></td>
+              <td>
+                @if (item.thumbnailPhoto) {
+                  <img [src]="item.thumbnailPhoto.url" [alt]="item.reference" />
+                } @else {
+                  <span class="no-photo">No photo</span>
+                }
+              </td>
               <td>{{ item.species }}</td>
               <td>{{ item.condition }}</td>
-              <td>{{ item.location.approximateLabel }}</td>
-              <td>{{ item.reporter.name }}<small>Trust {{ item.reporter.trustScore }}</small></td>
-              <td>{{ item.possibleDuplicateCount ? item.possibleDuplicateCount + ' possible' : 'Low' }}</td>
-              <td><pr-status-badge [label]="item.urgency" [tone]="item.urgency === 'HIGH' ? 'danger' : 'warning'" /></td>
-              <td><pr-status-badge [label]="item.verification" tone="match" /></td>
+              <td>Public approximate area</td>
+              <td>{{ item.reporter.displayName }}</td>
+              <td>{{ item.seenAt | date: 'medium' }}</td>
+              <td><pr-status-badge [label]="item.urgency" [tone]="item.urgency === 'HIGH' || item.urgency === 'EMERGENCY' ? 'danger' : 'warning'" /></td>
+              <td><pr-status-badge [label]="item.verificationStatus" tone="match" /></td>
               <td><button type="button" (click)="reviewed.emit(item)">Review</button></td>
             </tr>
           }
@@ -84,9 +92,9 @@ import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
         object-fit: cover;
       }
 
-      small {
-        display: block;
+      .no-photo {
         color: var(--color-text-muted);
+        font-size: 0.82rem;
       }
 
       a {
@@ -114,6 +122,6 @@ import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VerificationTableComponent {
-  readonly reports = input.required<AdminReport[]>();
-  readonly reviewed = output<AdminReport>();
+  readonly reports = input.required<AdminModerationQueueItem[]>();
+  readonly reviewed = output<AdminModerationQueueItem>();
 }

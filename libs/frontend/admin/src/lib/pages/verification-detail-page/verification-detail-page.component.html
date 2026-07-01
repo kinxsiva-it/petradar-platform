@@ -4,88 +4,100 @@
   @if (uiState() === 'loading') {
     <section class="panel"><pr-loading-skeleton [rows]="12" /></section>
   } @else if (uiState() === 'error') {
-    <pr-empty-state title="Report detail unavailable" description="The mock verification detail could not render." icon="!" />
-  } @else if (!report()) {
-    <pr-empty-state title="Report not found" description="Use CAT-00021, DOG-00014, or CAT-00018." icon="?" />
+    <pr-empty-state title="Report detail unavailable" [description]="errorMessage()" icon="!" />
+  } @else if (uiState() === 'not-found' || !report()) {
+    <pr-empty-state title="Report not found" description="This sighting is unavailable or was removed." icon="?" />
   } @else {
     @let item = report()!;
     <header class="detail-header">
       <div>
         <p class="eyebrow">{{ item.reference }}</p>
-        <h1>{{ item.title }}</h1>
-        <p>{{ item.species }} · {{ item.condition }} · submitted {{ item.submittedAt }}</p>
+        <h1>{{ item.species }} sighting</h1>
+        <p>{{ item.condition }} · submitted {{ item.createdAt }}</p>
       </div>
       <div class="badge-row">
-        <pr-status-badge [label]="item.urgency" [tone]="item.urgency === 'HIGH' ? 'danger' : 'warning'" />
-        <pr-status-badge [label]="item.verification" tone="match" />
+        <pr-status-badge [label]="item.urgency" [tone]="item.urgency === 'HIGH' || item.urgency === 'EMERGENCY' ? 'danger' : 'warning'" />
+        <pr-status-badge [label]="item.verificationStatus" tone="match" />
       </div>
     </header>
+
+    @if (actionMessage()) {
+      <pr-alert title="Moderation updated" tone="success">{{ actionMessage() }}</pr-alert>
+    }
 
     <section class="detail-grid">
       <div class="main-column">
         <article class="photo-panel">
-          <img [src]="item.photoUrls[0]" [alt]="item.title" />
-          <div>
-            @for (photo of item.photoUrls; track $index) {
-              <img [src]="photo" [alt]="item.title + ' photo'" />
-            }
-          </div>
+          @if (item.photos[0]; as firstPhoto) {
+            <img [src]="firstPhoto.url" [alt]="item.reference" />
+            <div>
+              @for (photo of item.photos; track photo.id) {
+                <img [src]="photo.url" [alt]="item.reference + ' photo'" />
+              }
+            </div>
+          } @else {
+            <p>No photos were uploaded for this sighting.</p>
+          }
         </article>
 
         <article class="panel">
           <h2>Animal Details</h2>
           <dl>
             <div><dt>Species</dt><dd>{{ item.species }}</dd></div>
-            <div><dt>Count</dt><dd>{{ item.count }}</dd></div>
-            <div><dt>Color</dt><dd>{{ item.color }}</dd></div>
-            <div><dt>Pattern</dt><dd>{{ item.pattern }}</dd></div>
-            <div><dt>Collar</dt><dd>{{ item.collar }}</dd></div>
-            <div><dt>Description</dt><dd>{{ item.description }}</dd></div>
+            <div><dt>Count</dt><dd>{{ item.animalCount }}</dd></div>
+            <div><dt>Color</dt><dd>{{ item.color ?? 'Unknown' }}</dd></div>
+            <div><dt>Pattern</dt><dd>{{ item.pattern ?? 'Unknown' }}</dd></div>
+            <div><dt>Collar</dt><dd>{{ item.collarStatus }}</dd></div>
+            <div><dt>Description</dt><dd>{{ item.description ?? 'No description provided.' }}</dd></div>
           </dl>
         </article>
 
         <article class="location-grid">
           <section class="panel">
-            <h2>Approximate Location</h2>
-            <p>{{ item.location.approximateLabel }}</p>
-            <small>Public radius: {{ item.location.radiusMeters }} meters</small>
+            <h2>Public Approximate Location</h2>
+            <p>{{ item.publicLocation.latitude }}, {{ item.publicLocation.longitude }}</p>
+            <small>Public radius: {{ item.publicLocation.radiusMeters }} meters</small>
           </section>
           <section class="panel restricted">
-            <h2>Authorized Exact-Location Section</h2>
-            <p>{{ item.location.internalLabel }}</p>
-            <small>{{ item.location.accessPolicy }}</small>
+            <h2>Exact Reported Location</h2>
+            <p>{{ item.exactLocation.latitude }}, {{ item.exactLocation.longitude }}</p>
+            <small>Admin only. Never copy into URLs, browser storage, logs, or public map state.</small>
           </section>
         </article>
 
+        @if (item.rejectionReason) {
+          <pr-alert title="Owner-visible rejection reason" tone="warning">
+            {{ item.rejectionReason }}
+          </pr-alert>
+        }
+
         <pr-privacy-banner />
-        <pr-admin-activity-list [items]="item.history" title="Verification History" />
+        <pr-admin-activity-list [items]="item.moderationHistory" title="Moderation History" />
       </div>
 
       <aside class="side-column">
         <pr-alert title="Sensitive data warning" tone="warning">
-          This is a mock-only internal location presentation. Do not put exact coordinates in URLs or expose them to unauthorized users.
+          Exact location is returned only by the authorized Admin detail API and is not part of public map data.
         </pr-alert>
         <article class="panel">
           <h2>Reporter</h2>
           <div class="reporter">
-            <img [src]="item.reporter.avatarUrl" alt="" />
             <div>
-              <b>{{ item.reporter.name }}</b>
-              <span>Trust {{ item.reporter.trustScore }} · {{ item.reporter.reportCount }} reports</span>
+              <b>{{ item.reporter.displayName }}</b>
+              <span>{{ item.reporter.email ?? 'No email available' }}</span>
+              @if (item.reporter.phone) {
+                <span>{{ item.reporter.phone }}</span>
+              }
             </div>
           </div>
         </article>
-        <article class="panel">
-          <h2>Possible Duplicate Summary</h2>
-          <p>{{ item.possibleDuplicateCount }} possible duplicate signals.</p>
-          <button type="button" (click)="openDuplicate()">Open duplicate review</button>
-        </article>
         <pr-report-verification-actions
-          [reportId]="item.id"
-          (approved)="approve(item.id, $event)"
-          (rejected)="reject(item.id, $event)"
-          (duplicate)="openDuplicate()"
-          (rescue)="admin.convertReportToRescue(item.id)"
+          [canVerify]="item.canVerify"
+          [canReject]="item.canReject"
+          [processing]="processing()"
+          [errorMessage]="errorMessage()"
+          (approved)="approve()"
+          (rejected)="reject($event)"
         />
       </aside>
     </section>
