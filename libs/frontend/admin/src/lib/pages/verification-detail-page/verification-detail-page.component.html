@@ -1,5 +1,5 @@
 <section class="detail-page">
-  <a class="back-link" routerLink="/admin/verification">Back to verification queue</a>
+  <a class="back-link" routerLink="/verification">Back to verification queue</a>
 
   @if (uiState() === 'loading') {
     <section class="panel"><pr-loading-skeleton [rows]="12" /></section>
@@ -123,7 +123,7 @@
             {{ rescueProcessing() ? 'Creating...' : 'Create rescue case' }}
           </button>
           @if (createdRescueCase(); as rescueCase) {
-            <a [routerLink]="['/admin/rescue-cases', rescueCase.id]">
+            <a [routerLink]="['/rescue-cases', rescueCase.id]">
               Open {{ rescueCase.caseNumber }}
             </a>
           }

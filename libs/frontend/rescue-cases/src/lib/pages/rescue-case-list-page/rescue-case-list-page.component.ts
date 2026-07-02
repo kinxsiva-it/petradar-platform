@@ -98,7 +98,7 @@ export class RescueCaseListPageComponent {
     );
   });
   readonly detailBaseRoute = computed(() =>
-    this.router.url.startsWith('/admin/') ? '/admin/rescue-cases' : '/volunteer/rescue-cases',
+    this.router.url.startsWith('/volunteer/') ? '/volunteer/rescue-cases' : '/rescue-cases',
   );
 
   constructor() {

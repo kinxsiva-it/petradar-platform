@@ -10,7 +10,6 @@ import {
   LucideMenu,
   LucidePawPrint,
   LucidePlus,
-  LucideShieldCheck,
   LucideX,
 } from '@lucide/angular';
 
@@ -23,7 +22,7 @@ interface NavItem {
   matchExact?: boolean;
   roles?: readonly UserRole[];
   route: string;
-  kind: 'admin' | 'map' | 'matches' | 'report' | 'rescue' | 'lost-pets';
+  kind: 'map' | 'matches' | 'report' | 'rescue' | 'lost-pets';
 }
 
 const mainNavItems: NavItem[] = [
@@ -37,13 +36,6 @@ const mainNavItems: NavItem[] = [
     label: 'Rescue',
     roles: ['VOLUNTEER', 'ADMIN'],
     route: '/volunteer/rescue-cases',
-  },
-  {
-    authenticatedOnly: true,
-    kind: 'admin',
-    label: 'Admin',
-    roles: ['ADMIN'],
-    route: '/admin/verification',
   },
 ];
 
@@ -62,7 +54,6 @@ const mainNavItems: NavItem[] = [
     LucideMenu,
     LucidePawPrint,
     LucidePlus,
-    LucideShieldCheck,
     LucideX,
   ],
   templateUrl: './pet-radar-navbar.component.html',

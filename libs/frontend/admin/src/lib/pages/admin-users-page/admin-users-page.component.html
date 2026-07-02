@@ -59,7 +59,7 @@
               <p>{{ user.email }}</p>
               <pr-status-badge [label]="user.accountStatus" [tone]="user.accountStatus === 'ACTIVE' ? 'success' : 'warning'" />
             </div>
-            <a [routerLink]="['/admin/users', user.id]">Open detail</a>
+            <a [routerLink]="['/users', user.id]">Open detail</a>
           </article>
         }
       </section>

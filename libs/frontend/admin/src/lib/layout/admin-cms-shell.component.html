@@ -1,0 +1,55 @@
+<section class="admin-cms-shell" [class.sidebar-open]="sidebarOpen()">
+  <button
+    type="button"
+    class="cms-backdrop"
+    aria-label="Close admin navigation"
+    (click)="closeSidebar()"
+  ></button>
+
+  <aside class="cms-sidebar" aria-label="PetRadar Admin CMS navigation">
+    <a routerLink="/" class="cms-brand" (click)="closeSidebar()">
+      <span aria-hidden="true">PR</span>
+      <strong>PetRadar CMS</strong>
+      <small>Admin operations</small>
+    </a>
+
+    <nav>
+      @for (item of navItems; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.exact === true }"
+          (click)="closeSidebar()"
+        >
+          <span aria-hidden="true">{{ item.marker }}</span>
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+  </aside>
+
+  <section class="cms-main">
+    <header class="cms-topbar">
+      <button
+        type="button"
+        class="menu-button"
+        [attr.aria-expanded]="sidebarOpen()"
+        aria-label="Toggle admin navigation"
+        (click)="sidebarOpen.set(!sidebarOpen())"
+      >
+        Menu
+      </button>
+      <div>
+        <strong>{{ displayName() }}</strong>
+        <span>{{ roleLabel() }}</span>
+      </div>
+      <nav aria-label="Admin account actions">
+        <button type="button" (click)="signOut()">Sign out</button>
+      </nav>
+    </header>
+
+    <main class="cms-content">
+      <router-outlet></router-outlet>
+    </main>
+  </section>
+</section>

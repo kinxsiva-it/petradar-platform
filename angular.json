@@ -52,6 +52,58 @@
           }
         }
       }
+    },
+    "admin": {
+      "projectType": "application",
+      "root": "apps/admin",
+      "sourceRoot": "apps/admin/src",
+      "prefix": "pr",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "apps/admin/public",
+                "output": "/"
+              }
+            ],
+            "browser": "apps/admin/src/main.ts",
+            "index": "apps/admin/src/index.html",
+            "outputPath": "dist/apps/admin",
+            "polyfills": ["zone.js"],
+            "styles": ["apps/web/src/styles.css"],
+            "tsConfig": "apps/admin/tsconfig.app.json"
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "600kB",
+                  "maximumError": "1MB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "admin:build:development",
+            "host": "127.0.0.1",
+            "proxyConfig": "apps/admin/proxy.conf.json",
+            "port": 4201
+          }
+        }
+      }
     }
   },
   "cli": {

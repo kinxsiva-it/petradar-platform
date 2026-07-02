@@ -33,7 +33,7 @@ import type { AdminModerationQueueItem } from '../../data-access/admin-sightings
           Queue cards contain public-safe summary data. Exact reported location is available only on the Admin detail response.
         </pr-alert>
         <div class="actions">
-          <a [routerLink]="['/admin/verification', item.id]">Open full detail</a>
+          <a [routerLink]="['/verification', item.id]">Open full detail</a>
           <button type="button" (click)="approved.emit(item.id)">Verify</button>
           <button type="button" class="danger" (click)="rejected.emit(item.id)">Reject</button>
         </div>

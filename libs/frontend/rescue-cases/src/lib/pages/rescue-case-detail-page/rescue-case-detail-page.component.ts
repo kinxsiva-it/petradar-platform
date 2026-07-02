@@ -64,7 +64,7 @@ export class RescueCaseDetailPageComponent {
   readonly statusNote = signal('');
   readonly isAdmin = computed(() => this.auth.isAdmin());
   readonly listRoute = computed(() =>
-    this.router.url.startsWith('/admin/') ? '/admin/rescue-cases' : '/volunteer/rescue-cases',
+    this.router.url.startsWith('/volunteer/') ? '/volunteer/rescue-cases' : '/rescue-cases',
   );
 
   constructor() {

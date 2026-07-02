@@ -30,7 +30,7 @@ import type { AdminModerationQueueItem } from '../../data-access/admin-sightings
         <tbody>
           @for (item of reports(); track item.id) {
             <tr>
-              <td><a [routerLink]="['/admin/verification', item.id]">{{ item.reference }}</a></td>
+              <td><a [routerLink]="['/verification', item.id]">{{ item.reference }}</a></td>
               <td>
                 @if (item.thumbnailPhoto) {
                   <img [src]="item.thumbnailPhoto.url" [alt]="item.reference" />

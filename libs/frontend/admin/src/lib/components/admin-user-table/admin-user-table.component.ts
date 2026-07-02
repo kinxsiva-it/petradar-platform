@@ -31,7 +31,7 @@ import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
               <td><pr-status-badge [label]="user.accountStatus" [tone]="user.accountStatus === 'ACTIVE' ? 'success' : 'warning'" /></td>
               <td><pr-status-badge [label]="user.volunteerVerification" tone="match" /></td>
               <td>{{ user.reportCount }}</td>
-              <td><a [routerLink]="['/admin/users', user.id]">Open</a></td>
+              <td><a [routerLink]="['/users', user.id]">Open</a></td>
             </tr>
           }
         </tbody>
