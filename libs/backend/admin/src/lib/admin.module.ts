@@ -5,11 +5,12 @@ import { BackendAuthModule } from '@petradar/backend/auth';
 import { PrismaModule } from '@petradar/backend/shared';
 import { SightingsModule } from '@petradar/backend/sightings';
 
+import { AdminReportsController } from './admin-reports.controller.js';
 import { AdminSightingsController } from './admin-sightings.controller.js';
 import { AdminSightingsService } from './admin-sightings.service.js';
 
 @Module({
-  controllers: [AdminSightingsController],
+  controllers: [AdminReportsController, AdminSightingsController],
   imports: [AuditModule, BackendAuthModule, PrismaModule, SightingsModule],
   providers: [AdminSightingsService],
 })

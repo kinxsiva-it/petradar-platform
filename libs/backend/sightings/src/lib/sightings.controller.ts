@@ -19,12 +19,20 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { UserRole } from '@prisma/client';
 import type { Request, Response } from 'express';
 
-import { CurrentUser, JwtAuthGuard, type AuthenticatedUser } from '@petradar/backend/auth';
+import {
+  CurrentUser,
+  JwtAuthGuard,
+  Roles,
+  RolesGuard,
+  type AuthenticatedUser,
+} from '@petradar/backend/auth';
 
 import { CreateSightingDto } from './dto/create-sighting.dto.js';
 import { ListSightingsQueryDto } from './dto/list-sightings-query.dto.js';
+import { RejectSightingDto } from './dto/reject-sighting.dto.js';
 import { UpdateSightingDto } from './dto/update-sighting.dto.js';
 import {
   maxSightingPhotoBytes,
@@ -118,6 +126,75 @@ export class SightingsController {
       this.requireUser(user),
       id,
       body,
+      this.contextFromRequest(request),
+    );
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: 'Close an editable owned animal sighting or Admin-managed report.' })
+  close(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request,
+  ): Promise<{ success: true }> {
+    return this.sightings.close(this.requireUser(user), id, this.contextFromRequest(request));
+  }
+
+  @Post(':id/verify')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: 'Verify one animal sighting.' })
+  verify(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request,
+  ): Promise<AuthorizedSightingResponse> {
+    return this.sightings.verify(this.requireUser(user), id, this.contextFromRequest(request));
+  }
+
+  @Post(':id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: 'Reject one animal sighting with a reason.' })
+  reject(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: RejectSightingDto,
+    @Req() request: Request,
+  ): Promise<AuthorizedSightingResponse> {
+    return this.sightings.reject(
+      this.requireUser(user),
+      id,
+      body.reason,
+      this.contextFromRequest(request),
+    );
+  }
+
+  @Post(':id/convert-to-rescue')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiCreatedResponse({ description: 'Convert one animal sighting into a rescue case.' })
+  convertToRescue(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() request: Request,
+  ): Promise<{
+    id: string;
+    caseNumber: string;
+    sightingId: string;
+    severity: string;
+    status: string;
+    summary: string;
+    createdAt: string;
+  }> {
+    return this.sightings.convertToRescue(
+      this.requireUser(user),
+      id,
       this.contextFromRequest(request),
     );
   }

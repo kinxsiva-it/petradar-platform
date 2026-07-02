@@ -1,12 +1,21 @@
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { PhotoStorageProvider, Prisma, UserRole } from '@prisma/client';
+import {
+  AnimalCondition,
+  PhotoStorageProvider,
+  Prisma,
+  SightingLifecycleStatus,
+  UrgencyLevel,
+  UserRole,
+  VerificationStatus,
+} from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
 import { AuditService } from '@petradar/backend/audit';
@@ -28,7 +37,7 @@ import {
   type PublicSightingResponse,
   type SightingPhotoResponse,
 } from './sighting-response.mapper.js';
-import { isOwnerEditableSighting } from './sighting-policies.js';
+import { canModerateSighting, isOwnerEditableSighting } from './sighting-policies.js';
 import {
   SightingsRepository,
   type CreateSightingPhotoInput,
@@ -254,6 +263,191 @@ export class SightingsService {
     });
   }
 
+  async close(
+    user: AuthenticatedUser,
+    id: string,
+    context: RequestContext = {},
+  ): Promise<{ success: true }> {
+    const current = await this.sightings.findById(id, {
+      includeExactLocation: false,
+    });
+    if (!current) {
+      throw new NotFoundException('Sighting not found.');
+    }
+
+    const isAdmin = user.roles.includes(UserRole.ADMIN);
+    if (!isAdmin && current.reporterId !== user.id) {
+      await this.audit.create({
+        action: 'SIGHTING_DELETE_DENIED',
+        actorId: user.id,
+        entityId: id,
+        entityType: 'AnimalSighting',
+        metadata: { actorId: user.id, reason: 'not_owner', sightingId: id },
+        requestId: context.requestId,
+      });
+      throw new ForbiddenException('Sighting access denied.');
+    }
+
+    if (!isAdmin && !isOwnerEditableSighting(current)) {
+      throw new ForbiddenException('This sighting can no longer be deleted.');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`
+        UPDATE "animal_sightings"
+        SET
+          "lifecycle_status" = CAST(${SightingLifecycleStatus.CLOSED} AS "SightingLifecycleStatus"),
+          "updated_at" = CURRENT_TIMESTAMP
+        WHERE "id" = CAST(${id} AS uuid)
+      `;
+
+      await this.audit.createWithClient(tx, {
+        action: 'SIGHTING_CLOSED',
+        actorId: user.id,
+        entityId: id,
+        entityType: 'AnimalSighting',
+        metadata: { actorId: user.id, closedByRole: isAdmin ? 'ADMIN' : 'OWNER', sightingId: id },
+        requestId: context.requestId,
+      });
+    });
+
+    return { success: true };
+  }
+
+  async verify(
+    admin: AuthenticatedUser,
+    id: string,
+    context: RequestContext = {},
+  ): Promise<AuthorizedSightingResponse> {
+    return this.moderate(admin, id, VerificationStatus.VERIFIED, null, context);
+  }
+
+  async reject(
+    admin: AuthenticatedUser,
+    id: string,
+    reason: string,
+    context: RequestContext = {},
+  ): Promise<AuthorizedSightingResponse> {
+    return this.moderate(admin, id, VerificationStatus.REJECTED, cleanReason(reason), context);
+  }
+
+  async convertToRescue(
+    admin: AuthenticatedUser,
+    id: string,
+    context: RequestContext = {},
+  ): Promise<{
+    id: string;
+    caseNumber: string;
+    sightingId: string;
+    severity: string;
+    status: string;
+    summary: string;
+    createdAt: string;
+  }> {
+    const current = await this.sightings.findById(id, {
+      includeExactLocation: false,
+    });
+    if (!current) {
+      throw new NotFoundException('Sighting not found.');
+    }
+
+    if (current.lifecycleStatus === SightingLifecycleStatus.CLOSED) {
+      throw new ConflictException('Closed sightings cannot be converted to rescue cases.');
+    }
+
+    const severity = severityFor(current.urgency);
+    const summary = rescueSummaryFor(current);
+
+    const created = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.$queryRaw<RescueCaseRow[]>`
+        SELECT "id"::text AS "id"
+        FROM "rescue_cases"
+        WHERE "sighting_id" = CAST(${id} AS uuid)
+          AND "status" NOT IN (
+            CAST(${'RESOLVED'} AS "RescueCaseStatus"),
+            CAST(${'CLOSED'} AS "RescueCaseStatus")
+          )
+        LIMIT 1
+      `;
+      if (existing.length > 0) {
+        throw new ConflictException('An active rescue case already exists for this sighting.');
+      }
+
+      const rows = await tx.$queryRaw<RescueCaseRow[]>`
+        INSERT INTO "rescue_cases" (
+          "case_number",
+          "sighting_id",
+          "severity",
+          "status",
+          "summary",
+          "created_by_id"
+        )
+        VALUES (
+          ${caseNumberFor(id)},
+          CAST(${id} AS uuid),
+          CAST(${severity} AS "RescueSeverity"),
+          CAST(${'NEEDS_RESCUE'} AS "RescueCaseStatus"),
+          ${summary},
+          CAST(${admin.id} AS uuid)
+        )
+        RETURNING
+          "id"::text AS "id",
+          "case_number" AS "caseNumber",
+          "sighting_id"::text AS "sightingId",
+          "severity"::text AS "severity",
+          "status"::text AS "status",
+          "summary" AS "summary",
+          "created_at" AS "createdAt"
+      `;
+      const row = rows[0];
+      if (!row) {
+        throw new Error('Rescue case could not be created.');
+      }
+
+      await tx.$executeRaw`
+        UPDATE "animal_sightings"
+        SET
+          "lifecycle_status" = CAST(${SightingLifecycleStatus.NEEDS_RESCUE} AS "SightingLifecycleStatus"),
+          "condition" = CAST(${AnimalCondition.NEEDS_RESCUE} AS "AnimalCondition"),
+          "updated_at" = CURRENT_TIMESTAMP
+        WHERE "id" = CAST(${id} AS uuid)
+      `;
+
+      await tx.$executeRaw`
+        INSERT INTO "rescue_case_timeline_events" (
+          "rescue_case_id",
+          "event_type",
+          "new_status",
+          "actor_id",
+          "note"
+        )
+        VALUES (
+          CAST(${row.id} AS uuid),
+          CAST(${'CREATED'} AS "RescueTimelineEventType"),
+          CAST(${'NEEDS_RESCUE'} AS "RescueCaseStatus"),
+          CAST(${admin.id} AS uuid),
+          ${'Converted from animal sighting.'}
+        )
+      `;
+
+      await this.audit.createWithClient(tx, {
+        action: 'SIGHTING_CONVERTED_TO_RESCUE',
+        actorId: admin.id,
+        entityId: id,
+        entityType: 'AnimalSighting',
+        metadata: { actorId: admin.id, rescueCaseId: row.id, sightingId: id },
+        requestId: context.requestId,
+      });
+
+      return row;
+    });
+
+    return {
+      ...created,
+      createdAt: created.createdAt.toISOString(),
+    };
+  }
+
   async uploadPhotos(
     user: AuthenticatedUser,
     id: string,
@@ -443,6 +637,95 @@ export class SightingsService {
     throw new ForbiddenException('Sighting access denied.');
   }
 
+  private async moderate(
+    admin: AuthenticatedUser,
+    id: string,
+    nextStatus: VerificationStatus,
+    rejectionReason: string | null,
+    context: RequestContext,
+  ): Promise<AuthorizedSightingResponse> {
+    if (!admin.roles.includes(UserRole.ADMIN)) {
+      throw new ForbiddenException('Admin access required.');
+    }
+
+    const current = await this.sightings.findById(id, { includeExactLocation: true });
+    if (!current) {
+      throw new NotFoundException('Sighting not found.');
+    }
+
+    const action = nextStatus === VerificationStatus.VERIFIED ? 'verify' : 'reject';
+    const policy = canModerateSighting(current, action);
+    if (!policy.allowed) {
+      await this.audit.create({
+        action: 'SIGHTING_MODERATION_DENIED',
+        actorId: admin.id,
+        entityId: id,
+        entityType: 'AnimalSighting',
+        metadata: {
+          actorId: admin.id,
+          attemptedAction: action,
+          reason: policy.reason,
+          sightingId: id,
+        },
+        requestId: context.requestId,
+      });
+      throw new ConflictException(policy.reason ?? 'Sighting cannot be moderated.');
+    }
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const rows = await tx.$queryRaw<{ id: string }[]>`
+        UPDATE "animal_sightings"
+        SET
+          "verification_status" = CAST(${nextStatus} AS "VerificationStatus"),
+          "updated_at" = CURRENT_TIMESTAMP
+        WHERE
+          "id" = CAST(${id} AS uuid)
+          AND "verification_status" IN (
+            CAST(${VerificationStatus.PENDING} AS "VerificationStatus"),
+            CAST(${VerificationStatus.NEEDS_REVIEW} AS "VerificationStatus")
+          )
+          AND "lifecycle_status" = CAST(${SightingLifecycleStatus.SIGHTING} AS "SightingLifecycleStatus")
+        RETURNING "id"::text AS "id"
+      `;
+
+      if (rows.length === 0) {
+        return null;
+      }
+
+      await this.audit.createWithClient(tx, {
+        action:
+          nextStatus === VerificationStatus.VERIFIED ? 'SIGHTING_VERIFIED' : 'SIGHTING_REJECTED',
+        actorId: admin.id,
+        entityId: id,
+        entityType: 'AnimalSighting',
+        metadata: {
+          actorId: admin.id,
+          newVerificationStatus: nextStatus,
+          previousVerificationStatus: current.verificationStatus,
+          ...(rejectionReason ? { rejectionReason } : {}),
+          sightingId: id,
+        },
+        requestId: context.requestId,
+      });
+
+      return rows[0];
+    });
+
+    if (!updated) {
+      throw new ConflictException('This sighting was already moderated.');
+    }
+
+    const sighting = await this.sightings.findById(id, { includeExactLocation: true });
+    if (!sighting) {
+      throw new NotFoundException('Sighting not found.');
+    }
+
+    const [withRejectionReason] = await this.attachOwnerRejectionReasons([sighting]);
+    return toAuthorizedSightingResponse(toResponseSource(withRejectionReason ?? sighting), {
+      includeExactLocation: true,
+    });
+  }
+
   private async cleanupStoredPhotos(
     photos: readonly CreateSightingPhotoInput[],
     actorId: string,
@@ -560,6 +843,41 @@ function parseDate(value: string): Date {
     throw new BadRequestException('Invalid date.');
   }
   return date;
+}
+
+interface RescueCaseRow {
+  id: string;
+  caseNumber: string;
+  sightingId: string;
+  severity: string;
+  status: string;
+  summary: string;
+  createdAt: Date;
+}
+
+function severityFor(urgency: UrgencyLevel): 'LOW' | 'MEDIUM' | 'HIGH' | 'EMERGENCY' {
+  if (urgency === UrgencyLevel.EMERGENCY) return 'EMERGENCY';
+  if (urgency === UrgencyLevel.HIGH) return 'HIGH';
+  if (urgency === UrgencyLevel.MEDIUM) return 'MEDIUM';
+  return 'LOW';
+}
+
+function rescueSummaryFor(sighting: SightingRecord): string {
+  const parts = [
+    sighting.species.toLowerCase(),
+    sighting.condition.toLowerCase().replaceAll('_', ' '),
+    sighting.description,
+  ].filter(Boolean);
+
+  return parts.join(' - ').slice(0, 500);
+}
+
+function caseNumberFor(sightingId: string): string {
+  return `RES-${sightingId.slice(0, 8).toUpperCase()}`;
+}
+
+function cleanReason(reason: string): string {
+  return reason.trim().replace(/\s+/g, ' ');
 }
 
 function changedSafeFields(

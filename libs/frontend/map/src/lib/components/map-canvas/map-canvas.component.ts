@@ -11,16 +11,17 @@ import {
 
 import type { PublicSighting } from '@petradar/frontend/mock-data';
 
-import { Google3DMapRendererComponent } from './google-3d-map-renderer.component';
-import { GoogleMapRendererComponent } from './google-map-renderer.component';
-import { LeafletMapRendererComponent } from './leaflet-map-renderer.component';
-import { MapProviderStateService } from '../../services/map-provider-state.service';
+import { Google3DMapRendererComponent } from './google-3d-map-renderer.component.js';
+import { GoogleMapRendererComponent } from './google-map-renderer.component.js';
+import { LeafletMapRendererComponent } from './leaflet-map-renderer.component.js';
+import { MapProviderStateService } from '../../services/map-provider-state.service.js';
+
 import {
   defaultMapViewport,
   toMapMarkers,
   type MapProvider,
   type MapViewport,
-} from './map-marker-view.model';
+} from './map-marker-view.model.js';
 
 @Component({
   selector: 'pr-map-canvas',
@@ -36,13 +37,22 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MapCanvasComponent {
-  readonly providerState = inject(MapProviderStateService);
-  readonly sightings = input.required<readonly PublicSighting[]>();
+  readonly providerState: MapProviderStateService =
+    inject(MapProviderStateService);
+
+  readonly sightings =
+    input.required<readonly PublicSighting[]>();
+
   readonly selectedId = input<string | null>(null);
   readonly markerSelected = output<string>();
   readonly unavailable = signal(false);
-  readonly viewport = signal<MapViewport>(defaultMapViewport);
-  readonly markers = computed(() => toMapMarkers(this.sightings()));
+
+  readonly viewport =
+    signal<MapViewport>(defaultMapViewport);
+
+  readonly markers = computed(() =>
+    toMapMarkers(this.sightings()),
+  );
 
   selectProvider(provider: MapProvider): void {
     this.unavailable.set(false);
@@ -55,15 +65,8 @@ export class MapCanvasComponent {
 
   handleRendererFailure(provider: MapProvider): void {
     if (provider === 'google') {
-      this.providerState.fallbackToLeaflet('Google Maps could not load. OpenStreetMap is still available.');
-      return;
-    }
-
-    if (provider === 'google3d') {
-      this.providerState.fallbackFromGoogle3d(
-        this.providerState.googleConfigured()
-          ? 'Google 3D is unavailable on this device. Switched to Google Maps.'
-          : 'Google 3D could not load. OpenStreetMap is still available.',
+      this.providerState.fallbackToLeaflet(
+        'Google Maps could not load. OpenStreetMap is still available.',
       );
       return;
     }

@@ -260,6 +260,55 @@ export class AdminSightingsService {
     return this.detail(admin, id, context);
   }
 
+  async merge(
+    admin: AuthenticatedUser,
+    sourceId: string,
+    targetId: string,
+    context: RequestContext = {},
+  ): Promise<{ success: true; sourceSightingId: string; targetSightingId: string }> {
+    if (sourceId === targetId) {
+      throw new ConflictException('Source and target sightings must be different.');
+    }
+
+    const [source, target] = await Promise.all([
+      this.sightings.findById(sourceId, { includeExactLocation: false }),
+      this.sightings.findById(targetId, { includeExactLocation: false }),
+    ]);
+    if (!source || !target) {
+      throw new NotFoundException('Sighting not found.');
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`
+        UPDATE "animal_sightings"
+        SET
+          "verification_status" = CAST(${VerificationStatus.DUPLICATE} AS "VerificationStatus"),
+          "duplicate_of_sighting_id" = CAST(${targetId} AS uuid),
+          "updated_at" = CURRENT_TIMESTAMP
+        WHERE "id" = CAST(${sourceId} AS uuid)
+      `;
+
+      await this.audit.createWithClient(tx, {
+        action: 'SIGHTING_MERGED',
+        actorId: admin.id,
+        entityId: sourceId,
+        entityType: 'AnimalSighting',
+        metadata: {
+          actorId: admin.id,
+          sourceSightingId: sourceId,
+          targetSightingId: targetId,
+        },
+        requestId: context.requestId,
+      });
+    });
+
+    return {
+      sourceSightingId: sourceId,
+      success: true,
+      targetSightingId: targetId,
+    };
+  }
+
   private async transition(
     admin: AuthenticatedUser,
     id: string,

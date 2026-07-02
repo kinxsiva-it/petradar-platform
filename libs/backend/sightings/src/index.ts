@@ -1,5 +1,6 @@
 export * from './lib/dto/create-sighting.dto.js';
 export * from './lib/dto/list-sightings-query.dto.js';
+export * from './lib/dto/reject-sighting.dto.js';
 export * from './lib/dto/update-sighting.dto.js';
 export * from './lib/photos/local-sighting-photo-storage.js';
 export * from './lib/photos/sighting-photo-storage.js';
