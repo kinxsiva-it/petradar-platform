@@ -1,14 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import {
-  RescueCasesApiService,
-  type RescueCaseApiResponse,
-  type RescueSeverity,
-} from '@petradar/frontend/rescue-cases';
 import { AlertComponent, EmptyStateComponent, LoadingSkeletonComponent, PrivacyBannerComponent, StatusBadgeComponent } from '@petradar/frontend/shared-ui';
 
 import { AdminActivityListComponent } from '../../components/admin-activity-list/admin-activity-list.component.js';
@@ -40,8 +35,8 @@ type DetailState = 'loading' | 'ready' | 'error' | 'not-found';
 })
 export class VerificationDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly adminApi = inject(AdminSightingsApiService);
-  private readonly rescueCasesApi = inject(RescueCasesApiService);
   readonly id = this.route.snapshot.paramMap.get('id');
   readonly report = signal<AdminModerationDetail | null>(null);
   readonly uiState = signal<DetailState>('loading');
@@ -49,9 +44,8 @@ export class VerificationDetailPageComponent {
   readonly actionMessage = signal('');
   readonly processing = signal(false);
   readonly rescueProcessing = signal(false);
-  readonly rescueSeverity = signal<RescueSeverity>('HIGH');
-  readonly rescueSummary = signal('');
-  readonly createdRescueCase = signal<RescueCaseApiResponse | null>(null);
+  readonly mergeProcessing = signal(false);
+  readonly mergeTargetSightingId = signal('');
 
   constructor() {
     void this.loadDetail();
@@ -117,32 +111,52 @@ export class VerificationDetailPageComponent {
     if (!report || this.rescueProcessing()) {
       return;
     }
+    if (!window.confirm('Convert this sighting into a rescue case?')) {
+      return;
+    }
 
     this.rescueProcessing.set(true);
     this.errorMessage.set('');
     this.actionMessage.set('');
-    this.createdRescueCase.set(null);
     try {
-      const rescueCase = await firstValueFrom(
-        this.rescueCasesApi.create({
-          severity: this.rescueSeverity(),
-          sightingId: report.id,
-          summary: this.rescueSummary().trim() || rescueSummaryFor(report),
-        }),
-      );
-      this.createdRescueCase.set(rescueCase);
+      const rescueCase = await firstValueFrom(this.adminApi.convertToRescue(report.id));
       this.actionMessage.set('Rescue case created.');
+      await this.router.navigate(['/rescue-cases', rescueCase.id]);
     } catch (error) {
       this.errorMessage.set(toUserMessage(error));
     } finally {
       this.rescueProcessing.set(false);
     }
   }
-}
 
-function rescueSummaryFor(report: AdminModerationDetail): string {
-  const color = report.color ? `${report.color} ` : '';
-  return `${report.urgency} ${color}${report.species.toLowerCase()} sighting needs rescue review. ${report.description ?? 'No additional description was provided.'}`;
+  async mergeDuplicate(): Promise<void> {
+    const report = this.report();
+    const targetId = this.mergeTargetSightingId().trim();
+    if (!report || !targetId || this.mergeProcessing()) {
+      return;
+    }
+    if (targetId === report.id) {
+      this.errorMessage.set('Target sighting must be different from the source sighting.');
+      return;
+    }
+    if (!window.confirm('Mark this sighting as a duplicate of the target sighting ID?')) {
+      return;
+    }
+
+    this.mergeProcessing.set(true);
+    this.errorMessage.set('');
+    this.actionMessage.set('');
+    try {
+      await firstValueFrom(this.adminApi.mergeSighting(report.id, targetId));
+      this.report.set(await firstValueFrom(this.adminApi.getModerationDetail(report.id)));
+      this.mergeTargetSightingId.set('');
+      this.actionMessage.set('Sighting marked as duplicate.');
+    } catch (error) {
+      this.errorMessage.set(toUserMessage(error));
+    } finally {
+      this.mergeProcessing.set(false);
+    }
+  }
 }
 
 function toUserMessage(error: unknown): string {

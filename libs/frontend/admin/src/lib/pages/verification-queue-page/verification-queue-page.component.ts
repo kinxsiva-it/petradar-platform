@@ -117,7 +117,7 @@ export class VerificationQueuePageComponent {
     if (!window.confirm('Verify this animal sighting?')) {
       return;
     }
-    await this.runModeration(() => this.adminApi.verifySighting(id), 'Sighting verified.');
+    await this.runModeration(() => this.adminApi.approveReport(id), 'Sighting verified.');
   }
 
   async reject(id: string): Promise<void> {
@@ -126,7 +126,7 @@ export class VerificationQueuePageComponent {
       return;
     }
     await this.runModeration(
-      () => this.adminApi.rejectSighting(id, reason.trim()),
+      () => this.adminApi.rejectReport(id, reason.trim()),
       'Sighting rejected.',
     );
   }

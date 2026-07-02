@@ -39,13 +39,6 @@ export const ADMIN_ROUTES: Routes = [
           ),
       },
       {
-        path: 'duplicates/:id',
-        loadComponent: () =>
-          import('./pages/duplicate-review-page/duplicate-review-page.component.js').then(
-            (module) => module.DuplicateReviewPageComponent,
-          ),
-      },
-      {
         path: 'rescue-cases',
         loadComponent: () =>
           import('@petradar/frontend/rescue-cases').then(
@@ -68,14 +61,9 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'volunteers',
-        data: {
-          description:
-            'Volunteer directory and verification management will be implemented in a focused CMS pass.',
-          title: 'Volunteer Management',
-        },
         loadComponent: () =>
-          import('./pages/admin-cms-placeholder-page/admin-cms-placeholder-page.component.js').then(
-            (module) => module.AdminCmsPlaceholderPageComponent,
+          import('./pages/admin-volunteers-page/admin-volunteers-page.component.js').then(
+            (module) => module.AdminVolunteersPageComponent,
           ),
       },
       {
@@ -92,14 +80,9 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'audit-logs',
-        data: {
-          description:
-            'Audit log browsing will be implemented after the CMS shell and route structure are established.',
-          title: 'Audit Logs',
-        },
         loadComponent: () =>
-          import('./pages/admin-cms-placeholder-page/admin-cms-placeholder-page.component.js').then(
-            (module) => module.AdminCmsPlaceholderPageComponent,
+          import('./pages/admin-audit-logs-page/admin-audit-logs-page.component.js').then(
+            (module) => module.AdminAuditLogsPageComponent,
           ),
       },
       {

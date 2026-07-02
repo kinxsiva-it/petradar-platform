@@ -2,6 +2,7 @@ export {};
 export * from './lib/data-access/rescue-case-ui.mapper.js';
 export * from './lib/data-access/rescue-cases-api.models.js';
 export * from './lib/data-access/rescue-cases-api.service.js';
+export * from './lib/data-access/rescue-volunteers-api.service.js';
 export * from './lib/rescue-cases.routes.js';
 export * from './lib/components/rescue-case-card/rescue-case-card.component.js';
 export * from './lib/components/rescue-case-timeline/rescue-case-timeline.component.js';

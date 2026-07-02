@@ -1,6 +1,24 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, OnDestroy, inject, input, output } from '@angular/core';
 
-import type { HeatmapPointAggregate } from '@petradar/frontend/mock-data';
+import type { AnalyticsHotspotPoint } from '../../data-access/analytics-api.models.js';
+
+interface LeafletCircle {
+  addTo(map: LeafletMap): LeafletCircle;
+  bindPopup(content: string): LeafletCircle;
+  on(event: 'click', handler: () => void): void;
+  remove(): void;
+}
+
+interface LeafletMap {
+  remove(): void;
+  setView(center: [number, number], zoom: number): LeafletMap;
+}
+
+interface LeafletModule {
+  circle(center: [number, number], options: Record<string, number | string>): LeafletCircle;
+  map(host: Element): LeafletMap;
+  tileLayer(url: string, options: { attribution: string; maxZoom: number }): { addTo(map: LeafletMap): void };
+}
 
 @Component({
   selector: 'pr-heatmap-map',
@@ -33,15 +51,22 @@ import type { HeatmapPointAggregate } from '@petradar/frontend/mock-data';
 })
 export class HeatmapMapComponent implements AfterViewInit, OnDestroy {
   private readonly element = inject(ElementRef<HTMLElement>);
-  private leaflet: any;
-  private map: any;
-  private layers: any[] = [];
-  readonly points = input.required<HeatmapPointAggregate[]>();
-  readonly selected = output<HeatmapPointAggregate>();
+  private leaflet: LeafletModule | null = null;
+  private map: LeafletMap | null = null;
+  private layers: LeafletCircle[] = [];
+  readonly points = input.required<AnalyticsHotspotPoint[]>();
+  readonly selected = output<AnalyticsHotspotPoint>();
 
   async ngAfterViewInit(): Promise<void> {
-    this.leaflet = await import('leaflet');
     const host = this.element.nativeElement.querySelector('.heatmap-host');
+    if (!host) {
+      return;
+    }
+    const leafletModule: unknown = await import('leaflet');
+    if (!isLeafletModule(leafletModule)) {
+      return;
+    }
+    this.leaflet = leafletModule;
     this.map = this.leaflet.map(host).setView([13.782, 100.565], 12);
     this.leaflet
       .tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -62,19 +87,32 @@ export class HeatmapMapComponent implements AfterViewInit, OnDestroy {
     }
     this.layers.forEach((layer) => layer.remove());
     this.layers = this.points().map((point) => {
-      const color = point.severity === 'VERY_HIGH' ? '#ef4444' : point.severity === 'HIGH' ? '#f59e0b' : '#0f766e';
+      const color = point.weight >= 12 ? '#ef4444' : point.weight >= 6 ? '#f59e0b' : '#0f766e';
       const circle = this.leaflet
-        .circle([point.lat, point.lng], {
+        .circle([point.latitude, point.longitude], {
           color,
           fillColor: color,
-          fillOpacity: Math.min(0.18 + point.densityScore / 180, 0.68),
-          radius: 260 + point.densityScore * 8,
+          fillOpacity: Math.min(0.18 + point.weight / 80, 0.68),
+          radius: 260 + point.weight * 8,
           weight: 2,
         })
         .addTo(this.map)
-        .bindPopup(`${point.area}: ${point.reportCount} aggregated reports`);
+        .bindPopup(`${point.latitude}, ${point.longitude}: ${point.count} aggregated reports`);
       circle.on('click', () => this.selected.emit(point));
       return circle;
     });
   }
+}
+
+function isLeafletModule(value: unknown): value is LeafletModule {
+  return (
+    isRecord(value) &&
+    typeof value['circle'] === 'function' &&
+    typeof value['map'] === 'function' &&
+    typeof value['tileLayer'] === 'function'
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }

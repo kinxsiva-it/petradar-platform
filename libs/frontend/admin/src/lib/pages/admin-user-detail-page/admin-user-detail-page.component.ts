@@ -1,54 +1,65 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 
-import { AdminWorkspaceDataSource, type AdminAccountStatus, type AdminUserRole, type VolunteerVerificationState } from '@petradar/frontend/mock-data';
-import { EmptyStateComponent, LoadingSkeletonComponent, StatusBadgeComponent } from '@petradar/frontend/shared-ui';
+import { AlertComponent, EmptyStateComponent, LoadingSkeletonComponent, StatusBadgeComponent } from '@petradar/frontend/shared-ui';
 
-import { AccountStatusControlComponent } from '../../components/account-status-control/account-status-control.component.js';
-import { AdminActivityListComponent } from '../../components/admin-activity-list/admin-activity-list.component.js';
-import { RoleEditorComponent } from '../../components/role-editor/role-editor.component.js';
+import type { AdminUserSummary } from '../../data-access/admin-users-api.models.js';
+import { AdminUsersApiService } from '../../data-access/admin-users-api.service.js';
+
+type DetailState = 'loading' | 'ready' | 'error' | 'not-found';
 
 @Component({
   selector: 'pr-admin-user-detail-page',
   standalone: true,
-  imports: [
-    AccountStatusControlComponent,
-    AdminActivityListComponent,
-    EmptyStateComponent,
-    LoadingSkeletonComponent,
-    RoleEditorComponent,
-    RouterLink,
-    StatusBadgeComponent,
-  ],
+  imports: [AlertComponent, EmptyStateComponent, LoadingSkeletonComponent, RouterLink, StatusBadgeComponent],
   styleUrl: './admin-user-detail-page.component.css',
   templateUrl: './admin-user-detail-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminUserDetailPageComponent {
-  private readonly router = inject(Router);
-  readonly admin = inject(AdminWorkspaceDataSource);
-  readonly id = this.router.url.split('/').pop()?.split('?')[0] ?? null;
-  readonly user = computed(() => this.admin.findUser(this.id));
-  readonly uiState = signal(new URLSearchParams(window.location.search).get('uiState') ?? 'ready');
+  private readonly route = inject(ActivatedRoute);
+  private readonly usersApi = inject(AdminUsersApiService);
+  readonly id = this.route.snapshot.paramMap.get('id');
+  readonly user = signal<AdminUserSummary | null>(null);
+  readonly uiState = signal<DetailState>('loading');
+  readonly errorMessage = signal('');
 
-  changeRole(payload: { role: AdminUserRole; enabled: boolean }): void {
-    const user = this.user();
-    if (user && window.confirm(`Confirm mock role change: ${payload.role}`)) {
-      this.admin.setUserRole(user.id, payload.role, payload.enabled);
-    }
+  constructor() {
+    void this.loadUser();
   }
 
-  changeAccount(status: AdminAccountStatus): void {
-    const user = this.user();
-    if (user && window.confirm(`Confirm mock account status change to ${status}`)) {
-      this.admin.setAccountStatus(user.id, status);
+  async loadUser(): Promise<void> {
+    if (!this.id) {
+      this.uiState.set('not-found');
+      return;
     }
-  }
 
-  changeVolunteer(state: VolunteerVerificationState): void {
-    const user = this.user();
-    if (user && window.confirm(`Confirm mock volunteer verification change to ${state}`)) {
-      this.admin.setVolunteerVerification(user.id, state);
+    this.uiState.set('loading');
+    this.errorMessage.set('');
+    try {
+      this.user.set(await firstValueFrom(this.usersApi.detail(this.id)));
+      this.uiState.set('ready');
+    } catch (error) {
+      this.errorMessage.set(toUserMessage(error));
+      this.uiState.set(error instanceof HttpErrorResponse && error.status === 404 ? 'not-found' : 'error');
     }
   }
+}
+
+function toUserMessage(error: unknown): string {
+  if (!(error instanceof HttpErrorResponse)) {
+    return 'User detail could not be loaded.';
+  }
+  if (error.status === 0) {
+    return 'The PetRadar API is unavailable. User detail could not be loaded.';
+  }
+  if (error.status === 403) {
+    return 'You do not have permission to view this user.';
+  }
+  if (error.status === 404) {
+    return 'User not found.';
+  }
+  return 'User detail could not be loaded.';
 }

@@ -8,6 +8,8 @@ import type {
   AdminModerationDetail,
   AdminModerationFilters,
   AdminModerationQueueResponse,
+  ConvertSightingToRescueResponse,
+  MergeSightingResponse,
   RejectSightingRequest,
 } from './admin-sightings-api.models.js';
 
@@ -20,7 +22,7 @@ export class AdminSightingsApiService {
   getModerationQueue(
     filters: AdminModerationFilters = {},
   ): Observable<AdminModerationQueueResponse> {
-    return this.http.get<AdminModerationQueueResponse>(this.basePath, {
+    return this.http.get<AdminModerationQueueResponse>(`${this.apiBasePath}/admin/verification-queue`, {
       params: toHttpParams(filters),
     });
   }
@@ -36,6 +38,35 @@ export class AdminSightingsApiService {
   rejectSighting(id: string, reason: string): Observable<AdminModerationDetail> {
     const request: RejectSightingRequest = { reason };
     return this.http.patch<AdminModerationDetail>(`${this.basePath}/${id}/reject`, request);
+  }
+
+  mergeSighting(sourceId: string, targetSightingId: string): Observable<MergeSightingResponse> {
+    return this.http.post<MergeSightingResponse>(
+      `${this.apiBasePath}/admin/reports/${encodeURIComponent(sourceId)}/merge`,
+      { targetSightingId },
+    );
+  }
+
+  approveReport(id: string): Observable<AdminModerationDetail> {
+    return this.http.post<AdminModerationDetail>(
+      `${this.apiBasePath}/admin/reports/${encodeURIComponent(id)}/approve`,
+      {},
+    );
+  }
+
+  rejectReport(id: string, reason: string): Observable<AdminModerationDetail> {
+    const request: RejectSightingRequest = { reason };
+    return this.http.post<AdminModerationDetail>(
+      `${this.apiBasePath}/admin/reports/${encodeURIComponent(id)}/reject`,
+      request,
+    );
+  }
+
+  convertToRescue(id: string): Observable<ConvertSightingToRescueResponse> {
+    return this.http.post<ConvertSightingToRescueResponse>(
+      `${this.apiBasePath}/sightings/${encodeURIComponent(id)}/convert-to-rescue`,
+      {},
+    );
   }
 }
 

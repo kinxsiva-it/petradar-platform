@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import type { AdminChartSegment } from '@petradar/frontend/mock-data';
+import type { AnalyticsChartSegment } from '../../data-access/analytics-api.models.js';
 
 @Component({
   selector: 'pr-distribution-chart',
@@ -75,8 +75,8 @@ import type { AdminChartSegment } from '@petradar/frontend/mock-data';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DistributionChartComponent {
-  readonly description = input('Mock distribution values.');
-  readonly segments = input.required<AdminChartSegment[]>();
+  readonly description = input('API distribution values.');
+  readonly segments = input.required<AnalyticsChartSegment[]>();
   readonly title = input.required<string>();
   readonly total = computed(() => this.segments().reduce((sum, item) => sum + item.value, 0));
   readonly summary = computed(() => `${this.title()} total ${this.total()} across ${this.segments().length} categories.`);

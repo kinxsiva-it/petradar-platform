@@ -1,8 +1,9 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, firstValueFrom, of, Subject, switchMap, tap } from 'rxjs';
 
 import { AuthStateService } from '@petradar/frontend/core';
 import {
@@ -24,6 +25,10 @@ import {
 } from '../../data-access/rescue-case-ui.mapper.js';
 import type { RescueCaseStatus } from '../../data-access/rescue-cases-api.models.js';
 import { RescueCasesApiService } from '../../data-access/rescue-cases-api.service.js';
+import {
+  RescueVolunteersApiService,
+  type RescueVolunteerOption,
+} from '../../data-access/rescue-volunteers-api.service.js';
 
 type DetailState = 'default' | 'error' | 'loading' | 'not-found';
 
@@ -49,9 +54,12 @@ type DetailState = 'default' | 'error' | 'loading' | 'not-found';
 })
 export class RescueCaseDetailPageComponent {
   private readonly auth = inject(AuthStateService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly rescueCasesApi = inject(RescueCasesApiService);
+  private readonly rescueVolunteersApi = inject(RescueVolunteersApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly volunteerSearch = new Subject<string>();
   readonly id = this.route.snapshot.paramMap.get('id');
   readonly uiState = signal<DetailState>('loading');
   readonly errorMessage = signal('');
@@ -59,8 +67,12 @@ export class RescueCaseDetailPageComponent {
   readonly caseItem = signal<RescueCase | null>(null);
   readonly selectedPhoto = signal<string | null>(null);
   readonly assigning = signal(false);
+  readonly volunteerSearchQuery = signal('');
+  readonly volunteerSearchLoading = signal(false);
+  readonly volunteerSearchError = signal('');
+  readonly volunteerOptions = signal<RescueVolunteerOption[]>([]);
+  readonly selectedVolunteer = signal<RescueVolunteerOption | null>(null);
   readonly updating = signal(false);
-  readonly volunteerId = signal('');
   readonly statusNote = signal('');
   readonly isAdmin = computed(() => this.auth.isAdmin());
   readonly listRoute = computed(() =>
@@ -68,6 +80,32 @@ export class RescueCaseDetailPageComponent {
   );
 
   constructor() {
+    this.volunteerSearch
+      .pipe(
+        debounceTime(250),
+        distinctUntilChanged(),
+        tap((query) => {
+          this.volunteerSearchError.set('');
+          this.volunteerSearchLoading.set(query.trim().length >= 2);
+        }),
+        switchMap((query) => {
+          const searchQuery = query.trim();
+          if (searchQuery.length < 2) {
+            return of([]);
+          }
+          return this.rescueVolunteersApi.search(searchQuery).pipe(
+            catchError(() => {
+              this.volunteerSearchError.set('Volunteer search failed.');
+              return of([]);
+            }),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((items) => {
+        this.volunteerOptions.set(items);
+        this.volunteerSearchLoading.set(false);
+      });
     void this.loadCase();
   }
 
@@ -140,8 +178,8 @@ export class RescueCaseDetailPageComponent {
 
   async assignVolunteer(): Promise<void> {
     const item = this.caseItem();
-    const volunteerId = this.volunteerId().trim();
-    if (!item || !volunteerId || this.assigning()) {
+    const volunteer = this.selectedVolunteer();
+    if (!item || !volunteer || this.assigning()) {
       return;
     }
     this.assigning.set(true);
@@ -149,16 +187,28 @@ export class RescueCaseDetailPageComponent {
     this.actionMessage.set('');
     try {
       const response = await firstValueFrom(
-        this.rescueCasesApi.assignVolunteer(item.id, { volunteerId }),
+        this.rescueCasesApi.assignVolunteer(item.id, { volunteerId: volunteer.id }),
       );
       this.caseItem.set(toRescueCaseView(response));
-      this.volunteerId.set('');
       this.actionMessage.set('Volunteer assigned.');
     } catch (error) {
       this.errorMessage.set(toUserMessage(error));
     } finally {
       this.assigning.set(false);
     }
+  }
+
+  searchVolunteers(query: string): void {
+    this.volunteerSearchQuery.set(query);
+    this.selectedVolunteer.set(null);
+    this.volunteerSearchError.set('');
+    this.volunteerSearch.next(query);
+  }
+
+  selectVolunteer(volunteer: RescueVolunteerOption): void {
+    this.selectedVolunteer.set(volunteer);
+    this.volunteerSearchQuery.set(`${volunteer.displayName} <${volunteer.email}>`);
+    this.volunteerOptions.set([]);
   }
 }
 

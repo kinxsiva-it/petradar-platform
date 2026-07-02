@@ -2,50 +2,18 @@
   <header class="page-header">
     <div>
       <p class="eyebrow">Executive reporting</p>
-      <h1>{{ admin.executiveReport().title }}</h1>
-      <p>{{ admin.executiveReport().period }} · printable UI-only report.</p>
-    </div>
-    <div class="actions">
-      <select><option>April 2025</option><option>March 2025</option></select>
-      <button type="button" (click)="mockExport('PDF')">Export PDF</button>
-      <button type="button" (click)="mockExport('CSV')">Export CSV</button>
-      <button type="button" (click)="mockExport('Print')">Print</button>
+      <h1>Executive Reports</h1>
+      <p>No persisted executive-report API exists in the current backend contract.</p>
     </div>
   </header>
 
-  @if (uiState() === 'loading') {
-    <section class="panel"><pr-loading-skeleton [rows]="10" /></section>
-  } @else if (uiState() === 'error') {
-    <pr-empty-state title="Report generation unavailable" description="Executive report fixtures could not render." icon="!" />
-  } @else if (uiState() === 'empty') {
-    <pr-empty-state title="No report data" description="No executive report fixture exists for this period." icon="0" />
-  } @else {
-    <pr-alert title="Mock export only" tone="warning">
-      Export buttons do not generate files in this UI rescue batch.
-    </pr-alert>
-    <section class="printable-report">
-      <article class="panel executive-summary">
-        <h2>Executive Summary</h2>
-        <p>{{ admin.executiveReport().summary }}</p>
-      </article>
-      <pr-analytics-summary-grid [metrics]="admin.executiveReport().metrics" />
-      <section class="report-grid">
-        <article class="panel">
-          <h2>Key Hotspots</h2>
-          @for (hotspot of admin.executiveReport().keyHotspots; track hotspot.area) {
-            <p><b>{{ hotspot.area }}</b> · {{ hotspot.reportCount }} reports · {{ hotspot.severity }}</p>
-          }
-        </article>
-        <pr-distribution-chart title="Species Distribution" [segments]="admin.analyticsSnapshot().speciesDistribution" />
-        <article class="panel">
-          <h2>Volunteer Response</h2>
-          <p>{{ admin.executiveReport().volunteerSummary }}</p>
-          <h2>Resolution Summary</h2>
-          <p>{{ admin.executiveReport().resolutionSummary }}</p>
-          <h2>Lost-Pet Matching</h2>
-          <p>{{ admin.executiveReport().matchingSummary }}</p>
-        </article>
-      </section>
-    </section>
-  }
+  <pr-alert title="Blocked by backend contract" tone="warning">
+    Exportable executive reports need a dedicated persisted report endpoint. This page intentionally does not show fixture data or fake export buttons.
+  </pr-alert>
+
+  <pr-empty-state
+    title="Executive reports unavailable"
+    description="Use Analytics and Hotspots for live API-backed aggregate data until a real report-generation endpoint exists."
+    icon="!"
+  />
 </section>

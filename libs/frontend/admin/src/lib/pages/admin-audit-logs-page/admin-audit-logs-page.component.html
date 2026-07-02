@@ -1,0 +1,54 @@
+<section class="audit-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Audit logs</p>
+      <h1>Audit Logs</h1>
+      <p>Review sanitized Admin audit events without raw metadata payloads.</p>
+    </div>
+  </header>
+
+  <section class="filter-bar">
+    <input type="search" [ngModel]="filters().action ?? ''" (ngModelChange)="updateFilter('action', $event)" placeholder="Action" />
+    <input type="search" [ngModel]="filters().entityType ?? ''" (ngModelChange)="updateFilter('entityType', $event)" placeholder="Entity type" />
+    <input type="search" [ngModel]="filters().actorQuery ?? ''" (ngModelChange)="updateFilter('actorQuery', $event)" placeholder="Actor name or email" />
+    <button type="button" (click)="clearFilters()">Clear</button>
+  </section>
+
+  @if (uiState() === 'loading') {
+    <section class="panel"><pr-loading-skeleton [rows]="8" /></section>
+  } @else if (uiState() === 'error') {
+    <pr-empty-state title="Audit logs unavailable" [description]="errorMessage()" icon="!" />
+  } @else if ((response()?.items?.length ?? 0) === 0) {
+    <pr-empty-state title="No audit logs found" description="No persisted audit events match these filters." icon="0" />
+  } @else {
+    <section class="audit-table">
+      <table>
+        <thead>
+          <tr>
+            <th scope="col">Time</th>
+            <th scope="col">Actor</th>
+            <th scope="col">Action</th>
+            <th scope="col">Entity</th>
+            <th scope="col">Summary</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of response()?.items ?? []; track item.id) {
+            <tr>
+              <td>{{ item.createdAt }}</td>
+              <td>{{ item.actor?.displayName ?? 'System' }}</td>
+              <td>{{ item.action }}</td>
+              <td>{{ item.entityType }} / {{ item.entityId }}</td>
+              <td>{{ item.summary }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+    <div class="pagination" aria-label="Audit log pagination">
+      <button type="button" [disabled]="(response()?.page ?? 1) <= 1" (click)="page(-1)">Previous</button>
+      <span>Page {{ response()?.page ?? 1 }} of {{ response()?.totalPages ?? 1 }}</span>
+      <button type="button" [disabled]="(response()?.page ?? 1) >= (response()?.totalPages ?? 1)" (click)="page(1)">Next</button>
+    </div>
+  }
+</section>

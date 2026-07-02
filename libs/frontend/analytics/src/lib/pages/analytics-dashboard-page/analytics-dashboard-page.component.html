@@ -3,32 +3,25 @@
     <div>
       <p class="eyebrow">Reports and analytics dashboard</p>
       <h1>Analytics Dashboard</h1>
-      <p>{{ admin.analyticsSnapshot().periodLabel }} · internally consistent frontend fixtures.</p>
+      <p>Operational aggregates returned by the protected analytics API.</p>
     </div>
-    <section class="filter-row" aria-label="Analytics filters">
-      <select><option>This week</option><option>This month</option></select>
-      <select><option>All species</option><option>Cats</option><option>Dogs</option></select>
-      <select><option>All statuses</option><option>Needs rescue</option></select>
+    <section class="filter-row" aria-label="Analytics actions">
+      <button type="button" (click)="loadAnalytics()">Retry</button>
     </section>
   </header>
 
   @if (uiState() === 'loading') {
     <section class="panel"><pr-loading-skeleton [rows]="10" /></section>
   } @else if (uiState() === 'error') {
-    <pr-empty-state title="Analytics unavailable" description="The mock analytics dashboard could not render." icon="!" />
-  } @else if (uiState() === 'empty') {
-    <pr-empty-state title="No analytics data" description="No mock metrics exist for this filter set." icon="0" />
+    <pr-empty-state title="Analytics unavailable" [description]="errorMessage()" icon="!" />
+  } @else if (!hasData()) {
+    <pr-empty-state title="No analytics data" description="The analytics API returned no aggregate rows." icon="0" />
   } @else {
-    <pr-analytics-summary-grid [metrics]="admin.analyticsSnapshot().metrics" />
+    <pr-analytics-summary-grid [metrics]="metrics()" />
     <section class="chart-grid">
-      <pr-distribution-chart title="Sightings by Species" description="Mock species distribution." [segments]="admin.analyticsSnapshot().speciesDistribution" />
-      <pr-distribution-chart title="Sightings by Condition" description="Mock condition distribution." [segments]="admin.analyticsSnapshot().conditionDistribution" />
-      <pr-trend-chart [points]="admin.analyticsSnapshot().trend" />
-      <pr-distribution-chart title="Match Level Distribution" description="Mock match-confidence buckets." [segments]="admin.analyticsSnapshot().matchDistribution" />
-    </section>
-    <section class="panel">
-      <h2>Accessible Chart Summary</h2>
-      <p>{{ admin.analyticsSnapshot().textualSummary }}</p>
+      <pr-distribution-chart title="Sightings by Species" description="Backend sighting counts grouped by species." [segments]="speciesSegments()" />
+      <pr-distribution-chart title="Sightings by Status" description="Backend sighting counts grouped by lifecycle status." [segments]="sightingStatusSegments()" />
+      <pr-distribution-chart title="Rescue Cases by Status" description="Backend rescue case counts grouped by status." [segments]="rescueStatusSegments()" />
     </section>
   }
 </section>

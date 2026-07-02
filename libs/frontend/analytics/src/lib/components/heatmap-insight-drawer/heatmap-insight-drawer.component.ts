@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import type { HeatmapPointAggregate } from '@petradar/frontend/mock-data';
 import { AlertComponent } from '@petradar/frontend/shared-ui';
+
+import type { AnalyticsHotspotPoint } from '../../data-access/analytics-api.models.js';
 
 @Component({
   selector: 'pr-heatmap-insight-drawer',
@@ -12,19 +13,13 @@ import { AlertComponent } from '@petradar/frontend/shared-ui';
       <aside class="insight-drawer" role="dialog" aria-label="Heatmap insight drawer">
         <button type="button" class="close" (click)="closed.emit()">Close</button>
         <p class="eyebrow">Heatmap Insights</p>
-        <h2>{{ item.area }}</h2>
+        <h2>{{ item.latitude }}, {{ item.longitude }}</h2>
         <section class="metric-grid">
-          <article><span>Total reports</span><b>{{ item.reportCount }}</b></article>
-          <article><span>Injured</span><b>{{ item.injuredCount }}</b></article>
-          <article><span>Rescue needs</span><b>{{ item.rescueNeedCount }}</b></article>
-          <article><span>Density</span><b>{{ item.densityScore }}</b></article>
+          <article><span>Total reports</span><b>{{ item.count }}</b></article>
+          <article><span>Weighted urgency</span><b>{{ item.weight }}</b></article>
         </section>
-        <h3>Recent trend</h3>
-        <p>{{ item.recentTrend }}</p>
-        <h3>Suggested action</h3>
-        <p>{{ item.suggestedAction }}</p>
         <pr-alert title="Privacy aggregation" tone="privacy">
-          This drawer uses aggregated fictional cells only. It does not expose exact report coordinates.
+          These coordinates are rounded public-location aggregates from the analytics API, not exact report coordinates.
         </pr-alert>
       </aside>
     }
@@ -99,5 +94,5 @@ import { AlertComponent } from '@petradar/frontend/shared-ui';
 })
 export class HeatmapInsightDrawerComponent {
   readonly closed = output<void>();
-  readonly hotspot = input<HeatmapPointAggregate | undefined>();
+  readonly hotspot = input<AnalyticsHotspotPoint | undefined>();
 }

@@ -100,33 +100,26 @@
           (rejected)="reject($event)"
         />
         <article class="panel">
-          <h2>Create rescue case</h2>
-          <label>
-            Severity
-            <select [ngModel]="rescueSeverity()" (ngModelChange)="rescueSeverity.set($event)">
-              <option [ngValue]="'LOW'">LOW</option>
-              <option [ngValue]="'MEDIUM'">MEDIUM</option>
-              <option [ngValue]="'HIGH'">HIGH</option>
-              <option [ngValue]="'EMERGENCY'">EMERGENCY</option>
-            </select>
-          </label>
-          <label>
-            Summary
-            <textarea
-              rows="4"
-              [ngModel]="rescueSummary()"
-              (ngModelChange)="rescueSummary.set($event)"
-              placeholder="Optional rescue summary. A default summary will be generated if this is blank."
-            ></textarea>
-          </label>
+          <h2>Convert to rescue</h2>
+          <p>Uses the Admin-only sighting conversion workflow and returns the created rescue case.</p>
           <button type="button" [disabled]="rescueProcessing()" (click)="createRescueCase()">
-            {{ rescueProcessing() ? 'Creating...' : 'Create rescue case' }}
+            {{ rescueProcessing() ? 'Creating...' : 'Convert to rescue case' }}
           </button>
-          @if (createdRescueCase(); as rescueCase) {
-            <a [routerLink]="['/rescue-cases', rescueCase.id]">
-              Open {{ rescueCase.caseNumber }}
-            </a>
-          }
+        </article>
+        <article class="panel">
+          <h2>Merge duplicate</h2>
+          <p>No duplicate candidate search API exists yet, so provide a verified target sighting ID.</p>
+          <label>
+            Target sighting ID
+            <input
+              [ngModel]="mergeTargetSightingId()"
+              (ngModelChange)="mergeTargetSightingId.set($event)"
+              placeholder="Target sighting UUID"
+            />
+          </label>
+          <button type="button" [disabled]="mergeProcessing() || !mergeTargetSightingId().trim()" (click)="mergeDuplicate()">
+            {{ mergeProcessing() ? 'Merging...' : 'Mark as duplicate' }}
+          </button>
         </article>
       </aside>
     </section>

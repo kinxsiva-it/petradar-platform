@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import type { AdminManagedUser } from '@petradar/frontend/mock-data';
 import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
+
+import type { AdminUserSummary } from '../../data-access/admin-users-api.models.js';
 
 @Component({
   selector: 'pr-admin-user-table',
@@ -25,7 +26,7 @@ import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
         <tbody>
           @for (user of users(); track user.id) {
             <tr>
-              <td class="person"><img [src]="user.avatarUrl" alt="" /><span>{{ user.name }}</span></td>
+              <td class="person"><span class="avatar" aria-hidden="true">{{ initials(user.displayName) }}</span><span>{{ user.displayName }}</span></td>
               <td class="email">{{ user.email }}</td>
               <td>{{ user.roles.join(', ') }}</td>
               <td><pr-status-badge [label]="user.accountStatus" [tone]="user.accountStatus === 'ACTIVE' ? 'success' : 'warning'" /></td>
@@ -74,11 +75,15 @@ import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
         font-weight: 850;
       }
 
-      img {
+      .avatar {
+        display: inline-grid;
+        place-items: center;
         width: 2.4rem;
         height: 2.4rem;
         border-radius: 999px;
-        object-fit: cover;
+        background: var(--color-surface-muted);
+        color: var(--color-primary);
+        font-weight: 900;
       }
 
       .email {
@@ -100,5 +105,14 @@ import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminUserTableComponent {
-  readonly users = input.required<AdminManagedUser[]>();
+  readonly users = input.required<AdminUserSummary[]>();
+
+  initials(name: string): string {
+    return name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('');
+  }
 }

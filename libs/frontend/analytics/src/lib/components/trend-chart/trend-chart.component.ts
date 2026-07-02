@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import type { AdminTrendPoint } from '@petradar/frontend/mock-data';
+interface TrendPoint {
+  label: string;
+  rescues: number;
+  sightings: number;
+}
 
 @Component({
   selector: 'pr-trend-chart',
@@ -85,13 +89,13 @@ import type { AdminTrendPoint } from '@petradar/frontend/mock-data';
 })
 export class TrendChartComponent {
   readonly description = input('Sightings and rescue cases over time.');
-  readonly points = input.required<AdminTrendPoint[]>();
+  readonly points = input.required<TrendPoint[]>();
   readonly title = input('Reports Over Time');
   readonly max = computed(() => Math.max(...this.points().flatMap((item) => [item.sightings, item.rescues]), 1));
   readonly sightingPoints = computed(() => this.points().map((item, index) => `${30 + index * 76},${190 - (item.sightings / this.max()) * 150}`).join(' '));
   readonly rescuePoints = computed(() => this.points().map((item, index) => `${30 + index * 76},${190 - (item.rescues / this.max()) * 150}`).join(' '));
   readonly summary = computed(() => {
     const last = this.points().at(-1);
-    return last ? `${last.label} has ${last.sightings} sightings and ${last.rescues} rescue cases in mock data.` : 'No chart data.';
+    return last ? `${last.label} has ${last.sightings} sightings and ${last.rescues} rescue cases.` : 'No chart data.';
   });
 }

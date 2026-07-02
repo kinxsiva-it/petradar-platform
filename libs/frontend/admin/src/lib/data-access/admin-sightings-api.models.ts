@@ -100,3 +100,23 @@ export interface AdminModerationFilters {
 export interface RejectSightingRequest {
   reason: string;
 }
+
+export interface MergeSightingRequest {
+  targetSightingId: string;
+}
+
+export interface MergeSightingResponse {
+  sourceSightingId: string;
+  success: true;
+  targetSightingId: string;
+}
+
+export interface ConvertSightingToRescueResponse {
+  caseNumber: string;
+  createdAt: string;
+  id: string;
+  severity: string;
+  sightingId: string;
+  status: string;
+  summary: string;
+}

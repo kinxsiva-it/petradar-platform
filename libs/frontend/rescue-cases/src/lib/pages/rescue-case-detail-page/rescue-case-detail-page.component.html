@@ -78,15 +78,34 @@
         @if (isAdmin()) {
           <section class="assignment-form">
             <h2>Assign volunteer</h2>
+            @if (item.assignedVolunteer) {
+              <p>Current: {{ item.assignedVolunteer.name }}</p>
+            }
             <label>
-              Verified volunteer ID
+              Search verified volunteer
               <input
-                [ngModel]="volunteerId()"
-                (ngModelChange)="volunteerId.set($event)"
-                placeholder="UUID of a verified volunteer"
+                [ngModel]="volunteerSearchQuery()"
+                (ngModelChange)="searchVolunteers($event)"
+                placeholder="Search name or email"
               />
             </label>
-            <button type="button" [disabled]="assigning() || !volunteerId().trim()" (click)="assignVolunteer()">
+            @if (volunteerSearchLoading()) {
+              <p>Searching volunteers...</p>
+            }
+            @if (volunteerSearchError()) {
+              <p>{{ volunteerSearchError() }}</p>
+            }
+            @if (volunteerOptions().length > 0) {
+              <div class="volunteer-results">
+                @for (volunteer of volunteerOptions(); track volunteer.id) {
+                  <button type="button" (click)="selectVolunteer(volunteer)">
+                    <b>{{ volunteer.displayName }}</b>
+                    <span>{{ volunteer.email }}</span>
+                  </button>
+                }
+              </div>
+            }
+            <button type="button" [disabled]="assigning() || !selectedVolunteer()" (click)="assignVolunteer()">
               {{ assigning() ? 'Assigning...' : 'Assign volunteer' }}
             </button>
           </section>

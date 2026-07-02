@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import type { AdminAnalyticsMetric } from '@petradar/frontend/mock-data';
+import type { AnalyticsMetric } from '../../data-access/analytics-api.models.js';
 
 @Component({
   selector: 'pr-analytics-summary-grid',
@@ -79,5 +79,5 @@ import type { AdminAnalyticsMetric } from '@petradar/frontend/mock-data';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnalyticsSummaryGridComponent {
-  readonly metrics = input.required<AdminAnalyticsMetric[]>();
+  readonly metrics = input.required<AnalyticsMetric[]>();
 }

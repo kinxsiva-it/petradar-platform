@@ -3,59 +3,58 @@
     <div>
       <p class="eyebrow">User and role management</p>
       <h1>Admin Users</h1>
-      <p>Review mock users, role presentation, volunteer verification, and account status.</p>
+      <p>Review safe account summaries from the Admin users API.</p>
     </div>
   </header>
 
   @if (uiState() === 'loading') {
     <section class="panel"><pr-loading-skeleton [rows]="8" /></section>
   } @else if (uiState() === 'error') {
-    <pr-empty-state title="Users unavailable" description="The mock user list could not render." icon="!" />
+    <pr-empty-state title="Users unavailable" [description]="errorMessage()" icon="!">
+      <button type="button" (click)="loadUsers()">Retry</button>
+    </pr-empty-state>
   } @else {
     <section class="summary-grid">
-      <pr-admin-summary-card label="Users" [value]="admin.users().length" detail="Stored mock users" />
-      <pr-admin-summary-card label="Admins" [value]="admin.users().filter(user => user.roles.includes('ADMIN')).length" detail="Frontend role presentation" />
-      <pr-admin-summary-card label="Volunteers" [value]="admin.users().filter(user => user.roles.includes('VOLUNTEER')).length" detail="Includes pending" />
-      <pr-admin-summary-card label="Suspended" [value]="admin.users().filter(user => user.accountStatus === 'SUSPENDED').length" detail="Mock moderation state" />
+      <pr-admin-summary-card label="Users" [value]="response()?.total ?? 0" detail="Matching current filters" />
+      <pr-admin-summary-card label="Admins" [value]="adminCount()" detail="On this page" />
+      <pr-admin-summary-card label="Volunteers" [value]="volunteerCount()" detail="On this page" />
+      <pr-admin-summary-card label="Suspended" [value]="suspendedCount()" detail="On this page" />
     </section>
 
     <section class="filter-bar">
-      <input type="search" [ngModel]="admin.userFilters().query" (ngModelChange)="admin.updateUserFilter('query', $event)" placeholder="Search users" />
-      <select [ngModel]="admin.userFilters().role" (ngModelChange)="admin.updateUserFilter('role', $event)">
+      <input type="search" [ngModel]="filters().query ?? ''" (ngModelChange)="updateQuery($event)" placeholder="Search name or email" />
+      <select [ngModel]="filters().role ?? 'All'" (ngModelChange)="updateRole($event)">
         <option>All</option>
         <option>REPORTER</option>
         <option>PET_OWNER</option>
         <option>VOLUNTEER</option>
         <option>ADMIN</option>
       </select>
-      <select [ngModel]="admin.userFilters().accountStatus" (ngModelChange)="admin.updateUserFilter('accountStatus', $event)">
+      <select [ngModel]="filters().status ?? 'All'" (ngModelChange)="updateStatus($event)">
         <option>All</option>
         <option>ACTIVE</option>
         <option>SUSPENDED</option>
         <option>PENDING_REVIEW</option>
       </select>
-      <select [ngModel]="admin.userFilters().volunteerVerification" (ngModelChange)="admin.updateUserFilter('volunteerVerification', $event)">
+      <select [ngModel]="filters().volunteerVerification ?? 'All'" (ngModelChange)="updateVolunteerVerification($event)">
         <option>All</option>
         <option>NOT_APPLICABLE</option>
         <option>PENDING</option>
         <option>VERIFIED</option>
         <option>REJECTED</option>
       </select>
-      <button type="button" (click)="admin.clearUserFilters()">Clear</button>
+      <button type="button" (click)="clearFilters()">Clear</button>
     </section>
 
-    @if (uiState() === 'empty' || admin.users().length === 0) {
-      <pr-empty-state title="No users" description="There are no mock users in this state." icon="0" />
-    } @else if (admin.filteredUsers().length === 0) {
+    @if ((response()?.items?.length ?? 0) === 0) {
       <pr-empty-state title="No users match filters" description="Clear filters or search for another role." icon="0" />
     } @else {
-      <pr-admin-user-table [users]="admin.filteredUsers()" />
+      <pr-admin-user-table [users]="response()?.items ?? []" />
       <section class="mobile-cards">
-        @for (user of admin.filteredUsers(); track user.id) {
+        @for (user of response()?.items ?? []; track user.id) {
           <article>
-            <img [src]="user.avatarUrl" alt="" />
             <div>
-              <h2>{{ user.name }}</h2>
+              <h2>{{ user.displayName }}</h2>
               <p>{{ user.email }}</p>
               <pr-status-badge [label]="user.accountStatus" [tone]="user.accountStatus === 'ACTIVE' ? 'success' : 'warning'" />
             </div>
@@ -63,6 +62,11 @@
           </article>
         }
       </section>
+      <div class="pagination" aria-label="User pagination">
+        <button type="button" [disabled]="(response()?.page ?? 1) <= 1" (click)="previousPage()">Previous</button>
+        <span>Page {{ response()?.page ?? 1 }} of {{ response()?.totalPages ?? 1 }}</span>
+        <button type="button" [disabled]="(response()?.page ?? 1) >= (response()?.totalPages ?? 1)" (click)="nextPage()">Next</button>
+      </div>
     }
   }
 </section>
