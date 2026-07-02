@@ -114,7 +114,7 @@ export interface AnalyticsSnapshot {
   metrics: AdminAnalyticsMetric[];
   speciesDistribution: AdminChartSegment[];
   conditionDistribution: AdminChartSegment[];
-  rescueStatusDistribution: Array<{ status: RescueCaseStatus; count: number; percent: number }>;
+  rescueStatusDistribution: { status: RescueCaseStatus; count: number; percent: number }[];
   matchDistribution: AdminChartSegment[];
   trend: AdminTrendPoint[];
   textualSummary: string;
@@ -141,7 +141,7 @@ export interface ExecutiveReportSnapshot {
   title: string;
   summary: string;
   metrics: AdminAnalyticsMetric[];
-  keyHotspots: Array<{ area: string; reportCount: number; severity: HeatmapPointAggregate['severity'] }>;
+  keyHotspots: { area: string; reportCount: number; severity: HeatmapPointAggregate['severity'] }[];
   volunteerSummary: string;
   resolutionSummary: string;
   matchingSummary: string;
@@ -181,8 +181,8 @@ export interface AdminWorkspaceFilters {
   species: 'All' | AdminReport['species'];
   urgency: 'All' | AdminReportUrgency;
   verification: 'All' | AdminReportVerificationState;
-  condition: 'All' | string;
-  reporter: 'All' | string;
+  condition: string;
+  reporter: string;
 }
 
 export interface AdminRescueFilters {
@@ -190,7 +190,7 @@ export interface AdminRescueFilters {
   severity: 'All' | RescueSeverity;
   status: 'All' | RescueCaseStatus;
   assignment: 'All' | 'Assigned' | 'Unassigned';
-  volunteerId: 'All' | string;
+  volunteerId: string;
 }
 
 export interface AdminUserFilters {

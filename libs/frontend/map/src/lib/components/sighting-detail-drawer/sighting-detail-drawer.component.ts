@@ -13,7 +13,7 @@ import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SightingDetailDrawerComponent {
-  readonly closed = output<void>();
+  readonly closed = output();
   readonly sighting = input.required<PublicSighting>();
 
   toneFor(): 'danger' | 'match' | 'success' | 'warning' {

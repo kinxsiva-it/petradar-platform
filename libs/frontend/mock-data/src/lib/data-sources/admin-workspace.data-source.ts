@@ -232,7 +232,9 @@ export class AdminWorkspaceDataSource {
 
   showToast(message: string): void {
     this.toast.set(message);
-    window.setTimeout(() => this.toast.set(null), 3000);
+    window.setTimeout(() => {
+      this.toast.set(null);
+    }, 3000);
   }
 
   private updateReportVerification(
@@ -282,7 +284,7 @@ export class AdminWorkspaceDataSource {
     return {
       actor,
       entity,
-      id: `act-${Date.now()}`,
+      id: `act-${String(Date.now())}`,
       occurredAt: 'Just now',
       reason,
       sensitive,

@@ -50,14 +50,22 @@ interface LeafletModule {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeatmapMapComponent implements AfterViewInit, OnDestroy {
-  private readonly element = inject(ElementRef<HTMLElement>);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
   private leaflet: LeafletModule | null = null;
   private map: LeafletMap | null = null;
   private layers: LeafletCircle[] = [];
   readonly points = input.required<AnalyticsHotspotPoint[]>();
   readonly selected = output<AnalyticsHotspotPoint>();
 
-  async ngAfterViewInit(): Promise<void> {
+  ngAfterViewInit(): void {
+    void this.initializeMap();
+  }
+
+  ngOnDestroy(): void {
+    this.map?.remove();
+  }
+
+  private async initializeMap(): Promise<void> {
     const host = this.element.nativeElement.querySelector('.heatmap-host');
     if (!host) {
       return;
@@ -77,18 +85,22 @@ export class HeatmapMapComponent implements AfterViewInit, OnDestroy {
     this.renderPoints();
   }
 
-  ngOnDestroy(): void {
-    this.map?.remove();
-  }
-
   private renderPoints(): void {
-    if (!this.map || !this.leaflet) {
+    const map = this.map;
+    const leaflet = this.leaflet;
+
+    if (!map || !leaflet) {
       return;
     }
-    this.layers.forEach((layer) => layer.remove());
+
+    this.layers.forEach((layer) => {
+      layer.remove();
+    });
+
     this.layers = this.points().map((point) => {
       const color = point.weight >= 12 ? '#ef4444' : point.weight >= 6 ? '#f59e0b' : '#0f766e';
-      const circle = this.leaflet
+
+      const circle = leaflet
         .circle([point.latitude, point.longitude], {
           color,
           fillColor: color,
@@ -96,9 +108,13 @@ export class HeatmapMapComponent implements AfterViewInit, OnDestroy {
           radius: 260 + point.weight * 8,
           weight: 2,
         })
-        .addTo(this.map)
-        .bindPopup(`${point.latitude}, ${point.longitude}: ${point.count} aggregated reports`);
-      circle.on('click', () => this.selected.emit(point));
+        .addTo(map)
+        .bindPopup(`${String(point.latitude)}, ${String(point.longitude)}: ${String(point.count)} aggregated reports`);
+
+      circle.on('click', () => {
+        this.selected.emit(point);
+      });
+
       return circle;
     });
   }

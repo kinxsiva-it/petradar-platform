@@ -80,7 +80,7 @@ export const adminReportsFixture: AdminReport[] = [
     count: 1,
     description: 'Friendly orange cat resting near a condo entrance. Allows close approach.',
     duplicateSuggestionId: 'dup-cat-00021',
-    history: [adminActivityFixture[0]!],
+    history: [fixtureActivity(0)],
     id: 'cat-00021',
     lifecycle: 'POSSIBLE_MATCH',
     location: {
@@ -108,7 +108,7 @@ export const adminReportsFixture: AdminReport[] = [
     condition: 'Injured',
     count: 1,
     description: 'White dog limping near roadside. Appears tired and needs medical attention.',
-    history: [adminActivityFixture[1]!],
+    history: [fixtureActivity(1)],
     id: 'dog-00014',
     lifecycle: 'NEEDS_RESCUE',
     location: {
@@ -158,6 +158,14 @@ export const adminReportsFixture: AdminReport[] = [
     verification: 'VERIFIED',
   },
 ];
+
+function fixtureActivity(index: number): AdminActivity {
+  const activity = adminActivityFixture[index];
+  if (!activity) {
+    throw new Error(`Missing admin activity fixture at index ${String(index)}.`);
+  }
+  return activity;
+}
 
 export const duplicateSuggestionsFixture: DuplicateSuggestion[] = [
   {

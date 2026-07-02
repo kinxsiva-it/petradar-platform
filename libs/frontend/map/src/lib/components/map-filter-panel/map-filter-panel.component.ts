@@ -14,6 +14,6 @@ import type { DiscoveryFilters } from './map-filter.model.js';
 export class MapFilterPanelComponent {
   readonly filters = input.required<DiscoveryFilters>();
   readonly filterChanged = output<{ key: keyof DiscoveryFilters; value: string }>();
-  readonly clearFilters = output<void>();
+  readonly clearFilters = output();
 }
 

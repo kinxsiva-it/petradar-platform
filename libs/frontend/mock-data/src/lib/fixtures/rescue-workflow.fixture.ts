@@ -1,6 +1,5 @@
 import type {
   RescueCase,
-  RescueCaseStatus,
   StatusTransitionOption,
   VolunteerProfile,
   VolunteerSummary,

@@ -171,7 +171,9 @@ export class MatchingService {
 
   async reject(admin: AuthenticatedUser, id: string, reason?: string | null) {
     this.assertAdmin(admin);
-    return this.review(admin, id, 'REJECTED', reason?.trim() || null);
+    const trimmedReason = reason?.trim();
+    const reviewReason = trimmedReason === undefined || trimmedReason.length === 0 ? null : trimmedReason;
+    return this.review(admin, id, 'REJECTED', reviewReason);
   }
 
   private async review(

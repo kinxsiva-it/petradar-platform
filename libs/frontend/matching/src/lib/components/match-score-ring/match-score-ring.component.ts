@@ -10,5 +10,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 export class MatchScoreRingComponent {
   readonly score = input.required<number>();
   readonly level = input.required<string>();
-  readonly background = computed(() => `conic-gradient(var(--color-match) ${this.score()}%, var(--color-match-subtle) 0)`);
+  readonly background = computed(
+    () => `conic-gradient(var(--color-match) ${String(this.score())}%, var(--color-match-subtle) 0)`,
+  );
 }

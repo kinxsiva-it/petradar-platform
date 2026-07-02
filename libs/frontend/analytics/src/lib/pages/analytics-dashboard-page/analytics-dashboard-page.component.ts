@@ -38,12 +38,14 @@ export class AnalyticsDashboardPageComponent {
   readonly uiState = signal<AnalyticsState>('loading');
   readonly errorMessage = signal('');
   readonly metrics = computed(() => summaryMetrics(this.summary()));
-  readonly speciesSegments = computed(() =>
-    (this.bySpecies()?.items ?? []).map((item, index) => ({
-      color: palette[index % palette.length],
-      label: item.species ?? 'Unknown',
-      value: item.count,
-    })),
+  readonly speciesSegments = computed<AnalyticsChartSegment[]>(() =>
+    (this.bySpecies()?.items ?? []).map(
+      (item, index): AnalyticsChartSegment => ({
+        color: palette[index % palette.length] ?? '#64748b',
+        label: item.species ?? 'Unknown',
+        value: item.count,
+      }),
+    ),
   );
   readonly sightingStatusSegments = computed(() => statusSegments(this.byStatus()?.sightings ?? []));
   readonly rescueStatusSegments = computed(() => statusSegments(this.byStatus()?.rescueCases ?? []));
@@ -115,12 +117,16 @@ function metric(
   };
 }
 
-function statusSegments(items: { count: number; status?: string }[]): AnalyticsChartSegment[] {
-  return items.map((item, index) => ({
-    color: palette[index % palette.length],
-    label: item.status ?? 'Unknown',
-    value: item.count,
-  }));
+function statusSegments(
+  items: { count: number; status?: string }[],
+): AnalyticsChartSegment[] {
+  return items.map(
+    (item, index): AnalyticsChartSegment => ({
+      color: palette[index % palette.length] ?? '#64748b',
+      label: item.status ?? 'Unknown',
+      value: item.count,
+    }),
+  );
 }
 
 function toUserMessage(error: unknown): string {

@@ -62,7 +62,7 @@ export class UserWorkspaceDataSource {
       condition: submission.condition,
       description: submission.description,
       editable: true,
-      id: `report-${Date.now()}`,
+      id: `report-${String(Date.now())}`,
       lifecycleStatus: 'Submitted',
       matchCount: 0,
       pattern: submission.pattern,
@@ -106,7 +106,7 @@ export class UserWorkspaceDataSource {
       contactPreference: submission.contactPreference,
       description: submission.description,
       hideContactPublicly: submission.hideContactPublicly,
-      id: `lp-${submission.petName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`,
+      id: `lp-${submission.petName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${String(Date.now())}`,
       lastSeenAt: `${submission.lastSeenDate} at ${submission.lastSeenTime}`,
       microchipLabel: submission.microchipLabel,
       pattern: submission.pattern,
@@ -194,6 +194,8 @@ export class UserWorkspaceDataSource {
 
   showToast(message: string): void {
     this.toast.set(message);
-    window.setTimeout(() => this.toast.set(null), 3200);
+    window.setTimeout(() => {
+      this.toast.set(null);
+    }, 3200);
   }
 }

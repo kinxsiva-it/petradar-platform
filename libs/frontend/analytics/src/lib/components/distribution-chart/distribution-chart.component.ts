@@ -79,7 +79,7 @@ export class DistributionChartComponent {
   readonly segments = input.required<AnalyticsChartSegment[]>();
   readonly title = input.required<string>();
   readonly total = computed(() => this.segments().reduce((sum, item) => sum + item.value, 0));
-  readonly summary = computed(() => `${this.title()} total ${this.total()} across ${this.segments().length} categories.`);
+  readonly summary = computed(() => `${this.title()} total ${String(this.total())} across ${String(this.segments().length)} categories.`);
 
   percent(value: number): number {
     return this.total() ? (value / this.total()) * 100 : 0;

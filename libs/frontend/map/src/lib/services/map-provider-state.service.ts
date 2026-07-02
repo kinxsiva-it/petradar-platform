@@ -127,7 +127,8 @@ function isGoogleProvider(
   provider: MapProvider,
 ): provider is 'google' | 'google3d' {
   return (
-    provider === 'google'
+    provider === 'google' ||
+    provider === 'google3d'
   );
 }
 

@@ -92,7 +92,7 @@ export class LostPetDetailPageComponent {
       const response = await firstValueFrom(this.lostPetsApi.runMatching(pet.id));
       this.authorizedPet.set({ ...pet, possibleMatchCount: response.items.length });
       this.actionMessage.set(
-        `${response.items.length} possible match${response.items.length === 1 ? '' : 'es'} refreshed.`,
+        `${String(response.items.length)} possible match${response.items.length === 1 ? '' : 'es'} refreshed.`,
       );
     } catch (error) {
       this.actionError.set(toUserMessage(error, 'Matching could not be run. Please try again.'));

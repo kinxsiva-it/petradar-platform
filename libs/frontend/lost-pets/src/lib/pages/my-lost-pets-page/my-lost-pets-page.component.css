@@ -94,7 +94,12 @@ select {
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
+  display: block;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
   background: rgb(31 41 51 / 0.34);
+  padding: 0;
 }
 
 .confirm-modal {

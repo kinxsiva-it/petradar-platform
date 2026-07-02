@@ -119,7 +119,7 @@ import type { AdminVolunteerCandidate } from '@petradar/frontend/mock-data';
 })
 export class VolunteerAssignmentPanelComponent {
   readonly assigned = output<AdminVolunteerCandidate>();
-  readonly removed = output<void>();
+  readonly removed = output();
   readonly selectedId = signal('');
   readonly volunteers = input.required<AdminVolunteerCandidate[]>();
   query = '';

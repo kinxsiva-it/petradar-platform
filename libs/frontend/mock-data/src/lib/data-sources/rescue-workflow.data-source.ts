@@ -164,7 +164,14 @@ export class RescueWorkflowDataSource {
               ...item,
               fosterNeeded: status === 'FOSTER_NEEDED' ? true : item.fosterNeeded,
               status,
-              timeline: [this.timelineEntry(`Status changed to ${this.statusLabel(status)}`, 'Mock rescue workflow status update.', status), ...item.timeline],
+              timeline: [
+                this.timelineEntry(
+                  `Status changed to ${this.statusLabel(status)}`,
+                  'Mock rescue workflow status update.',
+                  status,
+                ),
+                ...item.timeline,
+              ],
               updatedAt: 'Just now',
             }
           : item,
@@ -189,7 +196,7 @@ export class RescueWorkflowDataSource {
                   authorRole: 'Volunteer',
                   body: trimmed,
                   createdAt: 'Just now',
-                  id: `note-${Date.now()}`,
+                  id: `note-${String(Date.now())}`,
                 },
                 ...item.internalNotes,
               ],
@@ -208,7 +215,7 @@ export class RescueWorkflowDataSource {
       actor: this.currentVolunteer.name,
       addedAt: 'Just now',
       caption: caption || 'Mock rescue photo update.',
-      id: `photo-${Date.now()}`,
+      id: `photo-${String(Date.now())}`,
       photoUrl,
     };
     this.rescueCases.update((cases) =>
@@ -254,7 +261,9 @@ export class RescueWorkflowDataSource {
 
   showToast(message: string): void {
     this.toast.set(message);
-    window.setTimeout(() => this.toast.set(null), 3000);
+    window.setTimeout(() => {
+      this.toast.set(null);
+    }, 3000);
   }
 
   private timelineEntry(
@@ -268,7 +277,7 @@ export class RescueWorkflowDataSource {
     return {
       actor,
       description,
-      id: `tl-${Date.now()}`,
+      id: `tl-${String(Date.now())}`,
       internal,
       occurredAt: 'Just now',
       photoUrl,

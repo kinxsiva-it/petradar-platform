@@ -25,7 +25,7 @@ interface FilterOption<TValue extends string> {
 export class LostPetFilterBarComponent {
   readonly filters = input.required<LostPetListFilters>();
   readonly filterChanged = output<LostPetFilterChange>();
-  readonly clearFilters = output<void>();
+  readonly clearFilters = output();
 
   readonly speciesOptions: FilterOption<ApiAnimalSpecies>[] = [
     { label: 'All species', value: '' },

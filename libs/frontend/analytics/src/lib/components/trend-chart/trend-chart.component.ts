@@ -92,10 +92,24 @@ export class TrendChartComponent {
   readonly points = input.required<TrendPoint[]>();
   readonly title = input('Reports Over Time');
   readonly max = computed(() => Math.max(...this.points().flatMap((item) => [item.sightings, item.rescues]), 1));
-  readonly sightingPoints = computed(() => this.points().map((item, index) => `${30 + index * 76},${190 - (item.sightings / this.max()) * 150}`).join(' '));
-  readonly rescuePoints = computed(() => this.points().map((item, index) => `${30 + index * 76},${190 - (item.rescues / this.max()) * 150}`).join(' '));
+  readonly sightingPoints = computed(() =>
+    this.points()
+      .map((item, index) =>
+        `${String(30 + index * 76)},${String(190 - (item.sightings / this.max()) * 150)}`,
+      )
+      .join(' '),
+  );
+  readonly rescuePoints = computed(() =>
+    this.points()
+      .map((item, index) =>
+        `${String(30 + index * 76)},${String(190 - (item.rescues / this.max()) * 150)}`,
+      )
+      .join(' '),
+  );
   readonly summary = computed(() => {
     const last = this.points().at(-1);
-    return last ? `${last.label} has ${last.sightings} sightings and ${last.rescues} rescue cases.` : 'No chart data.';
+    return last
+      ? `${last.label} has ${String(last.sightings)} sightings and ${String(last.rescues)} rescue cases.`
+      : 'No chart data.';
   });
 }

@@ -93,6 +93,6 @@ import type { AnalyticsHotspotPoint } from '../../data-access/analytics-api.mode
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HeatmapInsightDrawerComponent {
-  readonly closed = output<void>();
+  readonly closed = output();
   readonly hotspot = input<AnalyticsHotspotPoint | undefined>();
 }

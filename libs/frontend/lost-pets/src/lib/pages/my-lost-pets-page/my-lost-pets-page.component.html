@@ -46,7 +46,12 @@
   }
 
   @if (confirmAction(); as action) {
-    <div class="modal-backdrop" (click)="confirmAction.set(null)"></div>
+    <button
+      type="button"
+      class="modal-backdrop"
+      aria-label="Close status confirmation"
+      (click)="confirmAction.set(null)"
+    ></button>
     <section class="confirm-modal" role="dialog" aria-modal="true">
       <h2>Confirm status change</h2>
       <p>Mark this lost-pet post as {{ statusLabel(action.status).toLowerCase() }}?</p>

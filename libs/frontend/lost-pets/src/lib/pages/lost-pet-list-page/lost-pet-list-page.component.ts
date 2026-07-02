@@ -51,7 +51,7 @@ export class LostPetListPageComponent {
   readonly errorMessage = signal('');
   readonly hasFilters = computed(() => {
     const filters = this.filters();
-    return Boolean(filters.query || filters.species || filters.status);
+    return Boolean(filters.query ?? filters.species ?? filters.status);
   });
 
   constructor() {
@@ -63,10 +63,10 @@ export class LostPetListPageComponent {
       const next: LostPetListFilters = { ...filters, page: 1 };
       if (event.key === 'query') {
         const query = event.value.trim();
-        next.query = query || undefined;
+        next.query = query.length > 0 ? query : undefined;
       }
-      if (event.key === 'species') next.species = event.value || undefined;
-      if (event.key === 'status') next.status = event.value || undefined;
+      if (event.key === 'species') next.species = event.value === '' ? undefined : event.value;
+      if (event.key === 'status') next.status = event.value === '' ? undefined : event.value;
       return next;
     });
     void this.loadLostPets();

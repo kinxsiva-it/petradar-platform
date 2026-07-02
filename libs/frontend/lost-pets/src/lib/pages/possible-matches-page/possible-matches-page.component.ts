@@ -96,7 +96,7 @@ export class PossibleMatchesPageComponent {
       this.matchItems.set(matchViews);
       this.pet.set({ ...pet, possibleMatchCount: matchViews.length });
       this.actionMessage.set(
-        `${matchViews.length} possible match${matchViews.length === 1 ? '' : 'es'} refreshed.`,
+        `${String(matchViews.length)} possible match${matchViews.length === 1 ? '' : 'es'} refreshed.`,
       );
     } catch (error) {
       this.errorMessage.set(toUserMessage(error, 'Matching could not be run.'));

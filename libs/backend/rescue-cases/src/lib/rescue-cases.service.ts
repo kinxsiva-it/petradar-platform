@@ -228,7 +228,7 @@ export class RescueCasesService {
   async assignVolunteer(admin: AuthenticatedUser, id: string, dto: AssignVolunteerDto) {
     this.assertAdmin(admin);
     const current = await this.loadCase(id);
-    if (isTerminal(current.status)) {
+    if (isRescueCaseStatusValue(current.status) && isTerminal(current.status)) {
       throw new ConflictException('Closed rescue cases cannot be assigned.');
     }
     await this.assertAssignableVolunteer(dto.volunteerId);
@@ -464,20 +464,46 @@ function caseNumberFor(sightingId: string): string {
   return `RES-${sightingId.slice(0, 8).toUpperCase()}`;
 }
 
+const rescueCaseStatuses = new Set<string>(Object.values(RescueCaseStatusValue));
+
 function canTransition(current: string, next: RescueCaseStatusValue): boolean {
+  if (!isRescueCaseStatusValue(current)) {
+    return false;
+  }
   if (current === next) return true;
   if (isTerminal(current)) return false;
-  const allowed: Record<string, string[]> = {
-    ASSIGNED: ['IN_PROGRESS', 'RESOLVED', 'CLOSED'],
-    IN_PROGRESS: ['RESOLVED', 'CLOSED'],
-    NEEDS_RESCUE: ['ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED'],
-    NEEDS_VERIFICATION: ['NEEDS_RESCUE', 'CLOSED'],
-    NEW_REPORT: ['NEEDS_VERIFICATION', 'NEEDS_RESCUE', 'ASSIGNED', 'CLOSED'],
-    RESOLVED: ['CLOSED'],
+  const allowed: Partial<Record<RescueCaseStatusValue, RescueCaseStatusValue[]>> = {
+    [RescueCaseStatusValue.ASSIGNED]: [
+      RescueCaseStatusValue.IN_PROGRESS,
+      RescueCaseStatusValue.RESOLVED,
+      RescueCaseStatusValue.CLOSED,
+    ],
+    [RescueCaseStatusValue.IN_PROGRESS]: [RescueCaseStatusValue.RESOLVED, RescueCaseStatusValue.CLOSED],
+    [RescueCaseStatusValue.NEEDS_RESCUE]: [
+      RescueCaseStatusValue.ASSIGNED,
+      RescueCaseStatusValue.IN_PROGRESS,
+      RescueCaseStatusValue.RESOLVED,
+      RescueCaseStatusValue.CLOSED,
+    ],
+    [RescueCaseStatusValue.NEEDS_VERIFICATION]: [
+      RescueCaseStatusValue.NEEDS_RESCUE,
+      RescueCaseStatusValue.CLOSED,
+    ],
+    [RescueCaseStatusValue.NEW_REPORT]: [
+      RescueCaseStatusValue.NEEDS_VERIFICATION,
+      RescueCaseStatusValue.NEEDS_RESCUE,
+      RescueCaseStatusValue.ASSIGNED,
+      RescueCaseStatusValue.CLOSED,
+    ],
+    [RescueCaseStatusValue.RESOLVED]: [RescueCaseStatusValue.CLOSED],
   };
   return allowed[current]?.includes(next) ?? false;
 }
 
-function isTerminal(status: string): boolean {
-  return status === 'CLOSED' || status === 'RESOLVED';
+function isRescueCaseStatusValue(status: string): status is RescueCaseStatusValue {
+  return rescueCaseStatuses.has(status);
+}
+
+function isTerminal(status: RescueCaseStatusValue): boolean {
+  return status === RescueCaseStatusValue.CLOSED || status === RescueCaseStatusValue.RESOLVED;
 }

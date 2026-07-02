@@ -48,7 +48,7 @@ describe('AdminSightingsApiService', () => {
       .subscribe();
 
     const options = getOptions();
-    expect(http.get).toHaveBeenCalledWith('/api/v1/admin/sightings', options);
+    expect(http.get).toHaveBeenCalledWith('/api/v1/admin/verification-queue', options);
     expect(options.params.get('hasPhotos')).toBe('true');
     expect(options.params.get('page')).toBe('2');
     expect(options.params.get('pageSize')).toBe('10');

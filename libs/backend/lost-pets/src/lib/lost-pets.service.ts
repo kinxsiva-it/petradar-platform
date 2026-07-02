@@ -379,7 +379,10 @@ function requireRow<T>(rows: readonly T[]): T {
 
 function cleanText(value: string | undefined | null): string | null {
   const trimmed = value?.trim();
-  return trimmed ? trimmed : null;
+  if (trimmed === undefined || trimmed.length === 0) {
+    return null;
+  }
+  return trimmed;
 }
 
 function parseDate(value: string): Date {
