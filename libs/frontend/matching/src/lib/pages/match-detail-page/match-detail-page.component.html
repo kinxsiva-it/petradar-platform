@@ -1,46 +1,54 @@
-@if (detail(); as detail) {
+@if (uiState() === 'loading') {
+  <section class="match-detail-page"><pr-loading-skeleton [rows]="8" /></section>
+} @else if (uiState() === 'error') {
+  <pr-empty-state title="Match unavailable" [description]="errorMessage()" icon="!" />
+} @else if (uiState() === 'not-found') {
+  <pr-empty-state title="Match not found" [description]="errorMessage()" icon="?" />
+} @else if (detail(); as detail) {
   <section class="match-detail-page">
     <header class="page-header">
       <div>
         <p class="eyebrow">Match Review</p>
-        <h1>{{ detail.lostPet.petName }} and {{ detail.sighting.reference }}</h1>
+        <h1>{{ detail.lostPet.name }} and {{ detail.sighting.title }}</h1>
         <p>Compare a lost-pet post with a public sighting using approximate location only.</p>
       </div>
       <a [routerLink]="['/my/lost-pets', detail.lostPet.id, 'matches']">Back to matches</a>
     </header>
 
+    @if (actionMessage()) {
+      <pr-alert title="Match review updated" tone="success">{{ actionMessage() }}</pr-alert>
+    }
+    @if (errorMessage()) {
+      <pr-alert title="Match action unavailable" tone="danger">{{ errorMessage() }}</pr-alert>
+    }
+
     <section class="comparison-grid">
       <article class="profile-card">
         <p class="eyebrow">Lost Pet Profile</p>
-        <h2>{{ detail.lostPet.petName }}</h2>
-        <img [src]="detail.lostPet.photoUrls[0]" [alt]="detail.lostPet.petName" />
+        <h2>{{ detail.lostPet.name }}</h2>
         <dl>
-          <div><dt>Species</dt><dd>{{ detail.lostPet.species }}</dd></div>
-          <div><dt>Color</dt><dd>{{ detail.lostPet.color }}</dd></div>
-          <div><dt>Collar</dt><dd>{{ detail.lostPet.collarDescription }}</dd></div>
-          <div><dt>Last seen</dt><dd>{{ detail.lostPet.approximateLastSeenLabel }}</dd></div>
+          <div><dt>Record</dt><dd>Accessible lost-pet post</dd></div>
+          <div><dt>Privacy</dt><dd>Exact last-seen location hidden</dd></div>
         </dl>
       </article>
 
       <section class="score-panel">
-        <pr-match-score-ring [score]="detail.match.score" [level]="detail.match.level" />
+        <pr-match-score-ring [score]="detail.score" [level]="detail.levelLabel" />
         <dl>
-          <div><dt>Distance</dt><dd>{{ detail.match.distanceLabel }}</dd></div>
-          <div><dt>Seen</dt><dd>{{ detail.match.seenAt }}</dd></div>
-          <div><dt>Area</dt><dd>{{ detail.match.approximateLocationLabel }}</dd></div>
+          <div><dt>Distance</dt><dd>{{ detail.distanceLabel }}</dd></div>
+          <div><dt>Seen</dt><dd>{{ detail.seenAt }}</dd></div>
+          <div><dt>Area</dt><dd>{{ detail.approximateLocationLabel }}</dd></div>
         </dl>
-        <pr-status-badge [label]="detail.match.verificationStatus" tone="success" />
+        <pr-status-badge [label]="detail.reviewStatusLabel" tone="match" />
       </section>
 
       <article class="profile-card">
         <p class="eyebrow">Sighting Profile</p>
-        <h2>{{ detail.sighting.reference }}</h2>
-        <img [src]="detail.sighting.photoUrls[0]" [alt]="detail.sighting.title" />
+        <h2>{{ detail.sighting.title }}</h2>
         <dl>
           <div><dt>Species</dt><dd>{{ detail.sighting.species }}</dd></div>
-          <div><dt>Color</dt><dd>{{ detail.sighting.color }}</dd></div>
-          <div><dt>Collar</dt><dd>{{ detail.sighting.collarStatus }}</dd></div>
-          <div><dt>Seen</dt><dd>{{ detail.sighting.seenAt }}</dd></div>
+          <div><dt>Condition</dt><dd>{{ detail.sighting.condition }}</dd></div>
+          <div><dt>Seen</dt><dd>{{ detail.seenAt }}</dd></div>
         </dl>
       </article>
     </section>
@@ -49,32 +57,31 @@
       <article>
         <h2>Match reasons</h2>
         <ul>
-          @for (reason of detail.match.reasons; track reason) {
+          @for (reason of detail.reasons; track reason) {
             <li>{{ reason }}</li>
           }
         </ul>
       </article>
       <article>
-        <h2>Similar traits</h2>
-        <ul>
-          @for (trait of detail.match.similarTraits; track trait) {
-            <li>{{ trait }}</li>
-          }
-        </ul>
+        <h2>Review status</h2>
+        <p>{{ detail.reviewStatusLabel }}</p>
+        @if (detail.rejectionReason) {
+          <p>{{ detail.rejectionReason }}</p>
+        }
       </article>
       <article>
-        <h2>Mock actions</h2>
-        <button type="button" (click)="workspace.requestMatchReview(detail.match.id)">
-          {{ detail.match.reviewRequested ? 'Review requested' : 'Request admin review' }}
-        </button>
-        <button type="button" class="secondary" (click)="workspace.showToast('Interest recorded in mock state.')">
-          Confirm interest
-        </button>
+        <h2>Admin actions</h2>
+        @if (canReview()) {
+          <button type="button" [disabled]="reviewing()" (click)="confirm()">Confirm match</button>
+          <button type="button" class="secondary" [disabled]="reviewing()" (click)="reject()">Reject match</button>
+        } @else {
+          <p>Admin review is available only while a match is pending.</p>
+        }
       </article>
     </section>
 
     <pr-privacy-banner />
   </section>
 } @else {
-  <pr-empty-state title="Match not found" description="This match is not available in mock state." icon="?" />
+  <pr-empty-state title="Match not found" description="This match is not available." icon="?" />
 }

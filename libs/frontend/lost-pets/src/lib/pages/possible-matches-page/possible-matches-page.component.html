@@ -1,5 +1,9 @@
 <section class="matches-page">
-  @if (pet(); as pet) {
+  @if (uiState() === 'loading') {
+    <section class="lost-pet-summary"><pr-loading-skeleton [rows]="5" /></section>
+  } @else if (uiState() === 'error') {
+    <pr-empty-state title="Possible matches unavailable" [description]="errorMessage()" icon="!" />
+  } @else if (pet(); as pet) {
     <header class="page-header">
       <div>
         <p class="eyebrow">{{ pet.reference }}</p>
@@ -9,36 +13,37 @@
       <a routerLink="/my/lost-pets">Back to My Lost Pets</a>
     </header>
 
+    @if (actionMessage()) {
+      <pr-alert title="Matching complete" tone="success">{{ actionMessage() }}</pr-alert>
+    }
+
     <section class="lost-pet-summary">
       <img [src]="pet.photoUrls[0]" [alt]="pet.petName" />
       <div>
         <h2>{{ pet.petName }}</h2>
         <p>{{ pet.species }} · {{ pet.breed }} · {{ pet.color }} {{ pet.pattern }}</p>
-        <p>Exact last-seen location remains private. Match cards show approximate areas only.</p>
+        <p>Rule-based matching uses attributes, distance, and time. A high score is not a confirmed identity.</p>
       </div>
       <select [(ngModel)]="level">
         @for (item of levelOptions; track item) {
-          <option [ngValue]="item">{{ item }} match level</option>
+          <option [ngValue]="item">{{ levelLabel(item) }} match level</option>
         }
       </select>
+      <button type="button" [disabled]="matching()" (click)="runMatching()">
+        {{ matching() ? 'Running...' : 'Run matching' }}
+      </button>
     </section>
 
     @if (matches().length === 0) {
-      <pr-empty-state title="No matches at this level" description="We will notify you if another mock sighting appears." icon="0" />
+      <pr-empty-state title="No possible matches" description="Run matching again after more verified sightings are available." icon="0" />
     } @else {
       <section class="match-list">
         @for (match of matches(); track match.id) {
-          @if (sighting(match.sightingId); as sightingItem) {
-            <pr-possible-match-card
-              [match]="match"
-              [sighting]="sightingItem"
-              (reviewRequested)="workspace.requestMatchReview($event)"
-            />
-          }
+          <pr-possible-match-card [match]="match" />
         }
       </section>
     }
   } @else {
-    <pr-empty-state title="Lost pet not found" description="This lost-pet post is not available in mock state." icon="?" />
+    <pr-empty-state title="Lost pet not found" description="This lost-pet post is not available." icon="?" />
   }
 </section>

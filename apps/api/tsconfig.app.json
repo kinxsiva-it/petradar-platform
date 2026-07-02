@@ -4,7 +4,7 @@
     "declaration": false,
     "isolatedModules": true,
     "module": "NodeNext",
-    "outDir": "../../dist/apps/api",
+    "rootDir": "../../dist/apps/api",
     "types": ["node", "jest"]
   },
   "include": ["src/**/*.ts", "test/**/*.ts"],

@@ -144,6 +144,39 @@ export class LostPetsService {
     };
   }
 
+  async listMine(user: AuthenticatedUser, query: ListLostPetsQueryDto) {
+    const page = Math.max(query.page ?? 1, 1);
+    const pageSize = Math.min(Math.max(query.pageSize ?? 25, 1), 50);
+    const where = [
+      Prisma.sql`"owner_id" = CAST(${user.id} AS uuid)`,
+      ...whereForList(query, { includeClosed: true }),
+    ];
+    const [rows, countRows] = await Promise.all([
+      this.prisma.$queryRaw<LostPetRow[]>(Prisma.sql`
+        SELECT ${lostPetSelectSql(true)}
+        FROM "lost_pets"
+        WHERE ${Prisma.join(where, ' AND ')}
+        ORDER BY "last_seen_at" DESC, "created_at" DESC, "id" DESC
+        LIMIT ${pageSize}
+        OFFSET ${(page - 1) * pageSize}
+      `),
+      this.prisma.$queryRaw<{ total: bigint | number }[]>(Prisma.sql`
+        SELECT COUNT(*) AS "total"
+        FROM "lost_pets"
+        WHERE ${Prisma.join(where, ' AND ')}
+      `),
+    ]);
+    const totalValue = countRows[0]?.total ?? 0;
+    const total = typeof totalValue === 'bigint' ? Number(totalValue) : totalValue;
+    return {
+      items: rows.map((row) => toLostPetResponse(row, { includeExact: true, includePrivate: true })),
+      page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
   async findPublic(id: string) {
     const row = await this.findRow(id, false);
     if (!row) {
@@ -246,8 +279,13 @@ export class LostPetsService {
   }
 }
 
-function whereForList(query: ListLostPetsQueryDto): Prisma.Sql[] {
-  const where: Prisma.Sql[] = [Prisma.sql`"status" != CAST(${'CLOSED'} AS "LostPetStatus")`];
+function whereForList(
+  query: ListLostPetsQueryDto,
+  options: { includeClosed?: boolean } = {},
+): Prisma.Sql[] {
+  const where: Prisma.Sql[] = options.includeClosed
+    ? []
+    : [Prisma.sql`"status" != CAST(${'CLOSED'} AS "LostPetStatus")`];
   if (query.species) where.push(Prisma.sql`"species" = CAST(${query.species} AS "AnimalSpecies")`);
   if (query.status) where.push(Prisma.sql`"status" = CAST(${query.status} AS "LostPetStatus")`);
   if (query.lastSeenFrom) where.push(Prisma.sql`"last_seen_at" >= ${parseDate(query.lastSeenFrom)}`);

@@ -9,21 +9,29 @@
   </header>
 
   <section class="summary-grid">
-    <article><span>{{ workspace.lostPetSummary().active }}</span><b>Active posts</b></article>
-    <article><span>{{ workspace.lostPetSummary().matches }}</span><b>Possible matches</b></article>
-    <article><span>{{ workspace.lostPetSummary().reunited }}</span><b>Reunited</b></article>
+    <article><span>{{ summary().active }}</span><b>Active posts</b></article>
+    <article><span>{{ summary().matches }}</span><b>Possible matches</b></article>
+    <article><span>{{ summary().reunited }}</span><b>Reunited</b></article>
   </section>
+
+  @if (actionMessage()) {
+    <pr-alert title="Lost pet updated" tone="success">{{ actionMessage() }}</pr-alert>
+  }
 
   <section class="filter-bar">
     <input type="search" [(ngModel)]="query" placeholder="Search pet name, ID, breed, or area" />
     <select [(ngModel)]="status">
       @for (item of statusOptions; track item) {
-        <option [ngValue]="item">{{ item }}</option>
+        <option [ngValue]="item">{{ statusLabel(item) }}</option>
       }
     </select>
   </section>
 
-  @if (workspace.userLostPets().length === 0) {
+  @if (uiState() === 'loading') {
+    <section class="pet-list"><pr-loading-skeleton [rows]="5" /></section>
+  } @else if (uiState() === 'error') {
+    <pr-empty-state title="Lost-pet posts unavailable" [description]="errorMessage()" icon="!" />
+  } @else if (pets().length === 0) {
     <pr-empty-state title="No lost-pet posts" description="Create a lost-pet post to start matching sightings." icon="+">
       <a routerLink="/lost-pets/new" class="inline-action">Post Lost Pet</a>
     </pr-empty-state>
@@ -41,10 +49,12 @@
     <div class="modal-backdrop" (click)="confirmAction.set(null)"></div>
     <section class="confirm-modal" role="dialog" aria-modal="true">
       <h2>Confirm status change</h2>
-      <p>This updates mock UI state only. Mark this lost-pet post as {{ action.status.toLowerCase() }}?</p>
+      <p>Mark this lost-pet post as {{ statusLabel(action.status).toLowerCase() }}?</p>
       <footer>
         <button type="button" class="secondary" (click)="confirmAction.set(null)">Cancel</button>
-        <button type="button" (click)="applyStatus()">Confirm</button>
+        <button type="button" [disabled]="updating()" (click)="applyStatus()">
+          {{ updating() ? 'Saving...' : 'Confirm' }}
+        </button>
       </footer>
     </section>
   }

@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { RouterLink } from '@angular/router';
 
 import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
-import type { LostPetStatus, UserLostPet } from '@petradar/frontend/mock-data';
+
+import type { ApiLostPetStatus, AuthorizedLostPetView } from '../../data-access/index.js';
 
 @Component({
   selector: 'pr-my-lost-pet-card',
@@ -13,8 +14,8 @@ import type { LostPetStatus, UserLostPet } from '@petradar/frontend/mock-data';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MyLostPetCardComponent {
-  readonly pet = input.required<UserLostPet>();
-  readonly statusChanged = output<{ id: string; status: LostPetStatus }>();
+  readonly pet = input.required<AuthorizedLostPetView>();
+  readonly statusChanged = output<{ id: string; status: ApiLostPetStatus }>();
 
   tone(status: string): 'default' | 'match' | 'success' | 'warning' {
     if (status === 'Possible match') return 'match';

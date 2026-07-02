@@ -8,29 +8,31 @@
 </section>
 
 <pr-lost-pet-filter-bar
-  [filters]="dataSource.currentLostPetFilters()"
+  [filters]="filters()"
   (filterChanged)="updateFilter($event)"
-  (clearFilters)="dataSource.clearLostPetFilters()"
+  (clearFilters)="clearFilters()"
 />
 
 @if (uiState() === 'loading') {
-  <pr-empty-state title="Loading lost pets" description="Loading public lost-pet posts." icon="..." />
+  <section class="pet-list"><pr-loading-skeleton [rows]="6" /></section>
 } @else if (uiState() === 'error') {
-  <pr-empty-state title="Lost pets could not load" description="Mock error state for the lost-pet list." icon="!" />
+  <pr-empty-state title="Lost pets could not load" [description]="errorMessage()" icon="!" />
 } @else if (uiState() === 'empty') {
-  <pr-empty-state title="No lost pets yet" description="There are no mock lost-pet posts in this area." icon="0" />
-} @else if (dataSource.filteredLostPets().length === 0) {
+  <pr-empty-state title="No lost pets yet" description="There are no public lost-pet posts right now." icon="0" />
+} @else if (items().length === 0) {
   <pr-empty-state title="No lost pets match filters" description="Clear filters or broaden your search." icon="0" />
 } @else {
   <section class="results-header">
-    <span>{{ dataSource.filteredLostPets().length }} lost pets found</span>
+    <span>{{ total() }} lost pets found</span>
     <span>Sort by: Last seen</span>
   </section>
   <section class="pet-list">
-    @for (pet of dataSource.filteredLostPets(); track pet.id) {
+    @for (pet of items(); track pet.id) {
       <pr-lost-pet-card [pet]="pet" />
     }
   </section>
-  <button type="button" class="load-more">Load more mock posts</button>
+  @if ((filters().page ?? 1) < totalPages()) {
+    <button type="button" class="load-more" (click)="nextPage()">Load more</button>
+  }
 }
 

@@ -3,9 +3,9 @@
   <div class="card-body">
     <div class="title-row">
       <h2>{{ pet().petName }}</h2>
-      <pr-status-badge [label]="pet().status" [tone]="pet().status === 'Reunited' ? 'success' : pet().status === 'Possible match' ? 'match' : 'default'" />
+      <pr-status-badge [label]="pet().status" [tone]="tone(pet().status)" />
     </div>
-    <p>{{ pet().species }} · {{ pet().breed ?? 'Mixed breed' }} · {{ pet().sex ?? 'Unknown sex' }} · {{ pet().ageDescription ?? 'Age unknown' }}</p>
+    <p>{{ pet().species }} · {{ pet().breed ?? 'Mixed breed' }} · {{ pet().sex }} · {{ pet().ageDescription ?? 'Age unknown' }}</p>
     <p><strong>Last seen</strong> {{ pet().approximateLastSeenLocation.label }} · {{ pet().lastSeenAt }}</p>
   </div>
   <aside>

@@ -13,15 +13,16 @@
       <div><dt>Last seen</dt><dd>{{ pet().approximateLastSeenLabel }}</dd></div>
       <div><dt>Time</dt><dd>{{ pet().lastSeenAt }}</dd></div>
       <div><dt>Matches</dt><dd>{{ pet().possibleMatchCount }}</dd></div>
-      <div><dt>Contact</dt><dd>{{ pet().contactPreference }}</dd></div>
+      <div><dt>Contact</dt><dd>{{ pet().contactMethod ?? 'Private' }}</dd></div>
     </dl>
     <footer>
       <a [routerLink]="['/lost-pets', pet().id]">View</a>
       <a [routerLink]="['/my/lost-pets', pet().id, 'matches']">View matches</a>
-      <button type="button" [disabled]="pet().status === 'Reunited'" (click)="statusChanged.emit({ id: pet().id, status: 'Reunited' })">
+      <a [routerLink]="['/lost-pets', pet().id, 'edit']">Edit</a>
+      <button type="button" [disabled]="pet().apiStatus === 'REUNITED'" (click)="statusChanged.emit({ id: pet().id, status: 'REUNITED' })">
         Mark reunited
       </button>
-      <button type="button" [disabled]="pet().status === 'Closed'" (click)="statusChanged.emit({ id: pet().id, status: 'Closed' })">
+      <button type="button" [disabled]="pet().apiStatus === 'CLOSED'" (click)="statusChanged.emit({ id: pet().id, status: 'CLOSED' })">
         Close post
       </button>
     </footer>

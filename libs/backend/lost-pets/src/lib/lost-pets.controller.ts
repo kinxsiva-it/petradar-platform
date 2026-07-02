@@ -45,6 +45,28 @@ export class LostPetsController {
     return this.lostPets.list(query);
   }
 
+  @Get('mine')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: 'Return lost-pet posts owned by the authenticated user.' })
+  listMine(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Query() query: ListLostPetsQueryDto,
+  ): ReturnType<LostPetsService['listMine']> {
+    return this.lostPets.listMine(this.requireUser(user), query);
+  }
+
+  @Get('mine/:id')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOkResponse({ description: 'Return one accessible lost-pet post with private owner fields.' })
+  myDetail(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+  ): ReturnType<LostPetsService['findAuthorized']> {
+    return this.lostPets.findAuthorized(this.requireUser(user), id);
+  }
+
   @Get(':id')
   @ApiOkResponse({ description: 'Return one public lost-pet post.' })
   detail(@Param('id', ParseUUIDPipe) id: string): ReturnType<LostPetsService['findPublic']> {

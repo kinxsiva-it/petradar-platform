@@ -1,14 +1,18 @@
 @if (uiState() === 'loading') {
-  <pr-empty-state title="Loading lost pet" description="Loading public lost-pet details." icon="..." />
+  <section class="detail-card"><pr-loading-skeleton [rows]="7" /></section>
 } @else if (uiState() === 'error') {
-  <pr-empty-state title="Lost pet could not load" description="Mock error state for lost-pet detail." icon="!" />
+  <pr-empty-state title="Lost pet could not load" [description]="errorMessage()" icon="!" />
+} @else if (uiState() === 'not-found') {
+  <pr-empty-state title="Lost pet not found" [description]="errorMessage()" icon="?">
+    <a routerLink="/lost-pets" class="back-link">Back to lost pets</a>
+  </pr-empty-state>
 } @else if (pet(); as item) {
   <section class="detail-header">
     <a routerLink="/lost-pets">Back to lost pets</a>
     <div>
       <p class="eyebrow">Lost pet detail</p>
       <h1>{{ item.petName }}</h1>
-      <p>{{ item.species }} · {{ item.breed ?? 'Mixed breed' }} · {{ item.sex ?? 'Unknown sex' }} · {{ item.ageDescription ?? 'Age unknown' }}</p>
+      <p>{{ item.species }} · {{ item.breed ?? 'Mixed breed' }} · {{ item.sex }} · {{ item.ageDescription ?? 'Age unknown' }}</p>
     </div>
   </section>
 
@@ -33,20 +37,30 @@
       </dl>
 
       <section class="contact-panel">
-        <h3>Owner contact preference</h3>
-        <p>{{ item.contactPreference }}</p>
+        <h3>Owner contact</h3>
+        <p>Contact details are private and are not shown in the public lost-pet view.</p>
       </section>
 
-      <pr-possible-match-summary [count]="item.possibleMatchCount" [petId]="item.id" />
+      @if (canManage()) {
+        <section class="owner-actions">
+          <a [routerLink]="['/lost-pets', item.id, 'edit']">Edit lost-pet post</a>
+          <a [routerLink]="['/my/lost-pets', item.id, 'matches']" class="secondary">View possible matches</a>
+          <button type="button" [disabled]="matching()" (click)="runMatching()">
+            {{ matching() ? 'Running matching...' : 'Run matching' }}
+          </button>
+        </section>
+      }
+      @if (actionMessage()) {
+        <pr-alert title="Matching updated" tone="success">{{ actionMessage() }}</pr-alert>
+      }
+      @if (actionError()) {
+        <pr-alert title="Action unavailable" tone="danger">{{ actionError() }}</pr-alert>
+      }
       <pr-privacy-banner />
     </article>
   </section>
 } @else {
-  <pr-empty-state
-    title="Lost pet not found"
-    description="This lost-pet post does not exist in the mock data source."
-    icon="?"
-  >
+  <pr-empty-state title="Lost pet not found" description="This lost-pet post is not available." icon="?">
     <a routerLink="/lost-pets" class="back-link">Back to lost pets</a>
   </pr-empty-state>
 }

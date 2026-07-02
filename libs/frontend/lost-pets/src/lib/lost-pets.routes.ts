@@ -18,6 +18,20 @@ export const LOST_PET_ROUTES: Routes = [
     ],
   },
   {
+    path: ':id/edit',
+    canActivate: [authGuard],
+    component: AuthenticatedLayoutComponent,
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/create-lost-pet-page/create-lost-pet-page.component.js').then(
+            (module) => module.CreateLostPetPageComponent,
+          ),
+      },
+    ],
+  },
+  {
     path: '',
     component: PublicLayoutComponent,
     children: [
