@@ -68,14 +68,16 @@ export const ADMIN_ROUTES: Routes = [
       },
       {
         path: 'match-review',
-        data: {
-          description:
-            'Lost pet match review will be connected to matching moderation APIs in a focused CMS pass.',
-          title: 'Lost Pet Match Review',
-        },
         loadComponent: () =>
-          import('./pages/admin-cms-placeholder-page/admin-cms-placeholder-page.component.js').then(
-            (module) => module.AdminCmsPlaceholderPageComponent,
+          import('./pages/admin-match-review-page/admin-match-review-page.component.js').then(
+            (module) => module.AdminMatchReviewPageComponent,
+          ),
+      },
+      {
+        path: 'match-review/:id',
+        loadComponent: () =>
+          import('./pages/admin-match-detail-page/admin-match-detail-page.component.js').then(
+            (module) => module.AdminMatchDetailPageComponent,
           ),
       },
       {

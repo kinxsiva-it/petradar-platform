@@ -1,0 +1,121 @@
+@if (uiState() === 'loading') {
+  <section class="match-detail-page"><pr-loading-skeleton [rows]="8" /></section>
+} @else if (uiState() === 'error') {
+  <pr-empty-state title="Match unavailable" [description]="errorMessage()" icon="!">
+    <button type="button" (click)="loadDetail()">Retry</button>
+  </pr-empty-state>
+} @else if (uiState() === 'not-found') {
+  <pr-empty-state title="Match not found" [description]="errorMessage()" icon="?" />
+} @else if (detail(); as item) {
+  <section class="match-detail-page">
+    <header class="page-header">
+      <div>
+        <p class="eyebrow">Match detail</p>
+        <h1>{{ item.lostPet.name }} / {{ item.sighting.species }} sighting</h1>
+        <p>Review backend match evidence, approximate public location, and moderation state.</p>
+      </div>
+      <a routerLink="/match-review">Back to match review</a>
+    </header>
+
+    @if (actionMessage()) {
+      <pr-alert title="Match review updated" tone="success">{{ actionMessage() }}</pr-alert>
+    }
+    @if (errorMessage()) {
+      <pr-alert title="Match action unavailable" tone="danger">{{ errorMessage() }}</pr-alert>
+    }
+
+    <section class="review-grid">
+      <article class="profile-card">
+        <p class="eyebrow">Lost pet</p>
+        <h2>{{ item.lostPet.name }}</h2>
+        <dl>
+          <div><dt>Lost pet ID</dt><dd>{{ item.lostPet.id }}</dd></div>
+          <div><dt>Privacy</dt><dd>Exact last-seen coordinates are not returned by this match API response.</dd></div>
+        </dl>
+      </article>
+
+      <section class="score-panel">
+        <div class="score-ring" [style.background]="scoreBackground(item.score)">
+          <div>
+            <strong>{{ item.score }}%</strong>
+            <span>{{ levelLabel(item) }}</span>
+          </div>
+        </div>
+        <pr-status-badge [label]="item.reviewStatusLabel" [tone]="statusTone(item.reviewStatus)" />
+        <dl>
+          <div><dt>Matched</dt><dd>{{ item.matchedAt }}</dd></div>
+          <div><dt>Reviewed</dt><dd>{{ item.reviewedAt ?? 'Not reviewed' }}</dd></div>
+          <div><dt>Distance</dt><dd>{{ item.distanceLabel }}</dd></div>
+        </dl>
+      </section>
+
+      <article class="profile-card">
+        <p class="eyebrow">Sighting</p>
+        <h2>{{ item.sighting.species }} sighting</h2>
+        <dl>
+          <div><dt>Sighting ID</dt><dd>{{ item.sighting.id }}</dd></div>
+          <div><dt>Condition</dt><dd>{{ item.sighting.condition }}</dd></div>
+          <div><dt>Seen</dt><dd>{{ item.seenAt }}</dd></div>
+          <div>
+            <dt>Public location</dt>
+            <dd>{{ item.approximateLocationLabel }} - {{ item.sighting.publicLocation.radiusMeters }}m radius</dd>
+          </div>
+        </dl>
+      </article>
+    </section>
+
+    <section class="evidence-grid">
+      <article>
+        <h2>Backend match evidence</h2>
+        @if (item.reasons.length > 0) {
+          <ul>
+            @for (reason of item.reasons; track reason) {
+              <li>{{ reason }}</li>
+            }
+          </ul>
+        } @else {
+          <p>The backend response did not include individual reason strings.</p>
+        }
+      </article>
+
+      <article>
+        <h2>Review state</h2>
+        <dl>
+          <div><dt>Status</dt><dd>{{ item.reviewStatusLabel }}</dd></div>
+          <div><dt>Rejection reason</dt><dd>{{ item.rejectionReason ?? 'None' }}</dd></div>
+        </dl>
+      </article>
+
+      <article>
+        <h2>Admin action</h2>
+        @if (canReview()) {
+          <label>
+            Rejection reason
+            <textarea
+              rows="4"
+              [ngModel]="rejectionReason()"
+              (ngModelChange)="rejectionReason.set($event)"
+              maxlength="500"
+              placeholder="Optional reason saved with a rejected match"
+            ></textarea>
+          </label>
+          <div class="action-row">
+            <button type="button" [disabled]="reviewing()" (click)="confirmMatch()">
+              {{ reviewing() ? 'Saving...' : 'Confirm match' }}
+            </button>
+            <button type="button" class="secondary" [disabled]="reviewing()" (click)="rejectMatch()">
+              {{ reviewing() ? 'Saving...' : 'Reject match' }}
+            </button>
+          </div>
+        } @else {
+          <p>This match has already been reviewed. Use Refresh to load the latest backend state.</p>
+          <button type="button" (click)="loadDetail()">Refresh</button>
+        }
+      </article>
+    </section>
+
+    <pr-privacy-banner />
+  </section>
+} @else {
+  <pr-empty-state title="Match not found" description="This match is not available." icon="?" />
+}

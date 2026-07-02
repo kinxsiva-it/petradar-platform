@@ -1,0 +1,185 @@
+.match-detail-page {
+  display: grid;
+  gap: 1rem;
+}
+
+.page-header,
+.profile-card,
+.score-panel,
+.evidence-grid article {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: clamp(1rem, 2.5vw, 1.35rem);
+  box-shadow: var(--shadow-card);
+}
+
+.page-header {
+  display: flex;
+  gap: 1rem;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.eyebrow,
+h1,
+h2,
+p,
+dl,
+ul {
+  margin: 0;
+}
+
+.eyebrow {
+  color: var(--color-primary);
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+h1 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-1);
+}
+
+h2 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-2);
+}
+
+.page-header p,
+p,
+dt,
+span {
+  color: var(--color-text-muted);
+}
+
+.page-header a,
+button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: white;
+  padding: 0 1rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+button:disabled {
+  opacity: 0.55;
+}
+
+button.secondary {
+  background: var(--color-surface);
+  color: var(--color-primary);
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.55fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.profile-card,
+.score-panel,
+.evidence-grid article {
+  display: grid;
+  align-content: start;
+  gap: 0.9rem;
+}
+
+.score-panel {
+  justify-items: center;
+}
+
+.score-ring {
+  display: grid;
+  width: clamp(9rem, 18vw, 12rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.score-ring > div {
+  display: grid;
+  width: 72%;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-surface);
+  text-align: center;
+  box-shadow: inset 0 0 0 1px var(--color-border-default);
+}
+
+.score-ring strong {
+  color: var(--color-text-strong);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+dl,
+ul {
+  display: grid;
+  gap: 0.55rem;
+}
+
+dl div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+dd {
+  margin: 0;
+  color: var(--color-text-strong);
+  overflow-wrap: anywhere;
+}
+
+ul {
+  padding-left: 1.1rem;
+}
+
+li::marker {
+  color: var(--color-success);
+}
+
+.evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+label {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font: var(--text-caption);
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  padding: 0.75rem;
+  font: inherit;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+@media (max-width: 980px) {
+  .page-header,
+  .review-grid,
+  .evidence-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+}

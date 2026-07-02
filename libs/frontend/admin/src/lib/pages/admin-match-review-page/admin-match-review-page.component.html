@@ -1,0 +1,97 @@
+<section class="match-review-page">
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Lost pet match review</p>
+      <h1>Match Review</h1>
+      <p>Inspect backend-generated match candidates and moderate pending owner/sighting matches.</p>
+    </div>
+  </header>
+
+  @if (uiState() === 'loading') {
+    <section class="panel"><pr-loading-skeleton [rows]="8" /></section>
+  } @else if (uiState() === 'error') {
+    <pr-empty-state title="Match review unavailable" [description]="errorMessage()" icon="!">
+      <button type="button" (click)="loadMatches()">Retry</button>
+    </pr-empty-state>
+  } @else {
+    <section class="summary-grid">
+      <article>
+        <span>{{ response()?.total ?? 0 }}</span>
+        <b>Total matches</b>
+      </article>
+      <article>
+        <span>{{ pendingCount() }}</span>
+        <b>Pending on this page</b>
+      </article>
+      <article>
+        <span>{{ highCount() }}</span>
+        <b>High-confidence on this page</b>
+      </article>
+    </section>
+
+    <section class="filter-bar">
+      <label>
+        Review status
+        <select [ngModel]="filters().status ?? 'All'" (ngModelChange)="updateStatus($event)">
+          <option>All</option>
+          <option>PENDING</option>
+          <option>CONFIRMED</option>
+          <option>REJECTED</option>
+        </select>
+      </label>
+      <button type="button" (click)="clearFilters()">Clear</button>
+    </section>
+
+    @if (items().length === 0) {
+      <pr-empty-state
+        title="No matches found"
+        description="No backend match results match the current review status."
+        icon="0"
+      />
+    } @else {
+      <section class="match-table">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Lost pet</th>
+              <th scope="col">Sighting</th>
+              <th scope="col">Score</th>
+              <th scope="col">Review</th>
+              <th scope="col">Matched</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.id) {
+              <tr>
+                <td>
+                  <b>{{ item.lostPet.name }}</b>
+                  <span>{{ item.lostPet.id }}</span>
+                </td>
+                <td>
+                  <b>{{ item.sighting.species }} sighting</b>
+                  <span>{{ item.approximateLocationLabel }} - {{ item.distanceLabel }}</span>
+                </td>
+                <td>
+                  <strong>{{ item.score }}%</strong>
+                  <span>{{ levelLabel(item.level) }}</span>
+                </td>
+                <td>
+                  <pr-status-badge [label]="item.reviewStatusLabel" [tone]="statusTone(item.reviewStatus)" />
+                </td>
+                <td>{{ item.matchedAt }}</td>
+                <td><a [routerLink]="['/match-review', item.id]">Open</a></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+
+      <div class="pagination" aria-label="Match review pagination">
+        <button type="button" [disabled]="(response()?.page ?? 1) <= 1" (click)="previousPage()">Previous</button>
+        <span>Page {{ response()?.page ?? 1 }} of {{ response()?.totalPages ?? 1 }}</span>
+        <button type="button" [disabled]="(response()?.page ?? 1) >= (response()?.totalPages ?? 1)" (click)="nextPage()">Next</button>
+      </div>
+    }
+  }
+</section>
