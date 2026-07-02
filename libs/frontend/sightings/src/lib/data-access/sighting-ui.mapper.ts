@@ -1,5 +1,3 @@
-import type { PublicSighting, UserReport } from '@petradar/frontend/mock-data';
-
 import type {
   ApiAnimalCondition,
   ApiAnimalSpecies,
@@ -13,6 +11,67 @@ import type {
   SightingListFilters,
   UpdateSightingRequest,
 } from './sightings-api.models.js';
+
+export type AnimalSpecies = 'Cat' | 'Dog' | 'Other';
+export type VerificationStatus =
+  | 'Community verified'
+  | 'Duplicate'
+  | 'Needs review'
+  | 'Pending'
+  | 'Rejected'
+  | 'Verified';
+
+export interface PublicSighting {
+  approximateLocation: {
+    area: string;
+    label: string;
+    latitude: number;
+    longitude: number;
+    radiusMeters: number;
+  };
+  collarStatus: string;
+  color: string;
+  condition: string;
+  description: string;
+  distanceLabel: string;
+  id: string;
+  pattern?: string;
+  photos: { id: string; sortOrder: number; url: string }[];
+  photoUrls: string[];
+  reference: string;
+  reporterLabel: string;
+  seenAt: string;
+  species: AnimalSpecies;
+  status: string;
+  title: string;
+  urgency: string;
+  verificationStatus: VerificationStatus;
+  matchConfidence?: number;
+}
+
+export interface UserReport {
+  animalCount: number;
+  approximateLocationLabel: string;
+  collarStatus: string;
+  color: string;
+  condition: string;
+  description: string;
+  editable: boolean;
+  id: string;
+  lifecycleStatus: 'Closed' | 'Needs rescue' | 'Possible match' | 'Submitted';
+  matchCount: number;
+  pattern: string;
+  photos?: { id: string; sortOrder: number; url: string }[];
+  photoUrls: string[];
+  publicRadiusMeters: number;
+  reference: string;
+  rejectionReason: string | null; 
+  seenAt: string;
+  species: AnimalSpecies;
+  title: string;
+  urgency: string;
+  verificationStatus: VerificationStatus;
+}
 
 const placeholderPhotoUrl =
   'https://images.unsplash.com/photo-1574158622682-e40e69881006?auto=format&fit=crop&w=900&q=80';
@@ -65,7 +124,7 @@ export function toUserReportView(sighting: OwnerSightingApiResponse): UserReport
     photoUrls: photoUrlsFor(sighting),
     publicRadiusMeters: sighting.publicLocation.radiusMeters,
     reference: referenceFor(sighting),
-    rejectionReason: sighting.rejectionReason,
+    rejectionReason: sighting.rejectionReason ?? null,
     seenAt: formatDateTime(sighting.seenAt),
     species: fromApiSpecies(sighting.species),
     title: titleFor(sighting),

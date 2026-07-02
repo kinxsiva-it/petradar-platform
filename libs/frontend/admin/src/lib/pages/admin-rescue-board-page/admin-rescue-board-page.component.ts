@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 
 import {
   AdminWorkspaceDataSource,
@@ -23,6 +24,7 @@ import { VolunteerAssignmentPanelComponent } from '../../components/volunteer-as
     FormsModule,
     LoadingSkeletonComponent,
     RescueCaseCardComponent,
+    RouterLink,
     VolunteerAssignmentPanelComponent,
   ],
   styleUrl: './admin-rescue-board-page.component.css',

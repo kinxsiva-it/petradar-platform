@@ -2,55 +2,43 @@
   <header class="page-header">
     <div>
       <p class="eyebrow">User Profile</p>
-      <h1>{{ workspace.currentUser().name }}</h1>
-      <p>{{ workspace.currentUser().locationLabel }} · Member since {{ workspace.currentUser().memberSince }}</p>
+      <h1>{{ auth.user()?.displayName ?? 'PetRadar user' }}</h1>
+      <p>{{ auth.user()?.email ?? 'Current account details are unavailable.' }}</p>
     </div>
-    @if (!editing()) {
-      <button type="button" (click)="edit()">Edit Profile</button>
-    }
   </header>
 
-  @if (saveSuccess()) {
-    <pr-alert title="Profile saved" tone="success">This update exists only in frontend mock state.</pr-alert>
-  }
-  @if (validationError()) {
-    <pr-alert title="Validation issue" tone="danger">{{ validationError() }}</pr-alert>
-  }
+  @if (auth.user(); as user) {
+    <section class="profile-grid">
+      <article class="profile-summary">
+        <span class="avatar-initials" aria-hidden="true">{{ initials() }}</span>
+        <h2>{{ user.displayName }}</h2>
+        <p>{{ user.email }}</p>
+        <div class="badge-row">
+          @for (role of user.roles; track role) {
+            <pr-status-badge [label]="role" tone="success" />
+          }
+        </div>
+        <dl>
+          <div><dt>Status</dt><dd>{{ user.status }}</dd></div>
+          <div><dt>Volunteer</dt><dd>{{ user.volunteerVerification }}</dd></div>
+          <div><dt>Joined</dt><dd>{{ user.createdAt | date: 'mediumDate' }}</dd></div>
+        </dl>
+      </article>
 
-  <section class="profile-grid">
-    <article class="profile-summary">
-      <img [src]="workspace.currentUser().avatarUrl" alt="Mock user avatar" />
-      <h2>{{ workspace.currentUser().name }}</h2>
-      <p>{{ workspace.currentUser().email }}</p>
-      <div class="badge-row">
-        @for (role of workspace.currentUser().roles; track role) {
-          <pr-status-badge [label]="role" tone="success" />
-        }
-      </div>
-      <dl>
-        <div><dt>Reports</dt><dd>{{ history().reports }}</dd></div>
-        <div><dt>Lost-pet posts</dt><dd>{{ history().lostPets }}</dd></div>
-        <div><dt>Reunited</dt><dd>{{ history().reunited }}</dd></div>
-      </dl>
-    </article>
-
-    <article class="profile-form">
-      <h2>Contact profile</h2>
-      <label>Name <input [(ngModel)]="draft.name" [disabled]="!editing()" /></label>
-      <label>Email <input [(ngModel)]="draft.email" [disabled]="!editing()" /></label>
-      <label>Phone <input [(ngModel)]="draft.phone" [disabled]="!editing()" /></label>
-      <label>Contact preference
-        <select [(ngModel)]="draft.contactPreference" [disabled]="!editing()">
-          @for (item of contactOptions; track item) { <option [ngValue]="item">{{ item }}</option> }
-        </select>
-      </label>
-      <label>About me <textarea rows="4" [(ngModel)]="draft.bio" [disabled]="!editing()"></textarea></label>
-      @if (editing()) {
-        <footer>
-          <button type="button" class="secondary" (click)="cancel()">Cancel</button>
-          <button type="button" (click)="save()">Save</button>
-        </footer>
-      }
-    </article>
-  </section>
+      <article class="profile-form">
+        <h2>Account contact</h2>
+        <p>Profile details are loaded from the authenticated `/auth/me` session.</p>
+        <label>Name <input [value]="user.displayName" disabled /></label>
+        <label>Email <input [value]="user.email" disabled /></label>
+        <label>Phone <input [value]="user.phone ?? 'Not provided'" disabled /></label>
+        <pr-alert title="Profile editing unavailable" tone="info">
+          This frontend does not expose a profile-update API yet, so no local mock profile edits are saved.
+        </pr-alert>
+      </article>
+    </section>
+  } @else {
+    <pr-alert title="Profile unavailable" tone="warning">
+      Sign in again to refresh your current account details.
+    </pr-alert>
+  }
 </section>

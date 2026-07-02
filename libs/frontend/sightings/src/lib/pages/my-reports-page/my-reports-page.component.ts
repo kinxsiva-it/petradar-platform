@@ -6,7 +6,6 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { EmptyStateComponent, LoadingSkeletonComponent } from '@petradar/frontend/shared-ui';
-import { AnimalSpecies, UserReport, VerificationStatus } from '@petradar/frontend/mock-data';
 
 import { MyReportCardComponent } from '../../components/my-report-card/my-report-card.component.js';
 import { ReportEditDrawerComponent } from '../../components/report-edit-drawer/report-edit-drawer.component.js';
@@ -14,6 +13,9 @@ import {
   SightingsApiService,
   toUpdateSightingRequest,
   toUserReportView,
+  type AnimalSpecies,
+  type UserReport,
+  type VerificationStatus,
 } from '../../data-access/index.js';
 import type { UpdateSightingRequest } from '../../data-access/sightings-api.models.js';
 

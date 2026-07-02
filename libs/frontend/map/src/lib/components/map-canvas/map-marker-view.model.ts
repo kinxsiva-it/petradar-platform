@@ -1,4 +1,4 @@
-import type { PublicSighting } from '@petradar/frontend/mock-data';
+import type { PublicSighting } from '@petradar/frontend/sightings';
 
 export type MapProvider = 'google' | 'google3d' | 'leaflet';
 

@@ -4,6 +4,8 @@ export * from './lib/auth/auth-state.service.js';
 export * from './lib/auth/auth.guards.js';
 export * from './lib/auth/auth.interceptor.js';
 export * from './lib/auth/auth.models.js';
+export * from './lib/layouts/app-shell.component.js';
+export * from './lib/layouts/pet-radar-navbar.component.js';
 export * from './lib/layouts/public-layout.component.js';
 export * from './lib/layouts/authenticated-layout.component.js';
 export * from './lib/layouts/volunteer-layout.component.js';

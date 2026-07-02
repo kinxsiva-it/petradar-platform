@@ -3,14 +3,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import type { PublicSighting } from '@petradar/frontend/mock-data';
 import { EmptyStateComponent, PrivacyBannerComponent } from '@petradar/frontend/shared-ui';
 
 import { RelatedSightingsComponent } from '../../components/related-sightings/related-sightings.component.js';
 import { SightingMetadataComponent } from '../../components/sighting-metadata/sighting-metadata.component.js';
 import { SightingPhotoGalleryComponent } from '../../components/sighting-photo-gallery/sighting-photo-gallery.component.js';
 import { SightingsApiService } from '../../data-access/sightings-api.service.js';
-import { toPublicSightingView } from '../../data-access/sighting-ui.mapper.js';
+import { toPublicSightingView, type PublicSighting } from '../../data-access/sighting-ui.mapper.js';
 
 type DetailState = 'default' | 'loading' | 'error';
 

@@ -3,32 +3,13 @@
     <div>
       <p class="eyebrow">Notification Center</p>
       <h1>Notifications</h1>
-      <p>{{ workspace.unreadCount() }} unread updates across reports, matches, and rescue status.</p>
+      <p>No notification API is exposed in the current PetRadar frontend contract.</p>
     </div>
-    <button type="button" (click)="workspace.markAllNotificationsRead()">Mark all as read</button>
   </header>
 
-  <nav class="tabs" aria-label="Notification filters">
-    @for (item of filters; track item) {
-      <button type="button" [class.active]="filter() === item" (click)="filter.set(item)">
-        {{ item }}
-      </button>
-    }
-  </nav>
-
-  @if (uiState() === 'loading') {
-    <section class="panel"><pr-loading-skeleton [rows]="7" /></section>
-  } @else if (uiState() === 'error') {
-    <pr-empty-state title="Notifications unavailable" description="Mock notifications could not be displayed." icon="!" />
-  } @else if (workspace.notifications().length === 0) {
-    <pr-empty-state title="No notifications" description="Important mock updates will appear here." icon="0" />
-  } @else if (filteredNotifications().length === 0) {
-    <pr-empty-state title="No notifications in this filter" description="Try all notifications or another category." icon="0" />
-  } @else {
-    <section class="notification-list">
-      @for (notification of filteredNotifications(); track notification.id) {
-        <pr-notification-item [notification]="notification" (read)="workspace.markNotificationRead($event)" />
-      }
-    </section>
-  }
+  <pr-empty-state
+    title="No notifications available"
+    description="Notification badges and local mock notification records have been removed until a real notification API is available."
+    icon="0"
+  />
 </section>

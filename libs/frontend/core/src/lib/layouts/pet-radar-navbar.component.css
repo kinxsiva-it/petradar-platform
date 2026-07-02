@@ -1,0 +1,355 @@
+:host {
+  display: block;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-header);
+}
+
+.petradar-navbar,
+.petradar-navbar * {
+  box-sizing: border-box;
+}
+
+.petradar-navbar {
+  position: relative;
+  display: flex;
+  min-height: 5.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  padding: 0 clamp(1rem, 3vw, 2.5rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 70%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  box-shadow: 0 1px 0 rgb(31 41 51 / 0.03);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: grid;
+  grid-template-columns: 3rem auto;
+  column-gap: 0.75rem;
+  align-items: center;
+  color: var(--color-text-strong);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.brand-mark {
+  grid-row: span 2;
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 35% 28%, rgb(255 255 255 / 0.32), transparent 28%),
+    var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-card);
+}
+
+.brand strong {
+  color: var(--color-primary);
+  font-size: 1.45rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.brand small {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.2rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.brand-heart {
+  color: var(--color-warning, #f4b740);
+  font-size: 0.65rem;
+}
+
+.primary-nav,
+.actions,
+.primary-nav a,
+.icon-action,
+.avatar-action,
+.login-link,
+.signup-link,
+.sign-out,
+.menu-toggle {
+  display: flex;
+  align-items: center;
+}
+
+.primary-nav {
+  gap: 0.55rem;
+}
+
+.primary-nav a {
+  gap: 0.55rem;
+  min-height: 3rem;
+  padding: 0 1rem;
+  border-radius: 1rem;
+  color: var(--color-text-strong);
+  font-weight: 850;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    transform 160ms ease;
+}
+
+.primary-nav a svg {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: color 160ms ease;
+}
+
+.primary-nav a:hover,
+.primary-nav a.active {
+  color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.primary-nav a:hover svg,
+.primary-nav a.active svg {
+  color: var(--color-primary);
+}
+
+.actions {
+  justify-content: flex-end;
+  gap: 0.7rem;
+}
+
+.icon-action,
+.avatar-action,
+.menu-toggle {
+  position: relative;
+  justify-content: center;
+  min-width: 3.25rem;
+  height: 3.25rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: var(--shadow-card);
+}
+
+.icon-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.avatar-action {
+  width: auto;
+  gap: 0.55rem;
+  padding: 0 0.65rem;
+}
+
+.avatar-initials {
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.profile-copy {
+  display: grid;
+  gap: 0.1rem;
+  text-align: left;
+}
+
+.profile-copy strong,
+.profile-copy small {
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-copy strong {
+  font-size: 0.82rem;
+}
+
+.profile-copy small {
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+}
+
+.login-link,
+.signup-link,
+.sign-out {
+  justify-content: center;
+  min-height: 2.85rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  padding: 0 1rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.signup-link {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: white;
+}
+
+.sign-out {
+  cursor: pointer;
+}
+
+.menu-toggle {
+  display: none;
+  cursor: pointer;
+}
+
+.mobile-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-header) - 1);
+  border: 0;
+  background: rgb(15 23 42 / 0.18);
+}
+
+.mobile-panel {
+  position: fixed;
+  top: 5.75rem;
+  right: 0.75rem;
+  z-index: var(--z-header);
+  display: grid;
+  width: min(22rem, calc(100vw - 1.5rem));
+  gap: 1rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  padding: 1rem;
+  box-shadow: var(--shadow-panel);
+}
+
+.mobile-panel nav,
+.mobile-account {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.mobile-panel a,
+.mobile-account button {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  padding: 0.7rem 0.85rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.mobile-panel a.active {
+  color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.brand:focus-visible,
+.primary-nav a:focus-visible,
+.icon-action:focus-visible,
+.avatar-action:focus-visible,
+.login-link:focus-visible,
+.signup-link:focus-visible,
+.sign-out:focus-visible,
+.menu-toggle:focus-visible,
+.mobile-panel a:focus-visible,
+.mobile-account button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 1120px) {
+  .petradar-navbar {
+    gap: 1rem;
+    padding-inline: 1.25rem;
+  }
+
+  .primary-nav a {
+    padding-inline: 0.75rem;
+  }
+
+  .profile-copy,
+  .sign-out {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .petradar-navbar {
+    min-height: 4.5rem;
+  }
+
+  .brand {
+    grid-template-columns: 2.5rem auto;
+  }
+
+  .brand-mark {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.85rem;
+  }
+
+  .brand strong {
+    font-size: 1.1rem;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .primary-nav {
+    display: none;
+  }
+
+  .icon-action,
+  .login-link,
+  .signup-link,
+  .avatar-action {
+    display: none;
+  }
+
+  .menu-toggle {
+    display: flex;
+  }
+
+  .mobile-panel {
+    top: 4.5rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .petradar-navbar {
+    min-height: 4rem;
+    padding-inline: 0.75rem;
+  }
+
+  .brand strong {
+    display: none;
+  }
+
+  .brand {
+    display: flex;
+  }
+
+  .mobile-panel {
+    top: 4rem;
+  }
+}

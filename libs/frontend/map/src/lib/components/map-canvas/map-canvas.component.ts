@@ -9,7 +9,7 @@ import {
   signal,
 } from '@angular/core';
 
-import type { PublicSighting } from '@petradar/frontend/mock-data';
+import type { PublicSighting } from '@petradar/frontend/sightings';
 
 import { Google3DMapRendererComponent } from './google-3d-map-renderer.component.js';
 import { GoogleMapRendererComponent } from './google-map-renderer.component.js';

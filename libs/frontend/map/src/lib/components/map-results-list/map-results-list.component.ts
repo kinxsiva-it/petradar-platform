@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
-import type { PublicSighting } from '@petradar/frontend/mock-data';
+import type { PublicSighting } from '@petradar/frontend/sightings';
 
 @Component({
   selector: 'pr-map-results-list',

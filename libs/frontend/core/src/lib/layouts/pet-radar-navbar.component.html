@@ -1,0 +1,115 @@
+<header class="petradar-navbar">
+  <a routerLink="/" class="brand" aria-label="PetRadar home" (click)="closeMenu()">
+    <span class="brand-mark" aria-hidden="true">
+      <svg lucidePawPrint size="25" strokeWidth="2.4"></svg>
+    </span>
+    <strong>PetRadar</strong>
+    <small>
+      Reuniting hearts
+      <span class="brand-heart" aria-hidden="true">&hearts;</span>
+    </small>
+  </a>
+
+  <nav class="primary-nav" aria-label="Main navigation">
+    @for (item of navItems(); track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        ariaCurrentWhenActive="page"
+        [routerLinkActiveOptions]="{ exact: item.matchExact === true }"
+      >
+        @switch (item.kind) {
+          @case ('map') {
+            <svg lucideMap size="21" strokeWidth="2" aria-hidden="true"></svg>
+          }
+          @case ('lost-pets') {
+            <svg lucideHeart size="21" strokeWidth="2" aria-hidden="true"></svg>
+          }
+          @case ('matches') {
+            <svg lucideGitFork size="21" strokeWidth="2" aria-hidden="true"></svg>
+          }
+          @case ('report') {
+            <svg lucidePlus size="21" strokeWidth="2" aria-hidden="true"></svg>
+          }
+          @case ('rescue') {
+            <svg lucideLifeBuoy size="21" strokeWidth="2" aria-hidden="true"></svg>
+          }
+          @case ('admin') {
+            <svg lucideShieldCheck size="21" strokeWidth="2" aria-hidden="true"></svg>
+          }
+        }
+        <span class="nav-label">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+
+  <div class="actions">
+    @if (auth.isAuthenticated()) {
+      <button
+        type="button"
+        class="icon-action"
+        aria-label="Notifications unavailable"
+        disabled
+      >
+        <svg lucideBell size="21" strokeWidth="2" aria-hidden="true"></svg>
+      </button>
+
+      <a routerLink="/profile" class="avatar-action" aria-label="Open profile">
+        <span class="avatar-initials" aria-hidden="true">{{ initials() }}</span>
+        <span class="profile-copy">
+          <strong>{{ auth.user()?.displayName ?? 'PetRadar user' }}</strong>
+          <small>{{ roleLabel() || 'Member' }}</small>
+        </span>
+        <svg lucideChevronDown class="avatar-chevron" size="16" strokeWidth="2" aria-hidden="true"></svg>
+      </a>
+
+      <button type="button" class="sign-out" (click)="signOut()">Sign out</button>
+    } @else {
+      <a routerLink="/login" class="login-link">Log in</a>
+      <a routerLink="/register" class="signup-link">Sign up</a>
+    }
+
+    <button
+      type="button"
+      class="menu-toggle"
+      [attr.aria-expanded]="menuOpen()"
+      aria-label="Toggle navigation"
+      (click)="menuOpen.set(!menuOpen())"
+    >
+      @if (menuOpen()) {
+        <svg lucideX size="22" strokeWidth="2.2" aria-hidden="true"></svg>
+      } @else {
+        <svg lucideMenu size="22" strokeWidth="2.2" aria-hidden="true"></svg>
+      }
+    </button>
+  </div>
+</header>
+
+@if (menuOpen()) {
+  <button type="button" class="mobile-backdrop" aria-label="Close navigation" (click)="closeMenu()"></button>
+  <aside class="mobile-panel" aria-label="Mobile navigation">
+    <nav>
+      @for (item of navItems(); track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.matchExact === true }"
+          (click)="closeMenu()"
+        >
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    <div class="mobile-account">
+      @if (auth.isAuthenticated()) {
+        <a routerLink="/profile" (click)="closeMenu()">Profile</a>
+        <a routerLink="/settings" (click)="closeMenu()">Settings</a>
+        <button type="button" (click)="signOut()">Sign out</button>
+      } @else {
+        <a routerLink="/login" (click)="closeMenu()">Log in</a>
+        <a routerLink="/register" class="signup-link" (click)="closeMenu()">Sign up</a>
+      }
+    </div>
+  </aside>
+}

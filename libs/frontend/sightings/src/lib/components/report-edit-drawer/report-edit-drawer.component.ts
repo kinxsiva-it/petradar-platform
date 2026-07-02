@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import type { UserReport } from '@petradar/frontend/mock-data';
+import type { UserReport } from '../../data-access/sighting-ui.mapper.js';
 import type { UpdateSightingRequest } from '../../data-access/sightings-api.models.js';
 
 @Component({

@@ -72,8 +72,8 @@
         <aside class="assignment-column">
           @if (selectedCase(); as item) {
             <h2>{{ item.caseNumber }}</h2>
-            <p>{{ item.animal.nameLabel }} · {{ item.approximateLocation.label }}</p>
-            <a [href]="'/admin/rescue-cases/' + item.id">Open full detail</a>
+            <p>{{ item.animal.nameLabel }} &middot; {{ item.approximateLocation.label }}</p>
+            <a [routerLink]="['/admin/rescue-cases', item.id]">Open full detail</a>
             <pr-volunteer-assignment-panel [volunteers]="admin.volunteers()" (assigned)="assign($event)" (removed)="removeAssignment()" />
           } @else {
             <section class="panel"><p>Select a rescue case to assign or reassign a volunteer.</p></section>

@@ -14,8 +14,8 @@ import {
   LucidePawPrint,
   LucideStar,
 } from '@lucide/angular';
-import { DiscoveryFilters, PublicSighting } from '@petradar/frontend/mock-data';
 import {
+  type PublicSighting,
   SightingsApiService,
   toApiListFilters,
   toPublicSightingView,
@@ -31,11 +31,11 @@ import {
   MapFilterChipsComponent,
 } from '../../components/map-filter-chips/map-filter-chips.component.js';
 import { MapFilterPanelComponent } from '../../components/map-filter-panel/map-filter-panel.component.js';
+import type { DiscoveryFilters } from '../../components/map-filter-panel/map-filter.model.js';
 import { MapReportCtaComponent } from '../../components/map-report-cta/map-report-cta.component.js';
 import { MapResultCountComponent } from '../../components/map-result-count/map-result-count.component.js';
 import { MapResultsListComponent } from '../../components/map-results-list/map-results-list.component.js';
 import { MapSearchOverlayComponent } from '../../components/map-search-overlay/map-search-overlay.component.js';
-import { MapTopNavComponent } from '../../components/map-top-nav/map-top-nav.component.js';
 import { SightingDetailDrawerComponent } from '../../components/sighting-detail-drawer/sighting-detail-drawer.component.js';
 type MapUiState = 'default' | 'loading' | 'empty' | 'error' | 'location-denied' | 'map-unavailable';
 type NearMeState = 'idle' | 'loading' | 'ready' | 'denied';
@@ -62,7 +62,6 @@ const defaultSightingFilters: DiscoveryFilters = {
     MapResultCountComponent,
     MapResultsListComponent,
     MapSearchOverlayComponent,
-    MapTopNavComponent,
     SightingDetailDrawerComponent,
   ],
   templateUrl: './community-map-page.component.html',

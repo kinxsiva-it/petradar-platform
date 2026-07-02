@@ -17,7 +17,6 @@ import {
   PrivacyBannerComponent,
   StatusBadgeComponent,
 } from '@petradar/frontend/shared-ui';
-import { AnimalSpecies, CollarStatus, UrgencyLevel } from '@petradar/frontend/mock-data';
 import { SightingsApiService, toCreateSightingRequest } from '@petradar/frontend/sightings';
 
 import { ReportStepperComponent } from '../../components/report-stepper/report-stepper.component.js';
@@ -31,6 +30,9 @@ type ReportCondition =
   | 'Newborn litter'
   | 'Aggressive'
   | 'Possible lost pet';
+type AnimalSpecies = 'Cat' | 'Dog' | 'Other';
+type CollarStatus = 'Blue collar' | 'No collar' | 'Red collar with bell' | 'Unknown';
+type UrgencyLevel = 'Emergency' | 'High' | 'Low' | 'Medium';
 
 interface ConditionOption {
   label: ReportCondition;

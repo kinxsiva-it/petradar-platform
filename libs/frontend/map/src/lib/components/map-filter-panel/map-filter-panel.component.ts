@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import type { DiscoveryFilters } from '@petradar/frontend/mock-data';
+import type { DiscoveryFilters } from './map-filter.model.js';
 
 @Component({
   selector: 'pr-map-filter-panel',

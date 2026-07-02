@@ -5,7 +5,7 @@
 }
 
 .modern-map-page {
-  min-height: 100vh;
+  min-height: calc(100vh - 5.75rem);
   overflow: hidden;
   background: var(--color-surface);
 }

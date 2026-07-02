@@ -60,6 +60,18 @@ p {
   object-fit: cover;
 }
 
+.avatar-initials {
+  display: grid;
+  width: 7rem;
+  height: 7rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-size: 2rem;
+  font-weight: 900;
+}
+
 .badge-row,
 footer {
   display: flex;

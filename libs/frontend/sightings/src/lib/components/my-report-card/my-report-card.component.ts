@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { RouterLink } from '@angular/router';
 
 import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
-import type { UserReport } from '@petradar/frontend/mock-data';
+import type { UserReport } from '../../data-access/sighting-ui.mapper.js';
 
 @Component({
   selector: 'pr-my-report-card',

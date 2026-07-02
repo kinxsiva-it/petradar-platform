@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import type { PublicSighting } from '@petradar/frontend/mock-data';
+import type { PublicSighting } from '@petradar/frontend/sightings';
 import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
 
 @Component({
