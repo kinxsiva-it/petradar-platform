@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { RescueWorkflowDataSource, type RescueCaseStatus } from '@petradar/frontend/mock-data';
+import { rescueStatusLabel } from '../../data-access/rescue-case-ui.mapper.js';
+import type { RescueCaseStatus } from '../../data-access/rescue-cases-api.models.js';
 
 @Component({
   selector: 'pr-rescue-status-badge',
@@ -10,8 +11,7 @@ import { RescueWorkflowDataSource, type RescueCaseStatus } from '@petradar/front
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RescueStatusBadgeComponent {
-  private readonly rescue = inject(RescueWorkflowDataSource);
   readonly status = input.required<RescueCaseStatus>();
-  readonly label = computed(() => this.rescue.statusLabel(this.status()));
+  readonly label = computed(() => rescueStatusLabel(this.status()));
   readonly classes = computed(() => `status-badge ${this.status().toLowerCase().replaceAll('_', '-')}`);
 }

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 
-import type { RescueTimelineEntry } from '@petradar/frontend/mock-data';
+import type { RescueTimelineEntry } from '../../data-access/rescue-case-ui.mapper.js';
 
 @Component({
   selector: 'pr-rescue-case-timeline',
@@ -10,5 +10,5 @@ import type { RescueTimelineEntry } from '@petradar/frontend/mock-data';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RescueCaseTimelineComponent {
-  readonly entries = input.required<RescueTimelineEntry[]>();
+  readonly entries = input.required<readonly RescueTimelineEntry[]>();
 }

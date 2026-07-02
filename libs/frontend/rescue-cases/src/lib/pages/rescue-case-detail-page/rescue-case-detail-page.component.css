@@ -166,6 +166,26 @@ button.secondary {
   color: var(--color-primary);
 }
 
+.assignment-form,
+label {
+  display: grid;
+  gap: 0.5rem;
+}
+
+input,
+textarea {
+  min-width: 0;
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  padding: 0.7rem 0.8rem;
+}
+
+textarea {
+  resize: vertical;
+}
+
 @media (max-width: 980px) {
   .case-header,
   .detail-grid,

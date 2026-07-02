@@ -32,15 +32,15 @@ export const ADMIN_ROUTES: Routes = [
       {
         path: 'rescue-cases',
         loadComponent: () =>
-          import('./pages/admin-rescue-board-page/admin-rescue-board-page.component.js').then(
-            (module) => module.AdminRescueBoardPageComponent,
+          import('@petradar/frontend/rescue-cases').then(
+            (module) => module.RescueCaseListPageComponent,
           ),
       },
       {
         path: 'rescue-cases/:id',
         loadComponent: () =>
-          import('./pages/admin-rescue-detail-page/admin-rescue-detail-page.component.js').then(
-            (module) => module.AdminRescueDetailPageComponent,
+          import('@petradar/frontend/rescue-cases').then(
+            (module) => module.RescueCaseDetailPageComponent,
           ),
       },
       {

@@ -13,7 +13,7 @@
       <div>
         <p class="eyebrow">{{ item.reference }}</p>
         <h1>{{ item.species }} sighting</h1>
-        <p>{{ item.condition }} · submitted {{ item.createdAt }}</p>
+        <p>{{ item.condition }} &middot; submitted {{ item.createdAt }}</p>
       </div>
       <div class="badge-row">
         <pr-status-badge [label]="item.urgency" [tone]="item.urgency === 'HIGH' || item.urgency === 'EMERGENCY' ? 'danger' : 'warning'" />
@@ -99,6 +99,35 @@
           (approved)="approve()"
           (rejected)="reject($event)"
         />
+        <article class="panel">
+          <h2>Create rescue case</h2>
+          <label>
+            Severity
+            <select [ngModel]="rescueSeverity()" (ngModelChange)="rescueSeverity.set($event)">
+              <option [ngValue]="'LOW'">LOW</option>
+              <option [ngValue]="'MEDIUM'">MEDIUM</option>
+              <option [ngValue]="'HIGH'">HIGH</option>
+              <option [ngValue]="'EMERGENCY'">EMERGENCY</option>
+            </select>
+          </label>
+          <label>
+            Summary
+            <textarea
+              rows="4"
+              [ngModel]="rescueSummary()"
+              (ngModelChange)="rescueSummary.set($event)"
+              placeholder="Optional rescue summary. A default summary will be generated if this is blank."
+            ></textarea>
+          </label>
+          <button type="button" [disabled]="rescueProcessing()" (click)="createRescueCase()">
+            {{ rescueProcessing() ? 'Creating...' : 'Create rescue case' }}
+          </button>
+          @if (createdRescueCase(); as rescueCase) {
+            <a [routerLink]="['/admin/rescue-cases', rescueCase.id]">
+              Open {{ rescueCase.caseNumber }}
+            </a>
+          }
+        </article>
       </aside>
     </section>
   }

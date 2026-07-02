@@ -1,6 +1,6 @@
 <section class="notes">
   <h2>Internal notes</h2>
-  <p class="internal-label">Internal-only mock notes. This prototype does not enforce backend privacy.</p>
+  <p class="internal-label">Visible only to authorized rescue users.</p>
   <label>
     Add note
     <textarea rows="4" [ngModel]="draft()" (ngModelChange)="draft.set($event)"></textarea>
@@ -12,7 +12,7 @@
   <div class="note-list">
     @for (note of notes(); track note.id) {
       <article>
-        <header><strong>{{ note.author }}</strong><span>{{ note.authorRole }}</span></header>
+        <header><strong>{{ note.author }}</strong></header>
         <p>{{ note.body }}</p>
         <small>{{ note.createdAt }}</small>
       </article>

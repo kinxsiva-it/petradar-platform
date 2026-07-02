@@ -96,7 +96,7 @@ export function toLostPetView(item: LostPetApiResponse, matchCount = 0): LostPet
     apiStatus: item.status,
     approximateLastSeenLabel: publicLabel,
     approximateLastSeenLocation: {
-      label: `${publicLabel} (${item.publicLocation.radiusMeters}m public radius)`,
+      label: `${publicLabel} (${String(item.publicLocation.radiusMeters)}m public radius)`,
       latitude: item.publicLocation.latitude,
       longitude: item.publicLocation.longitude,
       radiusMeters: item.publicLocation.radiusMeters,
@@ -301,7 +301,7 @@ function formatReward(value: number | null): string {
 function formatDistance(value: number | null): string {
   if (value === null) return 'Distance unavailable';
   if (value >= 1000) return `${(value / 1000).toFixed(1)} km away`;
-  return `${Math.round(value)} m away`;
+  return `${String(Math.round(value))} m away`;
 }
 
 function formatMatchReason(value: string): string {
@@ -310,7 +310,7 @@ function formatMatchReason(value: string): string {
 
 function clean(value: string | undefined): string | undefined {
   const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
+  return trimmed ?? undefined;
 }
 
 function isApiErrorResponse(value: unknown): value is Pick<ApiErrorResponse, 'message'> {

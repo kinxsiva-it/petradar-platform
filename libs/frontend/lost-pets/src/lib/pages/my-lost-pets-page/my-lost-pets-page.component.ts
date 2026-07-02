@@ -51,7 +51,7 @@ export class MyLostPetsPageComponent {
 
   readonly filteredPets = computed(() =>
     this.pets().filter((pet) => {
-      const target = `${pet.petName} ${pet.reference} ${pet.breed} ${pet.approximateLastSeenLabel}`.toLowerCase();
+      const target = `${pet.petName} ${pet.reference} ${pet.breed ?? ''} ${pet.approximateLastSeenLabel}`.toLowerCase();
       return target.includes(this.query.trim().toLowerCase()) && (this.status === 'All' || pet.apiStatus === this.status);
     }),
   );

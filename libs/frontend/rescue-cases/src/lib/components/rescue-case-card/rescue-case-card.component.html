@@ -8,8 +8,8 @@
       </div>
       <pr-rescue-severity-badge [severity]="caseItem().severity" />
     </div>
-    <p>{{ caseItem().animal.species }} · {{ caseItem().animal.conditionSummary }}</p>
-    <p class="meta">{{ caseItem().approximateLocation.label }} · {{ caseItem().distanceLabel }}</p>
+    <p>{{ caseItem().animal.species }} &middot; {{ caseItem().animal.conditionSummary }}</p>
+    <p class="meta">{{ caseItem().approximateLocation.label }} &middot; {{ caseItem().distanceLabel }}</p>
     <div class="badge-row">
       <pr-rescue-status-badge [status]="caseItem().status" />
       @if (caseItem().assignedVolunteer) {
@@ -20,8 +20,8 @@
     </div>
   </div>
   <footer>
-    <a [routerLink]="['/volunteer/rescue-cases', caseItem().id]">View case</a>
-    @if (!caseItem().assignedVolunteer) {
+    <a [routerLink]="[detailBaseRoute(), caseItem().id]">View case</a>
+    @if (showAccept() && !caseItem().assignedVolunteer) {
       <button type="button" (click)="accepted.emit(caseItem().id)">Accept</button>
     }
   </footer>

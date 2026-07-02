@@ -1,8 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
+import {
+  RescueCasesApiService,
+  type RescueCaseApiResponse,
+  type RescueSeverity,
+} from '@petradar/frontend/rescue-cases';
 import { AlertComponent, EmptyStateComponent, LoadingSkeletonComponent, PrivacyBannerComponent, StatusBadgeComponent } from '@petradar/frontend/shared-ui';
 
 import { AdminActivityListComponent } from '../../components/admin-activity-list/admin-activity-list.component.js';
@@ -21,6 +27,7 @@ type DetailState = 'loading' | 'ready' | 'error' | 'not-found';
     AdminActivityListComponent,
     AlertComponent,
     EmptyStateComponent,
+    FormsModule,
     LoadingSkeletonComponent,
     PrivacyBannerComponent,
     ReportVerificationActionsComponent,
@@ -34,12 +41,17 @@ type DetailState = 'loading' | 'ready' | 'error' | 'not-found';
 export class VerificationDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly adminApi = inject(AdminSightingsApiService);
+  private readonly rescueCasesApi = inject(RescueCasesApiService);
   readonly id = this.route.snapshot.paramMap.get('id');
   readonly report = signal<AdminModerationDetail | null>(null);
   readonly uiState = signal<DetailState>('loading');
   readonly errorMessage = signal('');
   readonly actionMessage = signal('');
   readonly processing = signal(false);
+  readonly rescueProcessing = signal(false);
+  readonly rescueSeverity = signal<RescueSeverity>('HIGH');
+  readonly rescueSummary = signal('');
+  readonly createdRescueCase = signal<RescueCaseApiResponse | null>(null);
 
   constructor() {
     void this.loadDetail();
@@ -99,6 +111,38 @@ export class VerificationDetailPageComponent {
       this.processing.set(false);
     }
   }
+
+  async createRescueCase(): Promise<void> {
+    const report = this.report();
+    if (!report || this.rescueProcessing()) {
+      return;
+    }
+
+    this.rescueProcessing.set(true);
+    this.errorMessage.set('');
+    this.actionMessage.set('');
+    this.createdRescueCase.set(null);
+    try {
+      const rescueCase = await firstValueFrom(
+        this.rescueCasesApi.create({
+          severity: this.rescueSeverity(),
+          sightingId: report.id,
+          summary: this.rescueSummary().trim() || rescueSummaryFor(report),
+        }),
+      );
+      this.createdRescueCase.set(rescueCase);
+      this.actionMessage.set('Rescue case created.');
+    } catch (error) {
+      this.errorMessage.set(toUserMessage(error));
+    } finally {
+      this.rescueProcessing.set(false);
+    }
+  }
+}
+
+function rescueSummaryFor(report: AdminModerationDetail): string {
+  const color = report.color ? `${report.color} ` : '';
+  return `${report.urgency} ${color}${report.species.toLowerCase()} sighting needs rescue review. ${report.description ?? 'No additional description was provided.'}`;
 }
 
 function toUserMessage(error: unknown): string {
@@ -116,7 +160,7 @@ function toUserMessage(error: unknown): string {
     return 'Sighting not found.';
   }
   if (error.status === 409) {
-    return 'This sighting has already been moderated.';
+    return 'This record already has a conflicting state or active rescue case.';
   }
 
   const body = error.error as { message?: string | string[] } | null;

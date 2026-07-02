@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import type { InternalNote } from '@petradar/frontend/mock-data';
+import type { InternalNote } from '../../data-access/rescue-case-ui.mapper.js';
 
 @Component({
   selector: 'pr-internal-note-list',
@@ -12,7 +12,7 @@ import type { InternalNote } from '@petradar/frontend/mock-data';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InternalNoteListComponent {
-  readonly notes = input.required<InternalNote[]>();
+  readonly notes = input.required<readonly InternalNote[]>();
   readonly noteAdded = output<string>();
   readonly draft = signal('');
   readonly error = signal('');

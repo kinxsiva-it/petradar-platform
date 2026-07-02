@@ -11,31 +11,28 @@
   font-weight: 800;
 }
 
-.needs-rescue,
-.emergency,
-.false-report {
+.needs-rescue {
   border-color: var(--color-danger-subtle);
   background: var(--color-danger-subtle);
   color: var(--color-danger);
 }
 
-.needs-verification,
-.foster-needed {
+.new-report,
+.needs-verification {
   border-color: var(--color-warning-subtle);
   background: var(--color-warning-subtle);
   color: #a85f00;
 }
 
-.volunteer-assigned,
-.watching,
-.at-clinic {
+.assigned,
+.in-progress {
   border-color: var(--color-info-subtle);
   background: var(--color-info-subtle);
   color: var(--color-info);
 }
 
-.reunited,
-.adopted {
+.resolved,
+.closed {
   border-color: var(--color-success-subtle);
   background: var(--color-success-subtle);
   color: var(--color-primary);

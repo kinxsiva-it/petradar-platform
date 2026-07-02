@@ -1,85 +1,9 @@
 <section class="rescue-board-page">
-  <header class="page-header">
-    <div>
-      <p class="eyebrow">Admin rescue management</p>
-      <h1>Rescue Operations Board</h1>
-      <p>Manage mock rescue cases, assignment, and status without backend persistence.</p>
-    </div>
-  </header>
-
-  @if (uiState() === 'loading') {
-    <section class="panel"><pr-loading-skeleton [rows]="10" /></section>
-  } @else if (uiState() === 'error') {
-    <pr-empty-state title="Rescue board unavailable" description="The mock rescue board could not render." icon="!" />
-  } @else {
-    <section class="summary-grid">
-      <pr-admin-summary-card label="Active rescue cases" [value]="rescue.activeCases().length" detail="Open workflow cases" />
-      <pr-admin-summary-card label="Unassigned" [value]="rescue.nearbyUrgentCases().length" detail="Need volunteer assignment" />
-      <pr-admin-summary-card label="At clinic" [value]="casesFor(['AT_CLINIC']).length" detail="Medical follow-up" />
-      <pr-admin-summary-card label="Completed" [value]="rescue.completedCases().length" detail="Closed outcomes" />
-    </section>
-
-    <section class="filter-bar">
-      <input
-        type="search"
-        [ngModel]="admin.rescueFilters().query"
-        (ngModelChange)="admin.updateRescueFilter('query', $event)"
-        placeholder="Search rescue cases"
-      />
-      <select [ngModel]="admin.rescueFilters().severity" (ngModelChange)="admin.updateRescueFilter('severity', $event)">
-        <option>All</option>
-        <option>LOW</option>
-        <option>MEDIUM</option>
-        <option>HIGH</option>
-        <option>EMERGENCY</option>
-      </select>
-      <select [ngModel]="admin.rescueFilters().status" (ngModelChange)="admin.updateRescueFilter('status', $event)">
-        <option>All</option>
-        @for (transition of rescue.transitions; track $index) {
-          <option [ngValue]="transition.to">{{ rescue.statusLabel(transition.to) }}</option>
-        }
-      </select>
-      <select [ngModel]="admin.rescueFilters().assignment" (ngModelChange)="admin.updateRescueFilter('assignment', $event)">
-        <option>All</option>
-        <option>Assigned</option>
-        <option>Unassigned</option>
-      </select>
-      <button type="button" (click)="admin.clearRescueFilters()">Clear</button>
-    </section>
-
-    @if (uiState() === 'empty' || rescue.rescueCases().length === 0) {
-      <pr-empty-state title="No rescue cases" description="There are no mock rescue cases to manage." icon="0" />
-    } @else if (filteredCases().length === 0) {
-      <pr-empty-state title="No rescue cases match filters" description="Clear filters or adjust the status grouping." icon="0" />
-    } @else {
-      <section class="board-layout">
-        <div class="board-groups">
-          @for (group of groups; track group.label) {
-            <section class="board-column">
-              <h2>{{ group.label }} <span>{{ casesFor(group.statuses).length }}</span></h2>
-              <div class="case-stack">
-                @for (caseItem of casesFor(group.statuses); track caseItem.id) {
-                  <pr-rescue-case-card [caseItem]="caseItem" [compact]="true" (accepted)="rescue.acceptCase($event)" />
-                  <button type="button" class="select-case" (click)="selectedCase.set(caseItem)">Manage</button>
-                } @empty {
-                  <p class="empty">No cases in this group.</p>
-                }
-              </div>
-            </section>
-          }
-        </div>
-
-        <aside class="assignment-column">
-          @if (selectedCase(); as item) {
-            <h2>{{ item.caseNumber }}</h2>
-            <p>{{ item.animal.nameLabel }} &middot; {{ item.approximateLocation.label }}</p>
-            <a [routerLink]="['/admin/rescue-cases', item.id]">Open full detail</a>
-            <pr-volunteer-assignment-panel [volunteers]="admin.volunteers()" (assigned)="assign($event)" (removed)="removeAssignment()" />
-          } @else {
-            <section class="panel"><p>Select a rescue case to assign or reassign a volunteer.</p></section>
-          }
-        </aside>
-      </section>
-    }
-  }
+  <pr-empty-state
+    title="Admin rescue board moved"
+    description="The routed admin rescue board now uses the shared API-backed rescue case board."
+    icon="i"
+  >
+    <a routerLink="/admin/rescue-cases" class="inline-action">Open rescue cases</a>
+  </pr-empty-state>
 </section>

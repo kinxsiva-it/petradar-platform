@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import type { RescueSeverity } from '@petradar/frontend/mock-data';
+import type { RescueSeverity } from '../../data-access/rescue-cases-api.models.js';
 
 const toneClasses: Record<RescueSeverity, string> = {
   EMERGENCY: 'emergency',

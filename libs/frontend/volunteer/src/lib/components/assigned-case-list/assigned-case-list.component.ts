@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import type { RescueCase } from '@petradar/frontend/mock-data';
-import { RescueCaseCardComponent } from '@petradar/frontend/rescue-cases';
+import { RescueCaseCardComponent, type RescueCase } from '@petradar/frontend/rescue-cases';
 
 @Component({
   selector: 'pr-assigned-case-list',
@@ -12,7 +11,7 @@ import { RescueCaseCardComponent } from '@petradar/frontend/rescue-cases';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AssignedCaseListComponent {
-  readonly cases = input.required<RescueCase[]>();
+  readonly cases = input.required<readonly RescueCase[]>();
   readonly title = input.required<string>();
   readonly emptyText = input('No cases in this list.');
   readonly accepted = output<string>();

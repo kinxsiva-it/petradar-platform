@@ -3,48 +3,56 @@
     <div>
       <p class="eyebrow">Rescue operations</p>
       <h1>Rescue Case Board</h1>
-      <p>Grouped mock rescue cases with approximate public locations and volunteer workflow actions.</p>
+      <p>Cases are loaded from the protected rescue workflow API using public-safe locations.</p>
     </div>
   </header>
 
   <section class="summary-grid">
-    <article><span>{{ rescue.activeCases().length }}</span><b>Active cases</b></article>
-    <article><span>{{ rescue.assignedCases().length }}</span><b>Assigned to me</b></article>
-    <article><span>{{ rescue.nearbyUrgentCases().length }}</span><b>Nearby urgent</b></article>
-    <article><span>{{ rescue.completedCases().length }}</span><b>Completed</b></article>
+    <article><span>{{ activeCases().length }}</span><b>Active cases</b></article>
+    <article><span>{{ assignedToMe().length }}</span><b>Assigned to me</b></article>
+    <article><span>{{ urgentCases().length }}</span><b>High urgency</b></article>
+    <article><span>{{ completedCases().length }}</span><b>Completed</b></article>
   </section>
 
   <section class="filter-bar">
     <input
       type="search"
-      [ngModel]="rescue.boardFilters().query"
+      [ngModel]="filters().query"
       (ngModelChange)="updateFilter('query', $event)"
       placeholder="Search case number, animal, area, or summary"
     />
-    <select [ngModel]="rescue.boardFilters().species" (ngModelChange)="updateFilter('species', $event)">
-      @for (item of speciesOptions; track item) { <option [ngValue]="item">{{ item }}</option> }
+    <select [ngModel]="filters().species" (ngModelChange)="updateFilter('species', $event)">
+      @for (item of speciesOptions; track item) {
+        <option [ngValue]="item">{{ speciesLabel(item) }}</option>
+      }
     </select>
-    <select [ngModel]="rescue.boardFilters().severity" (ngModelChange)="updateFilter('severity', $event)">
-      @for (item of severityOptions; track item) { <option [ngValue]="item">{{ item }}</option> }
+    <select [ngModel]="filters().severity" (ngModelChange)="updateFilter('severity', $event)">
+      @for (item of severityOptions; track item) {
+        <option [ngValue]="item">{{ item }}</option>
+      }
     </select>
-    <select [ngModel]="rescue.boardFilters().status" (ngModelChange)="updateFilter('status', $event)">
-      @for (item of statusOptions; track item) { <option [ngValue]="item">{{ item === 'All' ? item : rescue.statusLabel(item) }}</option> }
+    <select [ngModel]="filters().status" (ngModelChange)="updateFilter('status', $event)">
+      @for (item of statusOptions; track item) {
+        <option [ngValue]="item">{{ statusLabel(item) }}</option>
+      }
     </select>
-    <select [ngModel]="rescue.boardFilters().assignment" (ngModelChange)="updateFilter('assignment', $event)">
-      @for (item of assignmentOptions; track item) { <option [ngValue]="item">{{ item }}</option> }
+    <select [ngModel]="filters().assignment" (ngModelChange)="updateFilter('assignment', $event)">
+      @for (item of assignmentOptions; track item) {
+        <option [ngValue]="item">{{ item }}</option>
+      }
     </select>
-    <button type="button" (click)="rescue.clearFilters()">Clear</button>
+    <button type="button" (click)="clearFilters()">Clear</button>
   </section>
 
   @if (uiState() === 'loading') {
     <section class="panel"><pr-loading-skeleton [rows]="8" /></section>
   } @else if (uiState() === 'error') {
-    <pr-empty-state title="Rescue board unavailable" description="Mock rescue cases could not be displayed." icon="!" />
-  } @else if (uiState() === 'empty' || rescue.rescueCases().length === 0) {
-    <pr-empty-state title="No rescue cases" description="There are no mock rescue cases in this state." icon="0" />
-  } @else if (rescue.filteredCases().length === 0) {
+    <pr-empty-state title="Rescue board unavailable" [description]="errorMessage()" icon="!" />
+  } @else if (uiState() === 'empty' || cases().length === 0) {
+    <pr-empty-state title="No rescue cases" description="No rescue cases are available for your role." icon="0" />
+  } @else if (filteredCases().length === 0) {
     <pr-empty-state title="No cases match these filters" description="Clear filters or choose another group." icon="0">
-      <button type="button" class="inline-action" (click)="rescue.clearFilters()">Clear filters</button>
+      <button type="button" class="inline-action" (click)="clearFilters()">Clear filters</button>
     </pr-empty-state>
   } @else {
     <section class="board-groups">
@@ -53,7 +61,7 @@
           <h2>{{ group.label }} <span>{{ casesFor(group.statuses).length }}</span></h2>
           <div class="column-cases">
             @for (caseItem of casesFor(group.statuses); track caseItem.id) {
-              <pr-rescue-case-card [caseItem]="caseItem" (accepted)="rescue.acceptCase($event)" />
+              <pr-rescue-case-card [caseItem]="caseItem" [detailBaseRoute]="detailBaseRoute()" />
             } @empty {
               <p class="empty-column">No cases in this group.</p>
             }

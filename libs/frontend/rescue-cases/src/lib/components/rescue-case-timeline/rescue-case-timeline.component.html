@@ -11,10 +11,7 @@
           }
         </header>
         <p>{{ entry.description }}</p>
-        @if (entry.photoUrl) {
-          <img [src]="entry.photoUrl" alt="Timeline photo update" />
-        }
-        <small>{{ entry.actor }} · {{ entry.occurredAt }}</small>
+        <small>{{ entry.actor }} &middot; {{ entry.occurredAt }}</small>
       </div>
     </article>
   }

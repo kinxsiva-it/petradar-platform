@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import type { RescueCase } from '@petradar/frontend/mock-data';
+import type { RescueCase } from '../../data-access/rescue-case-ui.mapper.js';
 
 import { RescueSeverityBadgeComponent } from '../rescue-severity-badge/rescue-severity-badge.component.js';
 import { RescueStatusBadgeComponent } from '../rescue-status-badge/rescue-status-badge.component.js';
@@ -17,5 +17,7 @@ import { RescueStatusBadgeComponent } from '../rescue-status-badge/rescue-status
 export class RescueCaseCardComponent {
   readonly caseItem = input.required<RescueCase>();
   readonly compact = input(false);
+  readonly detailBaseRoute = input('/volunteer/rescue-cases');
   readonly accepted = output<string>();
+  readonly showAccept = input(false);
 }

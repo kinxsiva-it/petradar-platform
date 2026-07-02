@@ -1,6 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
-import { RescueWorkflowDataSource, type RescueCaseStatus, type StatusTransitionOption } from '@petradar/frontend/mock-data';
+import {
+  rescueStatusLabel,
+  type StatusTransitionOption,
+} from '../../data-access/rescue-case-ui.mapper.js';
+import type { RescueCaseStatus } from '../../data-access/rescue-cases-api.models.js';
 
 @Component({
   selector: 'pr-rescue-status-stepper',
@@ -10,12 +14,11 @@ import { RescueWorkflowDataSource, type RescueCaseStatus, type StatusTransitionO
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RescueStatusStepperComponent {
-  private readonly rescue = inject(RescueWorkflowDataSource);
   readonly status = input.required<RescueCaseStatus>();
   readonly options = input.required<StatusTransitionOption[]>();
   readonly statusChanged = output<RescueCaseStatus>();
 
   label(status: RescueCaseStatus): string {
-    return this.rescue.statusLabel(status);
+    return rescueStatusLabel(status);
   }
 }

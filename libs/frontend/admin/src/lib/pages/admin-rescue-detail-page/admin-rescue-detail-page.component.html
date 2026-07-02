@@ -1,78 +1,9 @@
 <section class="rescue-detail-page">
-  <a class="back-link" routerLink="/admin/rescue-cases">Back to rescue board</a>
-
-  @if (uiState() === 'loading') {
-    <section class="panel"><pr-loading-skeleton [rows]="10" /></section>
-  } @else if (uiState() === 'error') {
-    <pr-empty-state title="Rescue case unavailable" description="The mock rescue case detail could not render." icon="!" />
-  } @else if (!caseItem()) {
-    <pr-empty-state title="Rescue case not found" description="Use rc-2026-001, rc-2026-014, or rc-2026-009." icon="?" />
-  } @else {
-    @let item = caseItem()!;
-    <header class="detail-header">
-      <div>
-        <p class="eyebrow">{{ item.caseNumber }}</p>
-        <h1>{{ item.animal.nameLabel }}</h1>
-        <p>{{ item.summary }} · {{ item.approximateLocation.label }}</p>
-      </div>
-      <div class="badge-row">
-        <pr-rescue-severity-badge [severity]="item.severity" />
-        <pr-rescue-status-badge [status]="item.status" />
-      </div>
-    </header>
-
-    <section class="detail-grid">
-      <div class="main-column">
-        <article class="photo-panel">
-          <img [src]="item.photoUrls[0]" [alt]="item.animal.nameLabel" />
-          <div>
-            @for (photo of item.photoUrls; track $index) {
-              <img [src]="photo" [alt]="item.animal.nameLabel + ' photo'" />
-            }
-          </div>
-        </article>
-
-        <section class="location-grid">
-          <article class="panel">
-            <h2>Approximate Location</h2>
-            <p>{{ item.approximateLocation.label }}</p>
-            <small>{{ item.distanceLabel }} · public-safe area</small>
-          </article>
-          <article class="panel restricted">
-            <h2>Admin Authorized Location</h2>
-            <p>{{ item.internalAuthorizedLocation }}</p>
-            <small>Mock-only. Server authorization must enforce exact-location access later.</small>
-          </article>
-        </section>
-
-        <pr-privacy-banner />
-        <pr-rescue-case-timeline [entries]="item.timeline" />
-        <pr-internal-note-list [notes]="item.internalNotes" (noteAdded)="rescue.addInternalNote(item.id, $event)" />
-      </div>
-
-      <aside class="side-column">
-        <pr-alert title="Admin rescue controls" tone="warning">
-          Assignment, severity, status, and close-case actions only update frontend mock state.
-        </pr-alert>
-        <article class="panel">
-          <h2>Case Summary</h2>
-          <p>Assigned volunteer: {{ item.assignedVolunteer?.name ?? 'Unassigned' }}</p>
-          <p>Clinic: {{ item.clinic?.name ?? 'Not assigned' }}</p>
-          <p>Foster needed: {{ item.fosterNeeded ? 'Yes' : 'No' }}</p>
-        </article>
-        <pr-volunteer-assignment-panel
-          [volunteers]="admin.volunteers()"
-          (assigned)="assign($event)"
-          (removed)="rescue.assignVolunteer(item.id, undefined)"
-        />
-        <pr-rescue-status-stepper
-          [status]="item.status"
-          [options]="rescue.availableTransitions(item.status)"
-          (statusChanged)="updateStatus($event)"
-        />
-        <button type="button" class="danger" (click)="rescue.updateStatus(item.id, 'FALSE_REPORT')">Mark false report</button>
-        <button type="button" (click)="rescue.updateStatus(item.id, 'CLOSED')">Close case</button>
-      </aside>
-    </section>
-  }
+  <pr-empty-state
+    title="Admin rescue detail moved"
+    description="The routed admin rescue detail now uses the shared API-backed rescue case detail page."
+    icon="i"
+  >
+    <a routerLink="/admin/rescue-cases" class="back-link">Back to rescue cases</a>
+  </pr-empty-state>
 </section>

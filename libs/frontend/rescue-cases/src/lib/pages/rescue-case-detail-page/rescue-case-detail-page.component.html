@@ -1,21 +1,31 @@
 @if (uiState() === 'loading') {
-  <section class="panel"><h1>Loading rescue case</h1></section>
+  <section class="panel"><pr-loading-skeleton [rows]="10" /></section>
 } @else if (uiState() === 'error') {
-  <pr-empty-state title="Rescue case unavailable" description="This mock case failed to render." icon="!" />
-} @else if (caseItem(); as item) {
+  <pr-empty-state title="Rescue case unavailable" [description]="errorMessage()" icon="!" />
+} @else if (uiState() === 'not-found' || !caseItem()) {
+  <pr-empty-state title="Rescue case not found" description="This rescue case is unavailable or was removed." icon="?" />
+} @else {
+  @let item = caseItem()!;
   <section class="case-detail-page">
     <header class="case-header">
       <div>
-        <a routerLink="/volunteer/rescue-cases">Back to rescue cases</a>
+        <a [routerLink]="listRoute()">Back to rescue cases</a>
         <p class="eyebrow">{{ item.caseNumber }}</p>
         <h1>{{ item.animal.nameLabel }}</h1>
-        <p>{{ item.approximateLocation.label }} · Reported {{ item.reportedAt }}</p>
+        <p>{{ item.approximateLocation.label }} &middot; Reported {{ item.reportedAt }}</p>
       </div>
       <div class="badge-row">
         <pr-rescue-severity-badge [severity]="item.severity" />
         <pr-rescue-status-badge [status]="item.status" />
       </div>
     </header>
+
+    @if (actionMessage()) {
+      <pr-alert title="Rescue case updated" tone="success">{{ actionMessage() }}</pr-alert>
+    }
+    @if (errorMessage()) {
+      <pr-alert title="Rescue action failed" tone="warning">{{ errorMessage() }}</pr-alert>
+    }
 
     <section class="detail-grid">
       <div class="main-stack">
@@ -37,8 +47,8 @@
             <div><dt>Condition</dt><dd>{{ item.animal.conditionSummary }}</dd></div>
             <div><dt>Approximate area</dt><dd>{{ item.approximateLocation.label }}</dd></div>
             <div><dt>Assigned to</dt><dd>{{ item.assignedVolunteer?.name ?? 'Unassigned' }}</dd></div>
-            <div><dt>Clinic</dt><dd>{{ item.clinic?.name ?? 'Not selected' }}</dd></div>
-            <div><dt>Foster</dt><dd>{{ item.fosterNeeded ? 'Foster may be needed' : 'No foster request yet' }}</dd></div>
+            <div><dt>Status</dt><dd>{{ item.status }}</dd></div>
+            <div><dt>Last updated</dt><dd>{{ item.updatedAt }}</dd></div>
           </dl>
           <p>{{ item.summary }}</p>
         </article>
@@ -47,13 +57,13 @@
           <h2>Location privacy</h2>
           <div class="location-grid">
             <section>
-              <h3>Approximate public location</h3>
-              <p>{{ item.approximateLocation.label }} · radius {{ item.approximateLocation.radiusMeters }}m</p>
+              <h3>Approximate rescue location</h3>
+              <p>{{ item.approximateLocation.label }} &middot; radius {{ item.approximateLocation.radiusMeters }}m</p>
             </section>
             <section>
-              <h3>Authorized volunteer location</h3>
-              <p>{{ item.internalAuthorizedLocation?.label ?? 'Location access not available for this case.' }}</p>
-              <small>Development-only notice: this prototype does not enforce backend exact-location authorization.</small>
+              <h3>Coordinates shown here</h3>
+              <p>{{ item.approximateLocation.latitude }}, {{ item.approximateLocation.longitude }}</p>
+              <small>These are backend-generated public coordinates, not the reporter's exact location.</small>
             </section>
           </div>
           <pr-privacy-banner />
@@ -65,24 +75,36 @@
       </div>
 
       <aside class="action-panel">
-        @if (!item.assignedVolunteer) {
-          <button type="button" (click)="rescue.acceptCase(item.id)">Accept Case</button>
-        } @else if (item.assignedVolunteer.id === rescue.currentVolunteer.id) {
-          <button type="button" class="secondary" (click)="rescue.releaseCase(item.id)">Release Case</button>
+        @if (isAdmin()) {
+          <section class="assignment-form">
+            <h2>Assign volunteer</h2>
+            <label>
+              Verified volunteer ID
+              <input
+                [ngModel]="volunteerId()"
+                (ngModelChange)="volunteerId.set($event)"
+                placeholder="UUID of a verified volunteer"
+              />
+            </label>
+            <button type="button" [disabled]="assigning() || !volunteerId().trim()" (click)="assignVolunteer()">
+              {{ assigning() ? 'Assigning...' : 'Assign volunteer' }}
+            </button>
+          </section>
         }
+        <label>
+          Status note
+          <textarea rows="3" [ngModel]="statusNote()" (ngModelChange)="statusNote.set($event)"></textarea>
+        </label>
         <pr-rescue-status-stepper
           [status]="item.status"
-          [options]="rescue.availableTransitions(item.status)"
-          (statusChanged)="rescue.updateStatus(item.id, $event)"
+          [options]="availableTransitions(item.status)"
+          (statusChanged)="updateStatus($event)"
         />
         <pr-alert title="Privacy reminder" tone="warning">
-          Share only approximate areas in public updates. Internal notes are mock-only and not backend protected.
+          Share only approximate areas in public updates. Internal notes are protected by rescue-case access rules.
         </pr-alert>
-        <pr-internal-note-list [notes]="item.internalNotes" (noteAdded)="rescue.addInternalNote(item.id, $event)" />
-        <pr-rescue-photo-update (photoAdded)="rescue.addPhotoUpdate(item.id, $event.url, $event.caption)" />
+        <pr-internal-note-list [notes]="item.internalNotes" (noteAdded)="addInternalNote($event)" />
       </aside>
     </section>
   </section>
-} @else {
-  <pr-empty-state title="Rescue case not found" description="This mock rescue case ID is not available." icon="?" />
 }
