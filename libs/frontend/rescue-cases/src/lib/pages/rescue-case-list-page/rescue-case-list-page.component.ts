@@ -2,7 +2,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+import {
+  createAngularTable,
+  createColumnHelper,
+  getCoreRowModel,
+  type ColumnDef,
+} from '@tanstack/angular-table';
+import { lastValueFrom } from 'rxjs';
 
 import { AuthStateService } from '@petradar/frontend/core';
 import { EmptyStateComponent, LoadingSkeletonComponent } from '@petradar/frontend/shared-ui';
@@ -15,7 +22,10 @@ import {
   type RescueBoardFilters,
   type RescueCase,
 } from '../../data-access/rescue-case-ui.mapper.js';
-import type { RescueCaseStatus } from '../../data-access/rescue-cases-api.models.js';
+import type {
+  ListRescueCasesFilters,
+  RescueCaseStatus,
+} from '../../data-access/rescue-cases-api.models.js';
 import { RescueCasesApiService } from '../../data-access/rescue-cases-api.service.js';
 
 type RescueBoardState = 'default' | 'empty' | 'error' | 'loading';
@@ -27,6 +37,34 @@ const defaultFilters: RescueBoardFilters = {
   species: 'All',
   status: 'All',
 };
+
+const rescueCaseColumnHelper = createColumnHelper<RescueCase>();
+const rescueCaseColumns: ColumnDef<RescueCase, string>[] = [
+  rescueCaseColumnHelper.accessor('caseNumber', {
+    header: 'Case',
+  }),
+  rescueCaseColumnHelper.accessor((caseItem) => caseItem.animal.nameLabel, {
+    header: 'Animal',
+    id: 'animal',
+  }),
+  rescueCaseColumnHelper.accessor(rescueCaseSeverityValue, {
+    header: 'Severity',
+    id: 'severity',
+  }),
+  rescueCaseColumnHelper.accessor((caseItem) => rescueStatusLabel(caseItem.status), {
+    header: 'Status',
+    id: 'status',
+  }),
+  rescueCaseColumnHelper.accessor((caseItem) => caseItem.assignedVolunteer?.name ?? 'Unassigned', {
+    header: 'Assignment',
+    id: 'assignment',
+  }),
+];
+const rescueCaseRowModel = getCoreRowModel<RescueCase>();
+
+function rescueCaseSeverityValue(caseItem: RescueCase): string {
+  return caseItem.severity;
+}
 
 @Component({
   selector: 'pr-rescue-case-list-page',
@@ -40,10 +78,34 @@ export class RescueCaseListPageComponent {
   private readonly auth = inject(AuthStateService);
   private readonly rescueCasesApi = inject(RescueCasesApiService);
   private readonly router = inject(Router);
-  readonly uiState = signal<RescueBoardState>('loading');
-  readonly errorMessage = signal('');
-  readonly cases = signal<RescueCase[]>([]);
   readonly filters = signal<RescueBoardFilters>({ ...defaultFilters });
+  private readonly serverFilters = computed<ListRescueCasesFilters>(() => {
+    const filters = this.filters();
+    return {
+      pageSize: 50,
+      severity: filters.severity === 'All' ? undefined : filters.severity,
+      species: filters.species === 'All' ? undefined : filters.species,
+      status: filters.status === 'All' ? undefined : filters.status,
+    };
+  });
+  readonly rescueCasesQuery = injectQuery(() => ({
+    queryFn: () => lastValueFrom(this.rescueCasesApi.list(this.serverFilters())),
+    queryKey: ['rescue-cases', 'list', this.serverFilters()],
+    staleTime: 30_000,
+  }));
+  readonly cases = computed<RescueCase[]>(() =>
+    (this.rescueCasesQuery.data()?.items ?? []).map(toRescueCaseView),
+  );
+  readonly uiState = computed<RescueBoardState>(() => {
+    if (this.rescueCasesQuery.isPending()) {
+      return 'loading';
+    }
+    if (this.rescueCasesQuery.isError()) {
+      return 'error';
+    }
+    return this.cases().length === 0 ? 'empty' : 'default';
+  });
+  readonly errorMessage = computed(() => toUserMessage(this.rescueCasesQuery.error()));
   readonly speciesOptions: RescueBoardFilters['species'][] = ['All', 'CAT', 'DOG', 'OTHER'];
   readonly severityOptions: RescueBoardFilters['severity'][] = [
     'All',
@@ -87,6 +149,11 @@ export class RescueCaseListPageComponent {
     this.cases().filter((item) => item.status === 'RESOLVED' || item.status === 'CLOSED'),
   );
   readonly filteredCases = computed(() => this.applyClientFilters(this.cases()));
+  readonly table = createAngularTable<RescueCase>(() => ({
+    columns: rescueCaseColumns,
+    data: this.filteredCases(),
+    getCoreRowModel: rescueCaseRowModel,
+  }));
   readonly hasFilters = computed(() => {
     const filters = this.filters();
     return (
@@ -101,24 +168,19 @@ export class RescueCaseListPageComponent {
     this.router.url.startsWith('/volunteer/') ? '/volunteer/rescue-cases' : '/rescue-cases',
   );
 
-  constructor() {
-    void this.loadCases();
-  }
-
   casesFor(statuses: readonly RescueCaseStatus[]): RescueCase[] {
-    return this.filteredCases().filter((item) => statuses.includes(item.status));
+    return this.table
+      .getRowModel()
+      .rows.map((row) => row.original)
+      .filter((item) => statuses.includes(item.status));
   }
 
   updateFilter<K extends keyof RescueBoardFilters>(key: K, value: RescueBoardFilters[K]): void {
     this.filters.update((filters) => ({ ...filters, [key]: value }));
-    if (key === 'severity' || key === 'species' || key === 'status') {
-      void this.loadCases();
-    }
   }
 
   clearFilters(): void {
     this.filters.set({ ...defaultFilters });
-    void this.loadCases();
   }
 
   statusLabel(status: RescueBoardFilters['status']): string {
@@ -127,27 +189,6 @@ export class RescueCaseListPageComponent {
 
   speciesLabel(species: RescueBoardFilters['species']): string {
     return species === 'All' ? 'All' : rescueSpeciesLabel(species);
-  }
-
-  private async loadCases(): Promise<void> {
-    this.uiState.set('loading');
-    this.errorMessage.set('');
-    try {
-      const filters = this.filters();
-      const response = await firstValueFrom(
-        this.rescueCasesApi.list({
-          pageSize: 50,
-          severity: filters.severity === 'All' ? undefined : filters.severity,
-          species: filters.species === 'All' ? undefined : filters.species,
-          status: filters.status === 'All' ? undefined : filters.status,
-        }),
-      );
-      this.cases.set(response.items.map(toRescueCaseView));
-      this.uiState.set(response.items.length === 0 ? 'empty' : 'default');
-    } catch (error) {
-      this.errorMessage.set(toUserMessage(error));
-      this.uiState.set('error');
-    }
   }
 
   private applyClientFilters(cases: readonly RescueCase[]): RescueCase[] {
