@@ -2,7 +2,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+import { lastValueFrom } from 'rxjs';
 
 import type { UserRole } from '@petradar/frontend/core';
 import { EmptyStateComponent, LoadingSkeletonComponent, StatusBadgeComponent } from '@petradar/frontend/shared-ui';
@@ -43,9 +44,22 @@ const initialFilters: AdminUsersFilters = {
 export class AdminUsersPageComponent {
   private readonly usersApi = inject(AdminUsersApiService);
   readonly filters = signal<AdminUsersFilters>({ ...initialFilters });
-  readonly response = signal<AdminUsersResponse | null>(null);
-  readonly uiState = signal<UsersState>('loading');
-  readonly errorMessage = signal('');
+  readonly usersQuery = injectQuery(() => ({
+    queryKey: ['admin', 'users', this.filters()],
+    queryFn: () => lastValueFrom(this.usersApi.list(this.filters())),
+    staleTime: 30_000,
+  }));
+  readonly response = computed<AdminUsersResponse | null>(() => this.usersQuery.data() ?? null);
+  readonly uiState = computed<UsersState>(() => {
+    if (this.usersQuery.isPending()) {
+      return 'loading';
+    }
+    if (this.usersQuery.isError()) {
+      return 'error';
+    }
+    return 'ready';
+  });
+  readonly errorMessage = computed(() => toUserMessage(this.usersQuery.error()));
   readonly adminCount = computed(
     () => this.response()?.items.filter((user) => user.roles.includes('ADMIN')).length ?? 0,
   );
@@ -56,20 +70,8 @@ export class AdminUsersPageComponent {
     () => this.response()?.items.filter((user) => user.accountStatus === 'SUSPENDED').length ?? 0,
   );
 
-  constructor() {
-    void this.loadUsers();
-  }
-
-  async loadUsers(): Promise<void> {
-    this.uiState.set('loading');
-    this.errorMessage.set('');
-    try {
-      this.response.set(await firstValueFrom(this.usersApi.list(this.filters())));
-      this.uiState.set('ready');
-    } catch (error) {
-      this.errorMessage.set(toUserMessage(error));
-      this.uiState.set('error');
-    }
+  loadUsers(): void {
+    void this.usersQuery.refetch();
   }
 
   updateQuery(query: string): void {
@@ -90,7 +92,6 @@ export class AdminUsersPageComponent {
 
   clearFilters(): void {
     this.filters.set({ ...initialFilters });
-    void this.loadUsers();
   }
 
   nextPage(): void {
@@ -100,7 +101,6 @@ export class AdminUsersPageComponent {
       return;
     }
     this.filters.update((filters) => ({ ...filters, page: page + 1 }));
-    void this.loadUsers();
   }
 
   previousPage(): void {
@@ -109,12 +109,10 @@ export class AdminUsersPageComponent {
       return;
     }
     this.filters.update((filters) => ({ ...filters, page: page - 1 }));
-    void this.loadUsers();
   }
 
   private updateFilters(patch: Partial<AdminUsersFilters>): void {
     this.filters.update((filters) => ({ ...filters, ...patch, page: 1 }));
-    void this.loadUsers();
   }
 }
 

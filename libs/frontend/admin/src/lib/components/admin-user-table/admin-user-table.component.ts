@@ -1,9 +1,56 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import {
+  createAngularTable,
+  createColumnHelper,
+  getCoreRowModel,
+  type Cell,
+  type ColumnDef,
+  type Header,
+} from '@tanstack/angular-table';
 
 import { StatusBadgeComponent } from '@petradar/frontend/shared-ui';
 
 import type { AdminUserSummary } from '../../data-access/admin-users-api.models.js';
+
+const userColumnHelper = createColumnHelper<AdminUserSummary>();
+const userColumns: ColumnDef<AdminUserSummary, string>[] = [
+  userColumnHelper.accessor('displayName', {
+    header: 'User',
+  }),
+  userColumnHelper.accessor('email', {
+    header: 'Email',
+  }),
+  userColumnHelper.accessor((user) => user.roles.join(', '), {
+    header: 'Roles',
+    id: 'roles',
+  }),
+  userColumnHelper.accessor(accountStatusValue, {
+    header: 'Account',
+    id: 'accountStatus',
+  }),
+  userColumnHelper.accessor(volunteerVerificationValue, {
+    header: 'Volunteer',
+    id: 'volunteerVerification',
+  }),
+  userColumnHelper.accessor((user) => String(user.reportCount), {
+    header: 'Reports',
+    id: 'reportCount',
+  }),
+  userColumnHelper.accessor('id', {
+    header: 'Detail',
+    id: 'detail',
+  }),
+];
+const userRowModel = getCoreRowModel<AdminUserSummary>();
+
+function accountStatusValue(user: AdminUserSummary): string {
+  return user.accountStatus;
+}
+
+function volunteerVerificationValue(user: AdminUserSummary): string {
+  return user.volunteerVerification;
+}
 
 @Component({
   selector: 'pr-admin-user-table',
@@ -13,26 +60,40 @@ import type { AdminUserSummary } from '../../data-access/admin-users-api.models.
     <section class="user-table">
       <table>
         <thead>
-          <tr>
-            <th scope="col">User</th>
-            <th scope="col">Email</th>
-            <th scope="col">Roles</th>
-            <th scope="col">Account</th>
-            <th scope="col">Volunteer</th>
-            <th scope="col">Reports</th>
-            <th scope="col">Detail</th>
-          </tr>
+          @for (headerGroup of table.getHeaderGroups(); track headerGroup.id) {
+            <tr>
+              @for (header of headerGroup.headers; track header.id) {
+                <th scope="col">{{ headerLabel(header) }}</th>
+              }
+            </tr>
+          }
         </thead>
         <tbody>
-          @for (user of users(); track user.id) {
+          @for (row of table.getRowModel().rows; track row.original.id) {
             <tr>
-              <td class="person"><span class="avatar" aria-hidden="true">{{ initials(user.displayName) }}</span><span>{{ user.displayName }}</span></td>
-              <td class="email">{{ user.email }}</td>
-              <td>{{ user.roles.join(', ') }}</td>
-              <td><pr-status-badge [label]="user.accountStatus" [tone]="user.accountStatus === 'ACTIVE' ? 'success' : 'warning'" /></td>
-              <td><pr-status-badge [label]="user.volunteerVerification" tone="match" /></td>
-              <td>{{ user.reportCount }}</td>
-              <td><a [routerLink]="['/users', user.id]">Open</a></td>
+              @for (cell of row.getVisibleCells(); track cell.id) {
+                @if (cell.column.id === 'displayName') {
+                  <td class="person">
+                    <span class="avatar" aria-hidden="true">{{ initials(row.original.displayName) }}</span>
+                    <span>{{ row.original.displayName }}</span>
+                  </td>
+                } @else if (cell.column.id === 'email') {
+                  <td class="email">{{ cellValue(cell) }}</td>
+                } @else if (cell.column.id === 'accountStatus') {
+                  <td>
+                    <pr-status-badge
+                      [label]="row.original.accountStatus"
+                      [tone]="row.original.accountStatus === 'ACTIVE' ? 'success' : 'warning'"
+                    />
+                  </td>
+                } @else if (cell.column.id === 'volunteerVerification') {
+                  <td><pr-status-badge [label]="row.original.volunteerVerification" tone="match" /></td>
+                } @else if (cell.column.id === 'detail') {
+                  <td><a [routerLink]="['/users', row.original.id]">Open</a></td>
+                } @else {
+                  <td>{{ cellValue(cell) }}</td>
+                }
+              }
             </tr>
           }
         </tbody>
@@ -106,6 +167,11 @@ import type { AdminUserSummary } from '../../data-access/admin-users-api.models.
 })
 export class AdminUserTableComponent {
   readonly users = input.required<AdminUserSummary[]>();
+  readonly table = createAngularTable<AdminUserSummary>(() => ({
+    columns: userColumns,
+    data: this.users(),
+    getCoreRowModel: userRowModel,
+  }));
 
   initials(name: string): string {
     return name
@@ -114,5 +180,21 @@ export class AdminUserTableComponent {
       .slice(0, 2)
       .map((part) => part[0]?.toUpperCase() ?? '')
       .join('');
+  }
+
+  headerLabel(header: Header<AdminUserSummary, unknown>): string {
+    const value = header.column.columnDef.header;
+    return typeof value === 'string' ? value : '';
+  }
+
+  cellValue(cell: Cell<AdminUserSummary, unknown>): string {
+    const value = cell.getValue();
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    return '';
   }
 }
