@@ -1,15 +1,50 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+import {
+  createAngularTable,
+  createColumnHelper,
+  getCoreRowModel,
+  type ColumnDef,
+} from '@tanstack/angular-table';
+import { lastValueFrom } from 'rxjs';
 
 import { EmptyStateComponent, LoadingSkeletonComponent, StatusBadgeComponent } from '@petradar/frontend/shared-ui';
 
-import type { AdminUserSummary, AdminUsersResponse } from '../../data-access/admin-users-api.models.js';
+import type {
+  AdminUserSummary,
+  AdminUsersFilters,
+  AdminUsersResponse,
+} from '../../data-access/admin-users-api.models.js';
 import { AdminUsersApiService } from '../../data-access/admin-users-api.service.js';
 
 type VolunteersState = 'loading' | 'ready' | 'error';
+
+const pageSize = 25;
+const volunteerColumnHelper = createColumnHelper<AdminUserSummary>();
+const volunteerColumns: ColumnDef<AdminUserSummary, string>[] = [
+  volunteerColumnHelper.accessor('displayName', {
+    header: 'Volunteer',
+  }),
+  volunteerColumnHelper.accessor('email', {
+    header: 'Email',
+  }),
+  volunteerColumnHelper.accessor(volunteerVerificationValue, {
+    header: 'Verification',
+    id: 'volunteerVerification',
+  }),
+  volunteerColumnHelper.accessor('id', {
+    header: 'Detail',
+    id: 'detail',
+  }),
+];
+const volunteerRowModel = getCoreRowModel<AdminUserSummary>();
+
+function volunteerVerificationValue(user: AdminUserSummary): string {
+  return user.volunteerVerification;
+}
 
 @Component({
   selector: 'pr-admin-volunteers-page',
@@ -22,39 +57,47 @@ type VolunteersState = 'loading' | 'ready' | 'error';
 export class AdminVolunteersPageComponent {
   private readonly usersApi = inject(AdminUsersApiService);
   readonly query = signal('');
-  readonly response = signal<AdminUsersResponse | null>(null);
-  readonly uiState = signal<VolunteersState>('loading');
-  readonly errorMessage = signal('');
-
-  constructor() {
-    void this.loadVolunteers();
-  }
-
-  async loadVolunteers(page = 1): Promise<void> {
-    this.uiState.set('loading');
-    this.errorMessage.set('');
-    try {
-      this.response.set(
-        await firstValueFrom(
-          this.usersApi.list({
-            page,
-            pageSize: 25,
-            query: this.query().trim() || undefined,
-            role: 'VOLUNTEER',
-            status: 'ACTIVE',
-          }),
-        ),
-      );
-      this.uiState.set('ready');
-    } catch (error) {
-      this.errorMessage.set(toUserMessage(error));
-      this.uiState.set('error');
+  readonly page = signal(1);
+  readonly filters = computed<AdminUsersFilters>(() => ({
+    page: this.page(),
+    pageSize,
+    query: this.query().trim() || undefined,
+    role: 'VOLUNTEER',
+    status: 'ACTIVE',
+  }));
+  readonly volunteersQuery = injectQuery(() => ({
+    queryKey: ['admin', 'volunteers', this.filters()],
+    queryFn: () => lastValueFrom(this.usersApi.list(this.filters())),
+    staleTime: 30_000,
+  }));
+  readonly response = computed<AdminUsersResponse | null>(() => this.volunteersQuery.data() ?? null);
+  readonly uiState = computed<VolunteersState>(() => {
+    if (this.volunteersQuery.isPending()) {
+      return 'loading';
     }
+    if (this.volunteersQuery.isError()) {
+      return 'error';
+    }
+    return 'ready';
+  });
+  readonly errorMessage = computed(() => toUserMessage(this.volunteersQuery.error()));
+  readonly table = createAngularTable<AdminUserSummary>(() => ({
+    columns: volunteerColumns,
+    data: this.response()?.items ?? [],
+    getCoreRowModel: volunteerRowModel,
+  }));
+
+  loadVolunteers(page = 1): void {
+    if (this.page() === page) {
+      void this.volunteersQuery.refetch();
+      return;
+    }
+    this.page.set(page);
   }
 
   search(value: string): void {
     this.query.set(value);
-    void this.loadVolunteers(1);
+    this.page.set(1);
   }
 
   initials(user: AdminUserSummary): string {

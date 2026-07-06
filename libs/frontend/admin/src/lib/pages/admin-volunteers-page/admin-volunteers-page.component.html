@@ -20,7 +20,8 @@
     <pr-empty-state title="No volunteers found" description="Try another search term." icon="0" />
   } @else {
     <section class="volunteer-grid">
-      @for (volunteer of response()?.items ?? []; track volunteer.id) {
+      @for (row of table.getRowModel().rows; track row.original.id) {
+        @let volunteer = row.original;
         <article>
           <span aria-hidden="true">{{ initials(volunteer) }}</span>
           <div>
