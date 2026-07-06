@@ -23,6 +23,13 @@
       </div>
     </header>
 
+    @if (actionMessage()) {
+      <pr-alert title="User updated" tone="success">{{ actionMessage() }}</pr-alert>
+    }
+    @if (errorMessage()) {
+      <pr-alert title="User action unavailable" tone="danger">{{ errorMessage() }}</pr-alert>
+    }
+
     <section class="detail-grid">
       <div class="main-column">
         <article class="panel">
@@ -40,9 +47,71 @@
         </article>
       </div>
       <aside class="side-column">
-        <pr-alert title="Read-only user management" tone="warning">
-          Role and account-status mutation endpoints are not exposed by the current backend contract. This CMS screen does not fake role or status changes.
-        </pr-alert>
+        <article class="panel action-panel">
+          <div>
+            <p class="eyebrow">Admin actions</p>
+            <h2>Roles</h2>
+          </div>
+          <fieldset>
+            <legend>Role assignments</legend>
+            @for (role of availableRoles; track role) {
+              <label class="check-row">
+                <input type="checkbox" [checked]="roleChecked(role)" (change)="updateRoleDraft(role, $event)" />
+                <span>{{ role }}</span>
+              </label>
+            }
+          </fieldset>
+          <button type="button" [disabled]="savingAction() !== null || roleDraft().length === 0" (click)="saveRoles()">
+            {{ savingAction() === 'roles' ? 'Saving...' : 'Save roles' }}
+          </button>
+        </article>
+
+        <article class="panel action-panel">
+          <div>
+            <p class="eyebrow">Account</p>
+            <h2>Status</h2>
+          </div>
+          <label>
+            Account status
+            <select [ngModel]="statusDraft()" (ngModelChange)="updateStatusDraft($event)">
+              @for (status of accountStatuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select>
+          </label>
+          <button type="button" [disabled]="savingAction() !== null" (click)="saveStatus()">
+            {{ savingAction() === 'status' ? 'Saving...' : 'Save status' }}
+          </button>
+        </article>
+
+        <article class="panel action-panel">
+          <div>
+            <p class="eyebrow">Volunteer</p>
+            <h2>Verification</h2>
+          </div>
+          @if (isVolunteer()) {
+            <label>
+              Volunteer verification
+              <select
+                [ngModel]="volunteerVerificationDraft()"
+                (ngModelChange)="updateVolunteerVerificationDraft($event)"
+              >
+                @for (state of volunteerVerificationStates; track state) {
+                  <option [value]="state">{{ state }}</option>
+                }
+              </select>
+            </label>
+            <button type="button" [disabled]="savingAction() !== null" (click)="saveVolunteerVerification()">
+              {{ savingAction() === 'volunteerVerification' ? 'Saving...' : 'Save verification' }}
+            </button>
+          } @else {
+            <p>This account does not currently have the VOLUNTEER role.</p>
+          }
+        </article>
+
+        <button type="button" class="secondary" [disabled]="savingAction() !== null" (click)="resetDrafts()">
+          Reset unsaved changes
+        </button>
       </aside>
     </section>
   }

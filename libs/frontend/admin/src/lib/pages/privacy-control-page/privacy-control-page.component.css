@@ -4,7 +4,8 @@
 }
 
 .page-header,
-.panel {
+.panel,
+.summary-grid article {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
@@ -45,6 +46,45 @@ h2 {
 .form-panel {
   display: grid;
   gap: 0.8rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.summary-grid span {
+  display: block;
+  color: var(--color-primary);
+  font-size: 1.75rem;
+  font-weight: 850;
+}
+
+.summary-grid b,
+.hint,
+dt,
+.control-row p {
+  color: var(--color-text-muted);
+}
+
+dl {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+dl div {
+  display: grid;
+  grid-template-columns: 12rem minmax(0, 1fr);
+  gap: 1rem;
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--color-text-strong);
+  font-weight: 750;
 }
 
 label {
@@ -95,25 +135,31 @@ button {
   gap: 1rem;
 }
 
-.map-preview {
-  min-height: 12rem;
+.control-list {
   display: grid;
-  place-items: center;
-  border-radius: var(--radius-card);
-  text-align: center;
-  font-weight: 850;
+  gap: 0.85rem;
 }
 
-.public {
-  background: radial-gradient(circle, rgb(139 92 246 / 0.25), transparent 62%), var(--color-surface-muted);
+.control-row {
+  display: flex;
+  gap: 1rem;
+  align-items: start;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-border-default);
+  padding-top: 0.85rem;
 }
 
-.internal {
-  background: var(--color-warning-subtle);
+.control-row strong {
+  color: var(--color-text-strong);
 }
 
 @media (max-width: 960px) {
-  .privacy-grid {
+  .privacy-grid,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  dl div {
     grid-template-columns: 1fr;
   }
 }

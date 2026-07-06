@@ -1,6 +1,9 @@
 import { createHmac } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { Prisma } from '@prisma/client';
+
+import { PrismaService } from '../prisma/prisma.service.js';
 
 export interface GeographicPoint {
   latitude: number;
@@ -18,19 +21,32 @@ interface PublicLocationInput extends GeographicPoint {
 
 const earthRadiusMeters = 6_371_000;
 const defaultRadiusMeters = 300;
+export const minimumPublicRadiusMeters = 100;
+export const maximumPublicRadiusMeters = 5_000;
+export const privacyPolicyAuditAction = 'ADMIN_PRIVACY_POLICY_UPDATED';
+export const privacyPolicyEntityId = 'public-location';
+export const privacyPolicyEntityType = 'PrivacyPolicy';
+
+export interface EffectivePublicLocationPolicy {
+  defaultRadiusMeters: number;
+  maximumRadiusMeters: number;
+  minimumRadiusMeters: number;
+  source: 'audit-log' | 'default' | 'environment';
+  updatedAt: string | null;
+}
 
 @Injectable()
 export class LocationPrivacyService {
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly prisma?: PrismaService,
+  ) {}
 
   generatePublicLocation(input: PublicLocationInput): PublicLocation {
     this.assertLatitude(input.latitude);
     this.assertLongitude(input.longitude);
 
-    const radiusMeters = input.radiusMeters ?? this.configuredRadiusMeters();
-    if (!Number.isFinite(radiusMeters) || radiusMeters <= 0) {
-      throw new RangeError('Privacy radius must be greater than zero.');
-    }
+    const radiusMeters = this.enforceRadius(input.radiusMeters ?? this.configuredRadiusMeters());
 
     const secret = this.config.get<string>('LOCATION_OBFUSCATION_SECRET');
     if (!secret || secret.length < 32) {
@@ -50,6 +66,14 @@ export class LocationPrivacyService {
     };
   }
 
+  async generatePublicLocationForPublicApi(input: PublicLocationInput): Promise<PublicLocation> {
+    const policy = await this.effectivePublicLocationPolicy();
+    return this.generatePublicLocation({
+      ...input,
+      radiusMeters: policy.defaultRadiusMeters,
+    });
+  }
+
   assertLatitude(latitude: number): void {
     if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
       throw new RangeError('Latitude must be between -90 and 90.');
@@ -63,8 +87,45 @@ export class LocationPrivacyService {
   }
 
   configuredRadiusMeters(): number {
-    const value = this.config.get<number>('LOCATION_PRIVACY_RADIUS_METERS');
-    return value ?? defaultRadiusMeters;
+    const value = this.config.get<number | string>('LOCATION_PRIVACY_RADIUS_METERS');
+    return this.enforceRadius(radiusValue(value) ?? defaultRadiusMeters);
+  }
+
+  async effectivePublicLocationPolicy(): Promise<EffectivePublicLocationPolicy> {
+    const environmentRadius = radiusValue(this.config.get<number | string>('LOCATION_PRIVACY_RADIUS_METERS'));
+    const environmentPolicy = {
+      defaultRadiusMeters: this.enforceRadius(environmentRadius ?? defaultRadiusMeters),
+      maximumRadiusMeters: maximumPublicRadiusMeters,
+      minimumRadiusMeters: minimumPublicRadiusMeters,
+      source: environmentRadius === null ? 'default' : 'environment',
+      updatedAt: null,
+    } satisfies EffectivePublicLocationPolicy;
+
+    if (!this.prisma) {
+      return environmentPolicy;
+    }
+
+    const latest = await this.prisma.auditLog.findFirst({
+      orderBy: { createdAt: 'desc' },
+      where: {
+        action: privacyPolicyAuditAction,
+        entityId: privacyPolicyEntityId,
+        entityType: privacyPolicyEntityType,
+      },
+    });
+
+    const radius = numberFromMetadata(latest?.metadata, 'defaultRadiusMeters');
+    if (radius === null) {
+      return environmentPolicy;
+    }
+
+    return {
+      defaultRadiusMeters: this.enforceRadius(radius),
+      maximumRadiusMeters: maximumPublicRadiusMeters,
+      minimumRadiusMeters: minimumPublicRadiusMeters,
+      source: 'audit-log',
+      updatedAt: latest?.createdAt.toISOString() ?? null,
+    };
   }
 
   private offsetPoint(
@@ -109,4 +170,45 @@ export class LocationPrivacyService {
   private wrapLongitude(longitude: number): number {
     return ((((longitude + 180) % 360) + 360) % 360) - 180;
   }
+
+  private enforceRadius(radiusMeters: number): number {
+    if (!Number.isFinite(radiusMeters)) {
+      return defaultRadiusMeters;
+    }
+    return Math.min(Math.max(Math.round(radiusMeters), minimumPublicRadiusMeters), maximumPublicRadiusMeters);
+  }
+}
+
+function numberFromMetadata(
+  value: Prisma.JsonValue | null | undefined,
+  key: string,
+): number | null {
+  if (!isJsonRecord(value)) {
+    return null;
+  }
+
+  return numberValue(value[key]);
+}
+
+function numberValue(value: Prisma.JsonValue | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function radiusValue(value: number | string | undefined): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
+function isJsonRecord(
+  value: Prisma.JsonValue | null | undefined,
+): value is Record<string, Prisma.JsonValue> {
+  return value !== null && value !== undefined && typeof value === 'object' && !Array.isArray(value);
 }

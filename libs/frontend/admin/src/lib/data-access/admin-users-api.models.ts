@@ -35,3 +35,15 @@ export interface AdminUsersResponse {
   total: number;
   totalPages: number;
 }
+
+export interface UpdateAdminUserRolesRequest {
+  roles: UserRole[];
+}
+
+export interface UpdateAdminUserStatusRequest {
+  status: AdminAccountStatus;
+}
+
+export interface UpdateAdminUserVolunteerVerificationRequest {
+  volunteerVerification: VolunteerVerificationState;
+}

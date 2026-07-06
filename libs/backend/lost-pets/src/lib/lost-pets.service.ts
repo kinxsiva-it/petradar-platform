@@ -50,7 +50,7 @@ export class LostPetsService {
 
   async create(user: AuthenticatedUser, dto: CreateLostPetDto) {
     const id = randomUUID();
-    const publicLocation = this.locationPrivacy.generatePublicLocation({
+    const publicLocation = await this.locationPrivacy.generatePublicLocationForPublicApi({
       entityId: id,
       latitude: dto.latitude,
       longitude: dto.longitude,
@@ -207,7 +207,7 @@ export class LostPetsService {
 
     const publicLocation =
       dto.latitude !== undefined && dto.longitude !== undefined
-        ? this.locationPrivacy.generatePublicLocation({
+        ? await this.locationPrivacy.generatePublicLocationForPublicApi({
             entityId: id,
             latitude: dto.latitude,
             longitude: dto.longitude,

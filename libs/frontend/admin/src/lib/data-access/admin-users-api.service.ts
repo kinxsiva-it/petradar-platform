@@ -4,7 +4,14 @@ import type { Observable } from 'rxjs';
 
 import { API_BASE_PATH } from '@petradar/frontend/core';
 
-import type { AdminUsersFilters, AdminUsersResponse, AdminUserSummary } from './admin-users-api.models.js';
+import type {
+  AdminUsersFilters,
+  AdminUsersResponse,
+  AdminUserSummary,
+  UpdateAdminUserRolesRequest,
+  UpdateAdminUserStatusRequest,
+  UpdateAdminUserVolunteerVerificationRequest,
+} from './admin-users-api.models.js';
 
 @Injectable({ providedIn: 'root' })
 export class AdminUsersApiService {
@@ -18,6 +25,24 @@ export class AdminUsersApiService {
 
   detail(id: string): Observable<AdminUserSummary> {
     return this.http.get<AdminUserSummary>(`${this.basePath}/${encodeURIComponent(id)}`);
+  }
+
+  updateRoles(id: string, request: UpdateAdminUserRolesRequest): Observable<AdminUserSummary> {
+    return this.http.patch<AdminUserSummary>(`${this.basePath}/${encodeURIComponent(id)}/roles`, request);
+  }
+
+  updateStatus(id: string, request: UpdateAdminUserStatusRequest): Observable<AdminUserSummary> {
+    return this.http.patch<AdminUserSummary>(`${this.basePath}/${encodeURIComponent(id)}/status`, request);
+  }
+
+  updateVolunteerVerification(
+    id: string,
+    request: UpdateAdminUserVolunteerVerificationRequest,
+  ): Observable<AdminUserSummary> {
+    return this.http.patch<AdminUserSummary>(
+      `${this.basePath}/${encodeURIComponent(id)}/volunteer-verification`,
+      request,
+    );
   }
 }
 

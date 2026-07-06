@@ -179,7 +179,7 @@ export class SightingsRepository {
     this.locationPrivacy.assertLongitude(input.exactLongitude);
 
     const id = randomUUID();
-    const publicLocation = this.locationPrivacy.generatePublicLocation({
+    const publicLocation = await this.locationPrivacy.generatePublicLocationForPublicApi({
       entityId: id,
       latitude: input.exactLatitude,
       longitude: input.exactLongitude,
@@ -239,7 +239,7 @@ export class SightingsRepository {
     this.locationPrivacy.assertLatitude(input.exactLatitude);
     this.locationPrivacy.assertLongitude(input.exactLongitude);
 
-    const publicLocation = this.locationPrivacy.generatePublicLocation({
+    const publicLocation = await this.locationPrivacy.generatePublicLocationForPublicApi({
       entityId: input.id,
       latitude: input.exactLatitude,
       longitude: input.exactLongitude,
