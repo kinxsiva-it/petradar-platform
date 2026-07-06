@@ -52,35 +52,46 @@
       <section class="match-table">
         <table>
           <thead>
-            <tr>
-              <th scope="col">Lost pet</th>
-              <th scope="col">Sighting</th>
-              <th scope="col">Score</th>
-              <th scope="col">Review</th>
-              <th scope="col">Matched</th>
-              <th scope="col">Action</th>
-            </tr>
+            @for (headerGroup of table.getHeaderGroups(); track headerGroup.id) {
+              <tr>
+                @for (header of headerGroup.headers; track header.id) {
+                  <th scope="col">{{ headerLabel(header) }}</th>
+                }
+              </tr>
+            }
           </thead>
           <tbody>
-            @for (item of items(); track item.id) {
+            @for (row of table.getRowModel().rows; track row.original.id) {
               <tr>
-                <td>
-                  <b>{{ item.lostPet.name }}</b>
-                  <span>{{ item.lostPet.id }}</span>
-                </td>
-                <td>
-                  <b>{{ item.sighting.species }} sighting</b>
-                  <span>{{ item.approximateLocationLabel }} - {{ item.distanceLabel }}</span>
-                </td>
-                <td>
-                  <strong>{{ item.score }}%</strong>
-                  <span>{{ levelLabel(item.level) }}</span>
-                </td>
-                <td>
-                  <pr-status-badge [label]="item.reviewStatusLabel" [tone]="statusTone(item.reviewStatus)" />
-                </td>
-                <td>{{ item.matchedAt }}</td>
-                <td><a [routerLink]="['/match-review', item.id]">Open</a></td>
+                @for (cell of row.getVisibleCells(); track cell.id) {
+                  @if (cell.column.id === 'lostPet') {
+                    <td>
+                      <b>{{ row.original.lostPet.name }}</b>
+                      <span>{{ row.original.lostPet.id }}</span>
+                    </td>
+                  } @else if (cell.column.id === 'sighting') {
+                    <td>
+                      <b>{{ row.original.sighting.species }} sighting</b>
+                      <span>{{ row.original.approximateLocationLabel }} - {{ row.original.distanceLabel }}</span>
+                    </td>
+                  } @else if (cell.column.id === 'score') {
+                    <td>
+                      <strong>{{ row.original.score }}%</strong>
+                      <span>{{ levelLabel(row.original.level) }}</span>
+                    </td>
+                  } @else if (cell.column.id === 'reviewStatus') {
+                    <td>
+                      <pr-status-badge
+                        [label]="row.original.reviewStatusLabel"
+                        [tone]="statusTone(row.original.reviewStatus)"
+                      />
+                    </td>
+                  } @else if (cell.column.id === 'action') {
+                    <td><a [routerLink]="['/match-review', row.original.id]">Open</a></td>
+                  } @else {
+                    <td>{{ cellValue(cell) }}</td>
+                  }
+                }
               </tr>
             }
           </tbody>

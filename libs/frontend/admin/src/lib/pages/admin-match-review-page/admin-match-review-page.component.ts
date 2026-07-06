@@ -2,7 +2,16 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+import {
+  createAngularTable,
+  createColumnHelper,
+  getCoreRowModel,
+  type Cell,
+  type ColumnDef,
+  type Header,
+} from '@tanstack/angular-table';
+import { lastValueFrom } from 'rxjs';
 
 import {
   LostPetsApiService,
@@ -25,6 +34,38 @@ const initialFilters: MatchListFilters = {
   status: 'PENDING',
 };
 
+const matchReviewColumnHelper = createColumnHelper<LostPetMatchView>();
+const matchReviewColumns: ColumnDef<LostPetMatchView, string>[] = [
+  matchReviewColumnHelper.accessor((item) => item.lostPet.name, {
+    header: 'Lost pet',
+    id: 'lostPet',
+  }),
+  matchReviewColumnHelper.accessor((item) => item.sighting.title, {
+    header: 'Sighting',
+    id: 'sighting',
+  }),
+  matchReviewColumnHelper.accessor(matchScoreValue, {
+    header: 'Score',
+    id: 'score',
+  }),
+  matchReviewColumnHelper.accessor((item) => item.reviewStatusLabel, {
+    header: 'Review',
+    id: 'reviewStatus',
+  }),
+  matchReviewColumnHelper.accessor('matchedAt', {
+    header: 'Matched',
+  }),
+  matchReviewColumnHelper.accessor('id', {
+    header: 'Action',
+    id: 'action',
+  }),
+];
+const matchReviewRowModel = getCoreRowModel<LostPetMatchView>();
+
+function matchScoreValue(item: LostPetMatchView): string {
+  return `${String(item.score)}%`;
+}
+
 @Component({
   selector: 'pr-admin-match-review-page',
   standalone: true,
@@ -36,9 +77,26 @@ const initialFilters: MatchListFilters = {
 export class AdminMatchReviewPageComponent {
   private readonly matchesApi = inject(LostPetsApiService);
   readonly filters = signal<MatchListFilters>({ ...initialFilters });
-  readonly response = signal<PaginatedResponse<MatchApiResponse> | null>(null);
-  readonly uiState = signal<MatchReviewState>('loading');
-  readonly errorMessage = signal('');
+  readonly matchesQuery = injectQuery(() => ({
+    queryKey: ['admin', 'match-review', this.filters()],
+    queryFn: () => lastValueFrom(this.matchesApi.listMatches(this.filters())),
+    staleTime: 30_000,
+  }));
+  readonly response = computed<PaginatedResponse<MatchApiResponse> | null>(
+    () => this.matchesQuery.data() ?? null,
+  );
+  readonly uiState = computed<MatchReviewState>(() => {
+    if (this.matchesQuery.isPending()) {
+      return 'loading';
+    }
+    if (this.matchesQuery.isError()) {
+      return 'error';
+    }
+    return 'ready';
+  });
+  readonly errorMessage = computed(() =>
+    toUserMessage(this.matchesQuery.error(), 'Match review queue could not be loaded.'),
+  );
   readonly items = computed<LostPetMatchView[]>(() =>
     (this.response()?.items ?? []).map((item) => toLostPetMatchView(item)),
   );
@@ -48,21 +106,14 @@ export class AdminMatchReviewPageComponent {
   readonly highCount = computed(
     () => this.response()?.items.filter((item) => item.level === 'HIGH').length ?? 0,
   );
+  readonly table = createAngularTable<LostPetMatchView>(() => ({
+    columns: matchReviewColumns,
+    data: this.items(),
+    getCoreRowModel: matchReviewRowModel,
+  }));
 
-  constructor() {
-    void this.loadMatches();
-  }
-
-  async loadMatches(): Promise<void> {
-    this.uiState.set('loading');
-    this.errorMessage.set('');
-    try {
-      this.response.set(await firstValueFrom(this.matchesApi.listMatches(this.filters())));
-      this.uiState.set('ready');
-    } catch (error) {
-      this.errorMessage.set(toUserMessage(error, 'Match review queue could not be loaded.'));
-      this.uiState.set('error');
-    }
+  loadMatches(): void {
+    void this.matchesQuery.refetch();
   }
 
   updateStatus(status: string): void {
@@ -71,7 +122,6 @@ export class AdminMatchReviewPageComponent {
 
   clearFilters(): void {
     this.filters.set({ page: 1, pageSize: initialFilters.pageSize });
-    void this.loadMatches();
   }
 
   nextPage(): void {
@@ -81,7 +131,6 @@ export class AdminMatchReviewPageComponent {
       return;
     }
     this.filters.update((filters) => ({ ...filters, page: page + 1 }));
-    void this.loadMatches();
   }
 
   previousPage(): void {
@@ -90,7 +139,6 @@ export class AdminMatchReviewPageComponent {
       return;
     }
     this.filters.update((filters) => ({ ...filters, page: page - 1 }));
-    void this.loadMatches();
   }
 
   levelLabel(level: ApiMatchLevel): string {
@@ -109,7 +157,22 @@ export class AdminMatchReviewPageComponent {
 
   private updateFilters(patch: Partial<MatchListFilters>): void {
     this.filters.update((filters) => ({ ...filters, ...patch, page: 1 }));
-    void this.loadMatches();
+  }
+
+  headerLabel(header: Header<LostPetMatchView, unknown>): string {
+    const value = header.column.columnDef.header;
+    return typeof value === 'string' ? value : '';
+  }
+
+  cellValue(cell: Cell<LostPetMatchView, unknown>): string {
+    const value = cell.getValue();
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    return '';
   }
 }
 
