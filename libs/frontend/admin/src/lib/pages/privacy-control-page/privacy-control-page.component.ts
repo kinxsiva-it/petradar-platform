@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental';
+import { lastValueFrom } from 'rxjs';
 
 import {
   AlertComponent,
@@ -10,7 +11,10 @@ import {
   StatusBadgeComponent,
 } from '@petradar/frontend/shared-ui';
 
-import type { AdminPrivacyCenterResponse } from '../../data-access/admin-privacy-policy-api.models.js';
+import type {
+  AdminPrivacyCenterResponse,
+  UpdateAdminPrivacyPolicyRequest,
+} from '../../data-access/admin-privacy-policy-api.models.js';
 import { AdminPrivacyPolicyApiService } from '../../data-access/admin-privacy-policy-api.service.js';
 
 type PrivacyPageState = 'loading' | 'ready' | 'error';
@@ -25,32 +29,61 @@ type PrivacyPageState = 'loading' | 'ready' | 'error';
 })
 export class PrivacyControlPageComponent {
   private readonly privacyApi = inject(AdminPrivacyPolicyApiService);
-  readonly response = signal<AdminPrivacyCenterResponse | null>(null);
-  readonly uiState = signal<PrivacyPageState>('loading');
-  readonly errorMessage = signal('');
+  readonly privacyQuery = injectQuery(() => ({
+    queryKey: ['admin', 'privacy-policy'],
+    queryFn: () => lastValueFrom(this.privacyApi.detail()),
+    staleTime: 30_000,
+  }));
+  readonly privacyMutation = injectMutation<
+    AdminPrivacyCenterResponse,
+    unknown,
+    UpdateAdminPrivacyPolicyRequest
+  >(() => ({
+    mutationFn: (request) => lastValueFrom(this.privacyApi.updatePublicLocationPolicy(request)),
+  }));
+  readonly response = computed<AdminPrivacyCenterResponse | null>(
+    () => this.privacyQuery.data() ?? null,
+  );
+  readonly uiState = computed<PrivacyPageState>(() => {
+    if (this.privacyQuery.isPending()) {
+      return 'loading';
+    }
+    if (this.privacyQuery.isError()) {
+      return 'error';
+    }
+    return 'ready';
+  });
+  readonly actionErrorMessage = signal('');
+  readonly errorMessage = computed(() => {
+    const actionError = this.actionErrorMessage();
+    if (actionError) {
+      return actionError;
+    }
+    return this.privacyQuery.isError()
+      ? toUserMessage(this.privacyQuery.error(), 'Privacy and moderation status could not be loaded.')
+      : '';
+  });
   readonly actionMessage = signal('');
-  readonly saving = signal(false);
+  readonly saving = computed(() => this.privacyMutation.isPending());
   readonly radiusDraft = signal(300);
   readonly moderationBacklog = computed(() => {
     const moderation = this.response()?.moderation;
     return (moderation?.pendingSightingsCount ?? 0) + (moderation?.needsReviewSightingsCount ?? 0);
   });
 
-  constructor() {
-    void this.loadPrivacyCenter();
-  }
-
-  async loadPrivacyCenter(): Promise<void> {
-    this.uiState.set('loading');
-    this.errorMessage.set('');
-    this.actionMessage.set('');
-    try {
-      this.applyResponse(await firstValueFrom(this.privacyApi.detail()));
-      this.uiState.set('ready');
-    } catch (error) {
-      this.errorMessage.set(toUserMessage(error, 'Privacy and moderation status could not be loaded.'));
-      this.uiState.set('error');
+  private readonly syncRadiusDraftAfterLoad = effect(() => {
+    const dataUpdatedAt = this.privacyQuery.dataUpdatedAt();
+    const policy = this.response()?.policy;
+    if (dataUpdatedAt === 0 || !policy) {
+      return;
     }
+    this.radiusDraft.set(policy.defaultRadiusMeters);
+  });
+
+  loadPrivacyCenter(): void {
+    this.actionErrorMessage.set('');
+    this.actionMessage.set('');
+    void this.privacyQuery.refetch();
   }
 
   updateRadiusDraft(value: number | string): void {
@@ -66,7 +99,7 @@ export class PrivacyControlPageComponent {
       return;
     }
     this.radiusDraft.set(policy.defaultRadiusMeters);
-    this.errorMessage.set('');
+    this.actionErrorMessage.set('');
     this.actionMessage.set('');
   }
 
@@ -77,27 +110,21 @@ export class PrivacyControlPageComponent {
     }
 
     const radius = this.radiusDraft();
+    this.actionErrorMessage.set('');
+    this.actionMessage.set('');
     if (radius < policy.minimumRadiusMeters || radius > policy.maximumRadiusMeters) {
-      this.errorMessage.set(
+      this.actionErrorMessage.set(
         `Public radius must be between ${String(policy.minimumRadiusMeters)} and ${String(policy.maximumRadiusMeters)} meters.`,
       );
       return;
     }
 
-    this.saving.set(true);
-    this.errorMessage.set('');
-    this.actionMessage.set('');
     try {
-      this.applyResponse(
-        await firstValueFrom(
-          this.privacyApi.updatePublicLocationPolicy({ defaultRadiusMeters: radius }),
-        ),
-      );
+      await this.privacyMutation.mutateAsync({ defaultRadiusMeters: radius });
+      await this.privacyQuery.refetch();
       this.actionMessage.set('Public-location privacy policy was updated.');
     } catch (error) {
-      this.errorMessage.set(toUserMessage(error, 'Privacy policy could not be saved.'));
-    } finally {
-      this.saving.set(false);
+      this.actionErrorMessage.set(toUserMessage(error, 'Privacy policy could not be saved.'));
     }
   }
 
@@ -109,11 +136,6 @@ export class PrivacyControlPageComponent {
       return 'Environment default';
     }
     return 'Safe default';
-  }
-
-  private applyResponse(response: AdminPrivacyCenterResponse): void {
-    this.response.set(response);
-    this.radiusDraft.set(response.policy.defaultRadiusMeters);
   }
 }
 

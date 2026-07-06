@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { forkJoin, firstValueFrom } from 'rxjs';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+import { forkJoin, lastValueFrom } from 'rxjs';
 
 import { EmptyStateComponent, LoadingSkeletonComponent } from '@petradar/frontend/shared-ui';
 
@@ -16,6 +17,11 @@ import type {
 } from '../../data-access/analytics-api.models.js';
 
 type AnalyticsState = 'loading' | 'ready' | 'error';
+interface AnalyticsDashboardResponse {
+  bySpecies: AnalyticsBySpeciesResponse;
+  byStatus: AnalyticsByStatusResponse;
+  summary: AnalyticsSummaryResponse;
+}
 
 @Component({
   selector: 'pr-analytics-dashboard-page',
@@ -32,11 +38,40 @@ type AnalyticsState = 'loading' | 'ready' | 'error';
 })
 export class AnalyticsDashboardPageComponent {
   private readonly analyticsApi = inject(AnalyticsApiService);
-  readonly summary = signal<AnalyticsSummaryResponse | null>(null);
-  readonly bySpecies = signal<AnalyticsBySpeciesResponse | null>(null);
-  readonly byStatus = signal<AnalyticsByStatusResponse | null>(null);
-  readonly uiState = signal<AnalyticsState>('loading');
-  readonly errorMessage = signal('');
+  readonly analyticsQuery = injectQuery(() => ({
+    queryKey: ['admin', 'analytics', 'dashboard'],
+    queryFn: () =>
+      lastValueFrom(
+        forkJoin({
+          bySpecies: this.analyticsApi.bySpecies(),
+          byStatus: this.analyticsApi.byStatus(),
+          summary: this.analyticsApi.summary(),
+        }),
+      ),
+    staleTime: 30_000,
+  }));
+  readonly response = computed<AnalyticsDashboardResponse | null>(
+    () => this.analyticsQuery.data() ?? null,
+  );
+  readonly summary = computed<AnalyticsSummaryResponse | null>(
+    () => this.response()?.summary ?? null,
+  );
+  readonly bySpecies = computed<AnalyticsBySpeciesResponse | null>(
+    () => this.response()?.bySpecies ?? null,
+  );
+  readonly byStatus = computed<AnalyticsByStatusResponse | null>(
+    () => this.response()?.byStatus ?? null,
+  );
+  readonly uiState = computed<AnalyticsState>(() => {
+    if (this.analyticsQuery.isPending()) {
+      return 'loading';
+    }
+    if (this.analyticsQuery.isError()) {
+      return 'error';
+    }
+    return 'ready';
+  });
+  readonly errorMessage = computed(() => toUserMessage(this.analyticsQuery.error()));
   readonly metrics = computed(() => summaryMetrics(this.summary()));
   readonly speciesSegments = computed<AnalyticsChartSegment[]>(() =>
     (this.bySpecies()?.items ?? []).map(
@@ -57,29 +92,8 @@ export class AnalyticsDashboardPageComponent {
       this.rescueStatusSegments().length > 0,
   );
 
-  constructor() {
-    void this.loadAnalytics();
-  }
-
-  async loadAnalytics(): Promise<void> {
-    this.uiState.set('loading');
-    this.errorMessage.set('');
-    try {
-      const response = await firstValueFrom(
-        forkJoin({
-          bySpecies: this.analyticsApi.bySpecies(),
-          byStatus: this.analyticsApi.byStatus(),
-          summary: this.analyticsApi.summary(),
-        }),
-      );
-      this.summary.set(response.summary);
-      this.bySpecies.set(response.bySpecies);
-      this.byStatus.set(response.byStatus);
-      this.uiState.set('ready');
-    } catch (error) {
-      this.errorMessage.set(toUserMessage(error));
-      this.uiState.set('error');
-    }
+  loadAnalytics(): void {
+    void this.analyticsQuery.refetch();
   }
 }
 
