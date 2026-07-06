@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { firstValueFrom } from 'rxjs';
+import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental';
+import { lastValueFrom } from 'rxjs';
 
 import { AlertComponent, EmptyStateComponent, LoadingSkeletonComponent, StatusBadgeComponent } from '@petradar/frontend/shared-ui';
 
@@ -13,12 +14,16 @@ import {
   AdminSightingsApiService,
 } from '../../data-access/admin-sightings-api.service.js';
 import type {
+  AdminModerationDetail,
   AdminModerationFilters,
   AdminModerationQueueItem,
   AdminModerationQueueResponse,
 } from '../../data-access/admin-sightings-api.models.js';
 
 type QueueState = 'loading' | 'ready' | 'error';
+type ModerationVariables =
+  | { action: 'approve'; id: string }
+  | { action: 'reject'; id: string; reason: string };
 
 const initialFilters: AdminModerationFilters = {
   page: 1,
@@ -46,12 +51,35 @@ const initialFilters: AdminModerationFilters = {
 })
 export class VerificationQueuePageComponent {
   private readonly adminApi = inject(AdminSightingsApiService);
-  private requestVersion = 0;
   readonly filters = signal<AdminModerationFilters>({ ...initialFilters });
-  readonly response = signal<AdminModerationQueueResponse | null>(null);
+  readonly queueQuery = injectQuery(() => ({
+    queryKey: ['admin', 'verification-queue', this.filters()],
+    queryFn: () => lastValueFrom(this.adminApi.getModerationQueue(this.filters())),
+    staleTime: 30_000,
+  }));
+  readonly moderationMutation = injectMutation<AdminModerationDetail, unknown, ModerationVariables>(() => ({
+    mutationFn: (variables) => {
+      if (variables.action === 'approve') {
+        return lastValueFrom(this.adminApi.approveReport(variables.id));
+      }
+      return lastValueFrom(this.adminApi.rejectReport(variables.id, variables.reason));
+    },
+  }));
+  readonly response = computed<AdminModerationQueueResponse | null>(() => this.queueQuery.data() ?? null);
   readonly selected = signal<AdminModerationQueueItem | undefined>(undefined);
-  readonly uiState = signal<QueueState>('loading');
-  readonly errorMessage = signal('');
+  readonly actionErrorMessage = signal('');
+  readonly uiState = computed<QueueState>(() => {
+    if (this.queueQuery.isPending()) {
+      return 'loading';
+    }
+    if (this.actionErrorMessage() || this.queueQuery.isError()) {
+      return 'error';
+    }
+    return 'ready';
+  });
+  readonly errorMessage = computed(
+    () => this.actionErrorMessage() || toUserMessage(this.queueQuery.error()),
+  );
   readonly actionMessage = signal('');
   readonly pendingCount = computed(() => this.response()?.total ?? 0);
   readonly urgentCount = computed(
@@ -61,39 +89,28 @@ export class VerificationQueuePageComponent {
       ).length ?? 0,
   );
 
-  constructor() {
-    void this.loadQueue();
-  }
-
-  async loadQueue(): Promise<void> {
-    const version = ++this.requestVersion;
-    this.uiState.set('loading');
-    this.errorMessage.set('');
-    try {
-      const response = await firstValueFrom(this.adminApi.getModerationQueue(this.filters()));
-      if (version !== this.requestVersion) {
-        return;
-      }
-      this.response.set(response);
-      this.selected.set(response.items[0]);
-      this.uiState.set('ready');
-    } catch (error) {
-      if (version !== this.requestVersion) {
-        return;
-      }
-      this.errorMessage.set(toUserMessage(error));
-      this.uiState.set('error');
+  private readonly selectFirstReportAfterQueueLoad = effect(() => {
+    const dataUpdatedAt = this.queueQuery.dataUpdatedAt();
+    const response = this.response();
+    if (dataUpdatedAt === 0) {
+      return;
     }
-  }
+    this.selected.set(response?.items[0]);
+  });
 
   updateFilters(filters: AdminModerationFilters): void {
+    this.actionErrorMessage.set('');
     this.filters.set(filters);
-    void this.loadQueue();
   }
 
   clearFilters(): void {
+    this.actionErrorMessage.set('');
     this.filters.set({ ...initialFilters });
-    void this.loadQueue();
+  }
+
+  loadQueue(): void {
+    this.actionErrorMessage.set('');
+    void this.queueQuery.refetch();
   }
 
   nextPage(): void {
@@ -117,7 +134,7 @@ export class VerificationQueuePageComponent {
     if (!window.confirm('Verify this animal sighting?')) {
       return;
     }
-    await this.runModeration(() => this.adminApi.approveReport(id), 'Sighting verified.');
+    await this.runModeration({ action: 'approve', id }, 'Sighting verified.');
   }
 
   async reject(id: string): Promise<void> {
@@ -126,23 +143,24 @@ export class VerificationQueuePageComponent {
       return;
     }
     await this.runModeration(
-      () => this.adminApi.rejectReport(id, reason.trim()),
+      { action: 'reject', id, reason: reason.trim() },
       'Sighting rejected.',
     );
   }
 
   private async runModeration(
-    action: () => ReturnType<AdminSightingsApiService['verifySighting']>,
+    variables: ModerationVariables,
     successMessage: string,
   ): Promise<void> {
     this.actionMessage.set('');
+    this.actionErrorMessage.set('');
     try {
-      await firstValueFrom(action());
+      await this.moderationMutation.mutateAsync(variables);
       this.actionMessage.set(successMessage);
-      await this.loadQueue();
+      await this.queueQuery.refetch();
     } catch (error) {
-      this.errorMessage.set(toUserMessage(error));
-      this.uiState.set('error');
+      this.actionMessage.set('');
+      this.actionErrorMessage.set(toUserMessage(error));
     }
   }
 }
