@@ -106,6 +106,30 @@ describe('auth route guards', () => {
     expect(router.createUrlTree).toHaveBeenCalledWith(['/']);
   });
 
+  it('can clear sessions and redirect to a safe URL when a role is forbidden', async () => {
+    const logout = vi.fn().mockResolvedValue(undefined);
+    const { injector, router } = setup({
+      initializeSession: vi.fn().mockResolvedValue(undefined),
+      isAuthenticated: () => true,
+      logout,
+      roles: () => ['REPORTER'],
+    } as Partial<AuthStateService>);
+
+    await runInInjectionContext(injector, () =>
+      roleGuard(
+        routeData({
+          forbiddenRedirectUrl: '/login?access=denied',
+          logoutOnForbidden: true,
+          roles: ['ADMIN'],
+        }) as never,
+        routerState('/') as never,
+      ),
+    );
+
+    expect(logout).toHaveBeenCalledTimes(1);
+    expect(router.parseUrl).toHaveBeenCalledWith('/login?access=denied');
+  });
+
   it('rejects unsafe return URLs', () => {
     expect(safeReturnUrl('/profile')).toBe('/profile');
     expect(safeReturnUrl('https://evil.example')).toBeNull();

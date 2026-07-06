@@ -11,7 +11,7 @@ interface CmsNavItem {
 }
 
 const cmsNavItems: CmsNavItem[] = [
-  { exact: true, label: 'Dashboard', marker: 'D', route: '/' },
+  { label: 'Dashboard', marker: 'D', route: '/dashboard' },
   { label: 'Verification Queue', marker: 'V', route: '/verification' },
   { label: 'Rescue Cases', marker: 'R', route: '/rescue-cases' },
   { label: 'Volunteers', marker: 'M', route: '/volunteers' },

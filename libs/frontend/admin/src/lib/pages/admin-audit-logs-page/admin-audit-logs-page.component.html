@@ -24,22 +24,20 @@
     <section class="audit-table">
       <table>
         <thead>
-          <tr>
-            <th scope="col">Time</th>
-            <th scope="col">Actor</th>
-            <th scope="col">Action</th>
-            <th scope="col">Entity</th>
-            <th scope="col">Summary</th>
-          </tr>
+          @for (headerGroup of table.getHeaderGroups(); track headerGroup.id) {
+            <tr>
+              @for (header of headerGroup.headers; track header.id) {
+                <th scope="col">{{ headerLabel(header) }}</th>
+              }
+            </tr>
+          }
         </thead>
         <tbody>
-          @for (item of response()?.items ?? []; track item.id) {
+          @for (row of table.getRowModel().rows; track row.original.id) {
             <tr>
-              <td>{{ item.createdAt }}</td>
-              <td>{{ item.actor?.displayName ?? 'System' }}</td>
-              <td>{{ item.action }}</td>
-              <td>{{ item.entityType }} / {{ item.entityId }}</td>
-              <td>{{ item.summary }}</td>
+              @for (cell of row.getVisibleCells(); track cell.id) {
+                <td>{{ cellValue(cell) }}</td>
+              }
             </tr>
           }
         </tbody>

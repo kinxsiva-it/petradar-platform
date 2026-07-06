@@ -1,11 +1,24 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { injectQuery } from '@tanstack/angular-query-experimental';
+import {
+  createAngularTable,
+  createColumnHelper,
+  getCoreRowModel,
+  type Cell,
+  type ColumnDef,
+  type Header,
+} from '@tanstack/angular-table';
+import { lastValueFrom } from 'rxjs';
 
 import { EmptyStateComponent, LoadingSkeletonComponent } from '@petradar/frontend/shared-ui';
 
-import type { AdminAuditLogsFilters, AdminAuditLogsResponse } from '../../data-access/admin-audit-logs-api.models.js';
+import type {
+  AdminAuditLogItem,
+  AdminAuditLogsFilters,
+  AdminAuditLogsResponse,
+} from '../../data-access/admin-audit-logs-api.models.js';
 import { AdminAuditLogsApiService } from '../../data-access/admin-audit-logs-api.service.js';
 
 type AuditState = 'loading' | 'ready' | 'error';
@@ -14,6 +27,28 @@ const initialFilters: AdminAuditLogsFilters = {
   page: 1,
   pageSize: 25,
 };
+
+const auditLogColumnHelper = createColumnHelper<AdminAuditLogItem>();
+const auditLogColumns: ColumnDef<AdminAuditLogItem, string>[] = [
+  auditLogColumnHelper.accessor('createdAt', {
+    header: 'Time',
+  }),
+  auditLogColumnHelper.accessor((item) => item.actor?.displayName ?? 'System', {
+    header: 'Actor',
+    id: 'actor',
+  }),
+  auditLogColumnHelper.accessor('action', {
+    header: 'Action',
+  }),
+  auditLogColumnHelper.accessor((item) => `${item.entityType} / ${item.entityId}`, {
+    header: 'Entity',
+    id: 'entity',
+  }),
+  auditLogColumnHelper.accessor('summary', {
+    header: 'Summary',
+  }),
+];
+const auditLogRowModel = getCoreRowModel<AdminAuditLogItem>();
 
 @Component({
   selector: 'pr-admin-audit-logs-page',
@@ -26,25 +61,28 @@ const initialFilters: AdminAuditLogsFilters = {
 export class AdminAuditLogsPageComponent {
   private readonly auditLogsApi = inject(AdminAuditLogsApiService);
   readonly filters = signal<AdminAuditLogsFilters>({ ...initialFilters });
-  readonly response = signal<AdminAuditLogsResponse | null>(null);
-  readonly uiState = signal<AuditState>('loading');
-  readonly errorMessage = signal('');
-
-  constructor() {
-    void this.loadAuditLogs();
-  }
-
-  async loadAuditLogs(): Promise<void> {
-    this.uiState.set('loading');
-    this.errorMessage.set('');
-    try {
-      this.response.set(await firstValueFrom(this.auditLogsApi.list(this.filters())));
-      this.uiState.set('ready');
-    } catch (error) {
-      this.errorMessage.set(toUserMessage(error));
-      this.uiState.set('error');
+  readonly auditLogsQuery = injectQuery(() => ({
+    queryKey: ['admin', 'audit-logs', this.filters()],
+    queryFn: () => lastValueFrom(this.auditLogsApi.list(this.filters())),
+    staleTime: 30_000,
+  }));
+  readonly response = computed<AdminAuditLogsResponse | null>(() => this.auditLogsQuery.data() ?? null);
+  readonly uiState = computed<AuditState>(() => {
+    if (this.auditLogsQuery.isPending()) {
+      return 'loading';
     }
-  }
+    if (this.auditLogsQuery.isError()) {
+      return 'error';
+    }
+    return 'ready';
+  });
+  readonly errorMessage = computed(() => toUserMessage(this.auditLogsQuery.error()));
+  readonly auditRows = computed(() => this.response()?.items ?? []);
+  readonly table = createAngularTable<AdminAuditLogItem>(() => ({
+    columns: auditLogColumns,
+    data: this.auditRows(),
+    getCoreRowModel: auditLogRowModel,
+  }));
 
   updateFilter(key: keyof AdminAuditLogsFilters, value: string): void {
     this.filters.update((filters) => ({
@@ -52,12 +90,10 @@ export class AdminAuditLogsPageComponent {
       [key]: value.trim() || undefined,
       page: 1,
     }));
-    void this.loadAuditLogs();
   }
 
   clearFilters(): void {
     this.filters.set({ ...initialFilters });
-    void this.loadAuditLogs();
   }
 
   page(delta: number): void {
@@ -67,7 +103,22 @@ export class AdminAuditLogsPageComponent {
       return;
     }
     this.filters.update((filters) => ({ ...filters, page: next }));
-    void this.loadAuditLogs();
+  }
+
+  headerLabel(header: Header<AdminAuditLogItem, unknown>): string {
+    const value = header.column.columnDef.header;
+    return typeof value === 'string' ? value : '';
+  }
+
+  cellValue(cell: Cell<AdminAuditLogItem, unknown>): string {
+    const value = cell.getValue();
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      return String(value);
+    }
+    return '';
   }
 }
 

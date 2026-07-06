@@ -9,19 +9,23 @@ export const ADMIN_ROUTES: Routes = [
     path: '',
     canActivate: [roleGuard],
     component: AdminCmsShellComponent,
-    data: { roles: ['ADMIN'] },
+    data: {
+      forbiddenRedirectUrl: '/login?access=denied',
+      logoutOnForbidden: true,
+      roles: ['ADMIN'],
+    },
     children: [
       {
         path: '',
-        loadComponent: () =>
-          import('./pages/admin-cms-dashboard-page/admin-cms-dashboard-page.component.js').then(
-            (module) => module.AdminCmsDashboardPageComponent,
-          ),
+        redirectTo: 'dashboard',
         pathMatch: 'full',
       },
       {
         path: 'dashboard',
-        redirectTo: '',
+        loadComponent: () =>
+          import('./pages/admin-cms-dashboard-page/admin-cms-dashboard-page.component.js').then(
+            (module) => module.AdminCmsDashboardPageComponent,
+          ),
         pathMatch: 'full',
       },
       {

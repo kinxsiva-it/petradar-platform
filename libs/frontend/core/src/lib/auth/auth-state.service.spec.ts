@@ -51,6 +51,18 @@ describe('AuthStateService', () => {
     expect(auth.user()?.email).toBe('nicha@example.com');
   });
 
+  it('does not refresh again after a session is already initialized', async () => {
+    const login = vi.fn().mockReturnValue(of(session));
+    const refresh = vi.fn();
+    const auth = setup({ login, refresh });
+
+    await auth.login({ email: 'nicha@example.com', password: 'password' });
+    await auth.initializeSession();
+
+    expect(refresh).not.toHaveBeenCalled();
+    expect(auth.accessToken()).toBe('access-token');
+  });
+
   it('sets a safe login error on failure', async () => {
     const login = vi.fn().mockReturnValue(
       throwError(() => new HttpErrorResponse({ status: 401, statusText: 'Unauthorized' })),

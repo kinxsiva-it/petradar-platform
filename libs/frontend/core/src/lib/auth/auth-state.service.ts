@@ -39,6 +39,10 @@ export class AuthStateService {
       return this.initializationPromise;
     }
 
+    if (this.statusState() !== 'initializing') {
+      return Promise.resolve();
+    }
+
     this.statusState.set('initializing');
     this.errorState.set(null);
     this.initializationPromise = this.restoreSession();

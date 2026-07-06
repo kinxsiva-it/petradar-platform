@@ -2,7 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { AuthStateService, safeReturnUrl } from '@petradar/frontend/core';
+import {
+  AUTH_DEFAULT_REDIRECT_URL,
+  AuthStateService,
+  DEFAULT_AUTH_REDIRECT_URL,
+  safeReturnUrl,
+} from '@petradar/frontend/core';
 import { AlertComponent, ButtonComponent, PrivacyBannerComponent } from '@petradar/frontend/shared-ui';
 
 import type { LoginPreviewForm } from '../../models/auth-preview.model.js';
@@ -21,11 +26,19 @@ export class LoginPageComponent {
   readonly localError = signal<string | null>(null);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly defaultRedirectUrl =
+    inject(AUTH_DEFAULT_REDIRECT_URL, { optional: true }) ?? DEFAULT_AUTH_REDIRECT_URL;
   readonly form: LoginPreviewForm = {
     email: '',
     password: '',
     remember: true,
   };
+
+  constructor() {
+    if (this.route.snapshot.queryParamMap.get('access') === 'denied') {
+      this.localError.set('Sign in with an account that has access to that area.');
+    }
+  }
 
   async submit(): Promise<void> {
     if (this.authState.loading()) {
@@ -52,7 +65,7 @@ export class LoginPageComponent {
 
   private returnUrl(): string {
     const value = this.route.snapshot.queryParamMap.get('returnUrl');
-    return safeReturnUrl(value) ?? '/my/reports';
+    return safeReturnUrl(value) ?? this.defaultRedirectUrl;
   }
 }
 

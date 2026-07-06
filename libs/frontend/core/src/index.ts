@@ -1,5 +1,6 @@
 export * from './lib/auth/api-base-path.js';
 export * from './lib/auth/auth-api.service.js';
+export * from './lib/auth/auth-redirect-url.js';
 export * from './lib/auth/auth-state.service.js';
 export * from './lib/auth/auth.guards.js';
 export * from './lib/auth/auth.interceptor.js';

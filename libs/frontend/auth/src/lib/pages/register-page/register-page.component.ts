@@ -2,7 +2,12 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
-import { AuthStateService, safeReturnUrl } from '@petradar/frontend/core';
+import {
+  AUTH_DEFAULT_REDIRECT_URL,
+  AuthStateService,
+  DEFAULT_AUTH_REDIRECT_URL,
+  safeReturnUrl,
+} from '@petradar/frontend/core';
 import { AlertComponent, ButtonComponent, PrivacyBannerComponent } from '@petradar/frontend/shared-ui';
 
 import type { RegisterPreviewForm } from '../../models/auth-preview.model.js';
@@ -21,6 +26,8 @@ export class RegisterPageComponent {
   readonly localError = signal<string | null>(null);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly defaultRedirectUrl =
+    inject(AUTH_DEFAULT_REDIRECT_URL, { optional: true }) ?? DEFAULT_AUTH_REDIRECT_URL;
   readonly form: RegisterPreviewForm = {
     acceptedGuidelines: false,
     confirmPassword: '',
@@ -76,7 +83,7 @@ export class RegisterPageComponent {
 
   private returnUrl(): string {
     const value = this.route.snapshot.queryParamMap.get('returnUrl');
-    return safeReturnUrl(value) ?? '/my/reports';
+    return safeReturnUrl(value) ?? this.defaultRedirectUrl;
   }
 }
 

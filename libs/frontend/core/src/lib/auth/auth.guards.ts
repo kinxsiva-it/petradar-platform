@@ -2,8 +2,11 @@ import { inject } from '@angular/core';
 import type { CanActivateFn, RouterStateSnapshot } from '@angular/router';
 import { Router } from '@angular/router';
 
+import { AUTH_DEFAULT_REDIRECT_URL, DEFAULT_AUTH_REDIRECT_URL } from './auth-redirect-url.js';
 import { AuthStateService } from './auth-state.service.js';
 import type { UserRole } from './auth.models.js';
+
+const userRoleValues: readonly UserRole[] = ['GUEST', 'REPORTER', 'PET_OWNER', 'VOLUNTEER', 'ADMIN'];
 
 export const authGuard: CanActivateFn = async (_route, state) => {
   const auth = inject(AuthStateService);
@@ -23,6 +26,8 @@ export const authGuard: CanActivateFn = async (_route, state) => {
 export const anonymousOnlyGuard: CanActivateFn = async (_route, state) => {
   const auth = inject(AuthStateService);
   const router = inject(Router);
+  const defaultRedirectUrl =
+    inject(AUTH_DEFAULT_REDIRECT_URL, { optional: true }) ?? DEFAULT_AUTH_REDIRECT_URL;
 
   await auth.initializeSession();
 
@@ -31,7 +36,7 @@ export const anonymousOnlyGuard: CanActivateFn = async (_route, state) => {
   }
 
   const returnUrl = safeReturnUrl(queryParam(state.url, 'returnUrl'));
-  return router.parseUrl(returnUrl ?? '/my/reports');
+  return router.parseUrl(returnUrl ?? defaultRedirectUrl);
 };
 
 export const roleGuard: CanActivateFn = async (route, state) => {
@@ -46,9 +51,18 @@ export const roleGuard: CanActivateFn = async (route, state) => {
     });
   }
 
-  const roles = route.data['roles'] as UserRole[] | undefined;
+  const roles = userRolesRouteData(route.data);
   if (!roles || roles.length === 0 || roles.some((role) => auth.roles().includes(role))) {
     return true;
+  }
+
+  if (booleanRouteData(route.data, 'logoutOnForbidden')) {
+    await auth.logout();
+  }
+
+  const forbiddenRedirectUrl = stringRouteData(route.data, 'forbiddenRedirectUrl');
+  if (forbiddenRedirectUrl) {
+    return router.parseUrl(safeReturnUrl(forbiddenRedirectUrl) ?? '/');
   }
 
   return router.createUrlTree(['/']);
@@ -69,4 +83,25 @@ function queryParam(url: RouterStateSnapshot['url'], key: string): string | null
   }
 
   return new URLSearchParams(query).get(key);
+}
+
+function booleanRouteData(data: Record<string, unknown>, key: string): boolean {
+  return data[key] === true;
+}
+
+function stringRouteData(data: Record<string, unknown>, key: string): string | null {
+  const value = data[key];
+  return typeof value === 'string' ? value : null;
+}
+
+function userRolesRouteData(data: Record<string, unknown>): UserRole[] | undefined {
+  const value = data['roles'];
+  if (!Array.isArray(value) || !value.every(isUserRole)) {
+    return undefined;
+  }
+  return value;
+}
+
+function isUserRole(value: unknown): value is UserRole {
+  return typeof value === 'string' && userRoleValues.some((role) => role === value);
 }
