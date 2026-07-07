@@ -14,7 +14,13 @@
       <div>
         <p class="eyebrow">{{ editMode() ? 'Edit Lost Pet' : 'Post Lost Pet' }}</p>
         <h1>{{ steps[step()] }}</h1>
-        <p>{{ editMode() ? 'Update private owner fields without exposing exact location publicly.' : 'Create a lost-pet post with approximate public location.' }}</p>
+        <p>
+          {{
+            editMode()
+              ? 'Update private owner fields without exposing exact location publicly.'
+              : 'Create a lost-pet post with approximate public location.'
+          }}
+        </p>
       </div>
       <a routerLink="/my/lost-pets" class="secondary">My Lost Pets</a>
     </header>
@@ -28,8 +34,14 @@
 
     <nav class="stepper">
       @for (item of steps; track item; let index = $index) {
-        <button type="button" [class.active]="index === step()" [class.done]="index < step()" (click)="go(index)">
-          <span>{{ index + 1 }}</span>{{ item }}
+        <button
+          type="button"
+          [class.active]="index === step()"
+          [class.done]="index < step()"
+          (click)="go(index)"
+        >
+          <span>{{ index + 1 }}</span
+          >{{ item }}
         </button>
       }
     </nav>
@@ -39,15 +51,21 @@
         @case (0) {
           <div class="form-grid two">
             <label>Pet name <input [(ngModel)]="petName" /></label>
-            <label>Species
+            <label
+              >Species
               <select [(ngModel)]="species">
-                @for (item of speciesOptions; track item.value) { <option [ngValue]="item.value">{{ item.label }}</option> }
+                @for (item of speciesOptions; track item.value) {
+                  <option [ngValue]="item.value">{{ item.label }}</option>
+                }
               </select>
             </label>
             <label>Breed / type <input [(ngModel)]="breed" /></label>
-            <label>Sex
+            <label
+              >Sex
               <select [(ngModel)]="sex">
-                @for (item of sexOptions; track item.value) { <option [ngValue]="item.value">{{ item.label }}</option> }
+                @for (item of sexOptions; track item.value) {
+                  <option [ngValue]="item.value">{{ item.label }}</option>
+                }
               </select>
             </label>
             <label>Age <input [(ngModel)]="ageDescription" /></label>
@@ -58,7 +76,9 @@
             <label>Primary color <input [(ngModel)]="color" /></label>
             <label>Pattern <input [(ngModel)]="pattern" /></label>
             <label>Collar description <input [(ngModel)]="collarDescription" /></label>
-            <label class="toggle"><input type="checkbox" [(ngModel)]="microchipped" /> Microchipped</label>
+            <label class="toggle"
+              ><input type="checkbox" [(ngModel)]="microchipped" /> Microchipped</label
+            >
           </div>
           <label>Description <textarea rows="4" [(ngModel)]="description"></textarea></label>
         }
@@ -67,24 +87,106 @@
             <label>Photo URL <input [(ngModel)]="photoUrlDraft" placeholder="https://..." /></label>
             <button type="button" class="secondary" (click)="addPhotoUrl()">Add photo URL</button>
           </div>
-          <p class="empty-note">Lost-pet photo upload is not exposed by the backend yet. Use existing server-hosted image URLs only.</p>
-          @if (uploadError()) { <p class="field-error">{{ uploadError() }}</p> }
+          <p class="empty-note">
+            Lost-pet photo upload is not exposed by the backend yet. Use existing server-hosted
+            image URLs only.
+          </p>
+          @if (uploadError()) {
+            <p class="field-error">{{ uploadError() }}</p>
+          }
           <div class="photo-grid">
             @for (photo of photoUrls; track photo) {
-              <figure><img [src]="photo" alt="Lost pet preview" /><button type="button" (click)="removePhoto(photo)">Remove</button></figure>
+              <figure>
+                <img [src]="photo" alt="Lost pet preview" /><button
+                  type="button"
+                  (click)="removePhoto(photo)"
+                >
+                  Remove
+                </button>
+              </figure>
             } @empty {
-              <p class="empty-note">No photo URLs added yet. Public cards will use a placeholder.</p>
+              <p class="empty-note">
+                No photo URLs added yet. Public cards will use a placeholder.
+              </p>
             }
           </div>
         }
         @case (3) {
           <div class="location-grid">
-            <div class="mock-map"><span></span><b>{{ approximateLastSeenLabel }}</b></div>
+            <div
+              class="mock-map"
+              role="button"
+              tabindex="0"
+              aria-label="Select private last-seen location"
+              (click)="selectLocationFromMap($event)"
+              (keydown)="handleMapKeydown($event)"
+            >
+              <span [ngStyle]="locationMarkerStyle()" aria-hidden="true"></span>
+              <b>{{ approximateLastSeenLabel }}</b>
+              <small>{{ selectedLocationLabel() }}</small>
+            </div>
             <div class="location-panel">
-              <p class="empty-note">The backend stores this exact private pin and generates the public approximate location.</p>
-              <label>Private latitude <input type="number" min="-90" max="90" step="0.0001" [(ngModel)]="latitude" /></label>
-              <label>Private longitude <input type="number" min="-180" max="180" step="0.0001" [(ngModel)]="longitude" /></label>
+              <p class="empty-note">
+                The backend stores this exact private pin and generates the public approximate
+                location.
+              </p>
+              <div class="location-search">
+                <label
+                  >Search for a place
+                  <input
+                    [(ngModel)]="locationSearchQuery"
+                    placeholder="Ari, Siam, Chatuchak, or 13.767484, 100.512869"
+                    (keydown.enter)="searchPrivateLocations(); $event.preventDefault()"
+                  />
+                </label>
+                <button type="button" class="secondary" (click)="searchPrivateLocations()">
+                  Move private pin
+                </button>
+                <p class="empty-note">
+                  Search moves the exact private last-seen pin only. Public lost-pet pages still use
+                  the backend approximate area.
+                </p>
+                @if (locationSearchResults().length > 0) {
+                  <div class="location-search-results" aria-label="Location search results">
+                    @for (result of locationSearchResults(); track result.id) {
+                      <button
+                        type="button"
+                        class="location-search-result"
+                        (click)="selectLocationSearchResult(result)"
+                      >
+                        <strong>{{ result.label }}</strong>
+                        <span>{{ result.description }}</span>
+                      </button>
+                    }
+                  </div>
+                }
+                @if (locationSearchMessage()) {
+                  <p class="empty-note">{{ locationSearchMessage() }}</p>
+                }
+              </div>
+              <label
+                >Private latitude
+                <input type="number" min="-90" max="90" step="0.0001" [(ngModel)]="latitude"
+              /></label>
+              <label
+                >Private longitude
+                <input type="number" min="-180" max="180" step="0.0001" [(ngModel)]="longitude"
+              /></label>
               <label>Last seen <input type="datetime-local" [(ngModel)]="lastSeenAt" /></label>
+              <div class="pin-controls" aria-label="Adjust selected private pin">
+                <button type="button" class="secondary" (click)="moveSelectedLocation(0.001, 0)">
+                  North
+                </button>
+                <button type="button" class="secondary" (click)="moveSelectedLocation(0, -0.001)">
+                  West
+                </button>
+                <button type="button" class="secondary" (click)="moveSelectedLocation(0, 0.001)">
+                  East
+                </button>
+                <button type="button" class="secondary" (click)="moveSelectedLocation(-0.001, 0)">
+                  South
+                </button>
+              </div>
               <button type="button" (click)="useCurrentLocation()">Use current location</button>
               <pr-privacy-banner />
             </div>
@@ -92,31 +194,51 @@
         }
         @case (4) {
           <div class="form-grid two">
-            <label>Contact preference
+            <label
+              >Contact preference
               <select [(ngModel)]="contactPreference">
-                @for (item of contactOptions; track item) { <option [ngValue]="item">{{ item }}</option> }
+                @for (item of contactOptions; track item) {
+                  <option [ngValue]="item">{{ item }}</option>
+                }
               </select>
             </label>
             <label>Contact detail <input [(ngModel)]="contactDetail" /></label>
             <label>Reward cents <input type="number" min="0" [(ngModel)]="rewardCents" /></label>
           </div>
-          <p class="empty-note">Contact details are sent to the private owner API fields and are not displayed in public lost-pet views.</p>
+          <p class="empty-note">
+            Contact details are sent to the private owner API fields and are not displayed in public
+            lost-pet views.
+          </p>
         }
         @case (5) {
           <section class="review">
             <h2>Review {{ petName }}</h2>
             <dl>
-              <div><dt>Pet</dt><dd>{{ species }} · {{ breed }} · {{ sex }} · {{ ageDescription }}</dd></div>
-              <div><dt>Appearance</dt><dd>{{ color }} · {{ pattern }} · {{ collarDescription }}</dd></div>
-              <div><dt>Last seen</dt><dd>{{ approximateLastSeenLabel }} · {{ lastSeenAt }}</dd></div>
-              <div><dt>Contact</dt><dd>{{ contactPreference }} · Hidden publicly</dd></div>
+              <div>
+                <dt>Pet</dt>
+                <dd>{{ species }} · {{ breed }} · {{ sex }} · {{ ageDescription }}</dd>
+              </div>
+              <div>
+                <dt>Appearance</dt>
+                <dd>{{ color }} · {{ pattern }} · {{ collarDescription }}</dd>
+              </div>
+              <div>
+                <dt>Last seen</dt>
+                <dd>{{ approximateLastSeenLabel }} · {{ lastSeenAt }}</dd>
+              </div>
+              <div>
+                <dt>Contact</dt>
+                <dd>{{ contactPreference }} · Hidden publicly</dd>
+              </div>
             </dl>
             <pr-privacy-banner />
           </section>
         }
       }
       <footer class="wizard-actions">
-        <button type="button" class="secondary" [disabled]="step() === 0" (click)="back()">Back</button>
+        <button type="button" class="secondary" [disabled]="step() === 0" (click)="back()">
+          Back
+        </button>
         @if (step() === steps.length - 1) {
           <button type="button" [disabled]="submitting() || loading()" (click)="submit()">
             {{ submitting() ? 'Saving...' : editMode() ? 'Save changes' : 'Review & Submit' }}

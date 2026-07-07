@@ -3,23 +3,71 @@ export interface GoogleMapsLatLng {
   lng(): number;
 }
 
+export interface GoogleMapsLatLngLiteral {
+  lat: number;
+  lng: number;
+}
+
 export interface GoogleMapsListener {
   remove(): void;
 }
 
-export interface GoogleMapsMap {
-  addListener(eventName: 'idle', handler: () => void): GoogleMapsListener;
-  getCenter(): GoogleMapsLatLng | undefined;
-  getZoom(): number | undefined;
+export interface GoogleMapsMapMouseEvent {
+  latLng?: GoogleMapsLatLng;
 }
 
-export interface GoogleMapsMarker {
-  addListener(eventName: 'click', handler: () => void): GoogleMapsListener;
-  setMap(map: GoogleMapsMap | null): void;
+export interface GoogleMapsMap {
+  addListener(eventName: 'idle', handler: () => void): GoogleMapsListener;
+  addListener(
+    eventName: 'click',
+    handler: (event: GoogleMapsMapMouseEvent) => void,
+  ): GoogleMapsListener;
+  getCenter(): GoogleMapsLatLng | undefined;
+  getZoom(): number | undefined;
+  panTo(position: GoogleMapsLatLngLiteral): void;
+  setCenter(position: GoogleMapsLatLngLiteral): void;
 }
 
 export interface GoogleMapsCircle {
   setMap(map: GoogleMapsMap | null): void;
+}
+
+export interface GoogleMapsPinOptions {
+  background?: string;
+  borderColor?: string;
+  glyphColor?: string;
+  glyphSrc?: string;
+  glyphText?: string;
+  scale?: number;
+}
+
+export type GoogleMapsPinElement = object;
+
+export interface GoogleMapsAdvancedMarkerOptions {
+  gmpClickable?: boolean;
+  gmpDraggable?: boolean;
+  map?: GoogleMapsMap | null;
+  position: GoogleMapsLatLngLiteral;
+  title?: string;
+  zIndex?: number;
+}
+
+export interface GoogleMapsAdvancedMarkerElement {
+  addListener(eventName: 'dragend', handler: () => void): GoogleMapsListener;
+  addEventListener(eventName: 'gmp-click', handler: () => void): void;
+  map: GoogleMapsMap | null;
+  position: GoogleMapsLatLngLiteral;
+  removeEventListener(eventName: 'gmp-click', handler: () => void): void;
+  replaceChildren(...nodes: GoogleMapsPinElement[]): void;
+  title: string;
+  zIndex?: number;
+}
+
+export interface GoogleMapsMarkerLibrary {
+  AdvancedMarkerElement: new (
+    options: GoogleMapsAdvancedMarkerOptions,
+  ) => GoogleMapsAdvancedMarkerElement;
+  PinElement: new (options: GoogleMapsPinOptions) => GoogleMapsPinElement;
 }
 
 export interface GoogleMapsLatLngAltitudeLiteral {
@@ -28,10 +76,7 @@ export interface GoogleMapsLatLngAltitudeLiteral {
   lng: number;
 }
 
-export type GoogleMaps3DAltitudeMode =
-  | 'ABSOLUTE'
-  | 'CLAMP_TO_GROUND'
-  | 'RELATIVE_TO_GROUND';
+export type GoogleMaps3DAltitudeMode = 'ABSOLUTE' | 'CLAMP_TO_GROUND' | 'RELATIVE_TO_GROUND';
 
 export type GoogleMaps3DMapMode = 'HYBRID' | 'SATELLITE';
 
@@ -103,23 +148,70 @@ export interface GoogleMaps3DMarkerElement extends HTMLElement {
 
 export interface GoogleMaps3DLibrary {
   Map3DElement: new (options: GoogleMaps3DMapOptions) => GoogleMaps3DMapElement;
-  Marker3DInteractiveElement: new (
-    options: GoogleMaps3DMarkerOptions,
-  ) => GoogleMaps3DMarkerElement;
+  Marker3DInteractiveElement: new (options: GoogleMaps3DMarkerOptions) => GoogleMaps3DMarkerElement;
+}
+
+export interface GoogleMapsFetchFieldsRequest {
+  fields: readonly string[];
+}
+
+export interface GoogleMapsPlace {
+  displayName?: string | null;
+  fetchFields(request: GoogleMapsFetchFieldsRequest): Promise<{ place: GoogleMapsPlace }>;
+  formattedAddress?: string;
+  location?: GoogleMapsLatLng;
+}
+
+export interface GoogleMapsFormattableText {
+  text: string;
+  toString(): string;
+}
+
+export interface GoogleMapsPlacePrediction {
+  mainText?: GoogleMapsFormattableText;
+  placeId: string;
+  secondaryText?: GoogleMapsFormattableText;
+  text: GoogleMapsFormattableText;
+  toPlace(): GoogleMapsPlace;
+}
+
+export type GoogleMapsAutocompleteSessionToken = object;
+
+export interface GoogleMapsAutocompleteRequest {
+  includedRegionCodes?: readonly string[];
+  input: string;
+  origin?: GoogleMapsLatLngLiteral;
+  region?: string;
+  sessionToken?: GoogleMapsAutocompleteSessionToken;
+}
+
+export interface GoogleMapsAutocompleteSuggestion {
+  placePrediction?: GoogleMapsPlacePrediction;
+}
+
+export interface GoogleMapsAutocompleteSuggestionClass {
+  fetchAutocompleteSuggestions(
+    request: GoogleMapsAutocompleteRequest,
+  ): Promise<{ suggestions: GoogleMapsAutocompleteSuggestion[] }>;
+}
+
+export interface GoogleMapsPlacesLibrary {
+  AutocompleteSessionToken: new () => GoogleMapsAutocompleteSessionToken;
+  AutocompleteSuggestion: GoogleMapsAutocompleteSuggestionClass;
 }
 
 export interface GoogleMapsNamespace {
   maps: {
     Circle: new (options: Record<string, unknown>) => GoogleMapsCircle;
     Map: new (element: HTMLElement, options: Record<string, unknown>) => GoogleMapsMap;
-    Marker: new (options: Record<string, unknown>) => GoogleMapsMarker;
-    SymbolPath: {
-      CIRCLE: unknown;
-    };
     event: {
       clearInstanceListeners(instance: unknown): void;
     };
-    importLibrary?: (name: 'maps3d') => Promise<GoogleMaps3DLibrary>;
+    importLibrary?: {
+      (name: 'maps3d'): Promise<GoogleMaps3DLibrary>;
+      (name: 'marker'): Promise<GoogleMapsMarkerLibrary>;
+      (name: 'places'): Promise<GoogleMapsPlacesLibrary>;
+    };
   };
 }
 
@@ -129,4 +221,3 @@ declare global {
     google?: GoogleMapsNamespace;
   }
 }
-

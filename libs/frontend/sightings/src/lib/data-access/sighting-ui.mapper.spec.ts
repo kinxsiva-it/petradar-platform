@@ -130,14 +130,20 @@ describe('sighting UI mappers', () => {
       toApiListFilters({
         condition: 'Injured',
         lifecycleStatus: 'Needs rescue',
+        latitude: 13.7563,
+        longitude: 100.5018,
         query: 'white dog',
+        radiusMeters: 5000,
         species: 'Dog',
         verificationStatus: 'Pending',
       }),
     ).toEqual({
       condition: 'INJURED',
       lifecycleStatus: 'NEEDS_RESCUE',
+      latitude: 13.7563,
+      longitude: 100.5018,
       query: 'white dog',
+      radiusMeters: 5000,
       species: 'DOG',
       verificationStatus: 'PENDING',
     });

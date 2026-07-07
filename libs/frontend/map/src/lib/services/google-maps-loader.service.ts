@@ -2,13 +2,20 @@ import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '@petradar/frontend/core';
 
-import type { GoogleMaps3DLibrary, GoogleMapsNamespace } from './google-maps.types';
+import type {
+  GoogleMaps3DLibrary,
+  GoogleMapsMarkerLibrary,
+  GoogleMapsNamespace,
+  GoogleMapsPlacesLibrary,
+} from './google-maps.types';
 
 export type GoogleMapsLoadFailure =
   | 'load-failed'
+  | 'marker-unavailable'
   | 'maps3d-unavailable'
   | 'missing-browser'
-  | 'missing-key';
+  | 'missing-key'
+  | 'places-unavailable';
 
 export class GoogleMapsLoadError extends Error {
   constructor(readonly reason: GoogleMapsLoadFailure) {
@@ -20,7 +27,9 @@ export class GoogleMapsLoadError extends Error {
 export class GoogleMapsLoaderService {
   private readonly runtimeConfig = inject(RuntimeConfigService);
   private loadPromise: Promise<GoogleMapsNamespace> | null = null;
+  private markerPromise: Promise<GoogleMapsMarkerLibrary> | null = null;
   private maps3dPromise: Promise<GoogleMaps3DLibrary> | null = null;
+  private placesPromise: Promise<GoogleMapsPlacesLibrary> | null = null;
 
   load(): Promise<GoogleMapsNamespace> {
     if (typeof window !== 'undefined' && window.google?.maps.Map) {
@@ -108,14 +117,91 @@ export class GoogleMapsLoaderService {
     return this.maps3dPromise;
   }
 
+  loadMarkerLibrary(): Promise<GoogleMapsMarkerLibrary> {
+    if (this.markerPromise) {
+      return this.markerPromise;
+    }
+
+    this.markerPromise = this.load()
+      .then((api) => {
+        if (!api.maps.importLibrary) {
+          throw new GoogleMapsLoadError('marker-unavailable');
+        }
+
+        return api.maps.importLibrary('marker');
+      })
+      .then((library: Partial<GoogleMapsMarkerLibrary>) => {
+        if (!isGoogleMapsMarkerLibrary(library)) {
+          throw new GoogleMapsLoadError('marker-unavailable');
+        }
+
+        return library;
+      })
+      .catch((error: unknown) => {
+        this.markerPromise = null;
+        if (error instanceof GoogleMapsLoadError) {
+          throw error;
+        }
+
+        throw new GoogleMapsLoadError('marker-unavailable');
+      });
+
+    return this.markerPromise;
+  }
+
+  loadPlaces(): Promise<GoogleMapsPlacesLibrary> {
+    if (this.placesPromise) {
+      return this.placesPromise;
+    }
+
+    this.placesPromise = this.load()
+      .then((api) => {
+        if (!api.maps.importLibrary) {
+          throw new GoogleMapsLoadError('places-unavailable');
+        }
+
+        return api.maps.importLibrary('places');
+      })
+      .then((library: Partial<GoogleMapsPlacesLibrary>) => {
+        if (
+          typeof library.AutocompleteSessionToken !== 'function' ||
+          typeof library.AutocompleteSuggestion?.fetchAutocompleteSuggestions !== 'function'
+        ) {
+          throw new GoogleMapsLoadError('places-unavailable');
+        }
+
+        return library as GoogleMapsPlacesLibrary;
+      })
+      .catch((error: unknown) => {
+        this.placesPromise = null;
+        if (error instanceof GoogleMapsLoadError) {
+          throw error;
+        }
+
+        throw new GoogleMapsLoadError('places-unavailable');
+      });
+
+    return this.placesPromise;
+  }
+
   private googleMapsUrl(key: string): string {
     const params = new URLSearchParams({
       callback: '__petradarGoogleMapsReady',
       key,
-      libraries: 'marker',
-      v: 'alpha',
+      libraries: 'marker,places',
+      loading: 'async',
+      v: 'weekly',
     });
 
     return `https://maps.googleapis.com/maps/api/js?${params.toString()}`;
   }
+}
+
+function isGoogleMapsMarkerLibrary(
+  library: Partial<GoogleMapsMarkerLibrary>,
+): library is GoogleMapsMarkerLibrary {
+  return (
+    typeof library.AdvancedMarkerElement === 'function' &&
+    typeof library.PinElement === 'function'
+  );
 }

@@ -1,0 +1,132 @@
+.private-location-picker {
+  display: grid;
+  min-height: 24rem;
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+}
+
+.picker-search {
+  display: grid;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-surface);
+  padding: 0.85rem;
+}
+
+label,
+.fallback-search {
+  display: grid;
+  gap: 0.45rem;
+  color: var(--color-text-strong);
+  font-weight: 750;
+}
+
+input {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  padding: 0.7rem 0.8rem;
+}
+
+input:disabled {
+  background: var(--color-surface-muted);
+  cursor: not-allowed;
+}
+
+p {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.fallback-search {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-muted);
+  padding: 0.75rem;
+}
+
+.fallback-search > button,
+.fallback-results button,
+.place-results button {
+  min-height: 2.75rem;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  padding: 0 1rem;
+  font-weight: 800;
+}
+
+.fallback-results,
+.place-results {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.fallback-results button,
+.place-results button {
+  display: grid;
+  justify-items: start;
+  gap: 0.2rem;
+  height: auto;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.fallback-results span,
+.place-results span {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.google-map-shell {
+  position: relative;
+  min-height: 18rem;
+}
+
+.google-map-shell.unavailable {
+  display: grid;
+  place-items: center;
+  background:
+    linear-gradient(135deg, rgb(15 118 110 / 0.1), rgb(14 165 233 / 0.1)),
+    var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-weight: 800;
+}
+
+footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid var(--color-border-default);
+  background: var(--color-surface);
+  padding: 0.85rem;
+}
+
+footer div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+footer strong,
+footer b {
+  color: var(--color-text-strong);
+}
+
+footer span {
+  color: var(--color-text-muted);
+}
+
+footer b {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-muted);
+  padding: 0.45rem 0.65rem;
+}

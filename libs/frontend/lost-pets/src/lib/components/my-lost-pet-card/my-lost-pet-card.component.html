@@ -10,19 +10,46 @@
       <pr-status-badge [label]="pet().status" [tone]="tone(pet().status)" />
     </header>
     <dl>
-      <div><dt>Last seen</dt><dd>{{ pet().approximateLastSeenLabel }}</dd></div>
-      <div><dt>Time</dt><dd>{{ pet().lastSeenAt }}</dd></div>
-      <div><dt>Matches</dt><dd>{{ pet().possibleMatchCount }}</dd></div>
-      <div><dt>Contact</dt><dd>{{ pet().contactMethod ?? 'Private' }}</dd></div>
+      @if (pet().exactLocation; as exactLocation) {
+        <div>
+          <dt>Private saved pin</dt>
+          <dd>{{ exactLocation.latitude.toFixed(6) }}, {{ exactLocation.longitude.toFixed(6) }}</dd>
+        </div>
+      } @else {
+        <div>
+          <dt>Last seen</dt>
+          <dd>{{ pet().approximateLastSeenLabel }}</dd>
+        </div>
+      }
+      <div>
+        <dt>Time</dt>
+        <dd>{{ pet().lastSeenAt }}</dd>
+      </div>
+      <div>
+        <dt>Matches</dt>
+        <dd>{{ pet().possibleMatchCount }}</dd>
+      </div>
+      <div>
+        <dt>Contact</dt>
+        <dd>{{ pet().contactMethod ?? 'Private' }}</dd>
+      </div>
     </dl>
     <footer>
       <a [routerLink]="['/lost-pets', pet().id]">View</a>
       <a [routerLink]="['/my/lost-pets', pet().id, 'matches']">View matches</a>
       <a [routerLink]="['/lost-pets', pet().id, 'edit']">Edit</a>
-      <button type="button" [disabled]="pet().apiStatus === 'REUNITED'" (click)="statusChanged.emit({ id: pet().id, status: 'REUNITED' })">
+      <button
+        type="button"
+        [disabled]="pet().apiStatus === 'REUNITED'"
+        (click)="statusChanged.emit({ id: pet().id, status: 'REUNITED' })"
+      >
         Mark reunited
       </button>
-      <button type="button" [disabled]="pet().apiStatus === 'CLOSED'" (click)="statusChanged.emit({ id: pet().id, status: 'CLOSED' })">
+      <button
+        type="button"
+        [disabled]="pet().apiStatus === 'CLOSED'"
+        (click)="statusChanged.emit({ id: pet().id, status: 'CLOSED' })"
+      >
         Close post
       </button>
     </footer>

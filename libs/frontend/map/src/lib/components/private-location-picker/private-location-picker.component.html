@@ -1,0 +1,80 @@
+<section class="private-location-picker">
+  <div class="picker-search">
+    <label>
+      Google Places search
+      <input
+        [(ngModel)]="googleQuery"
+        [disabled]="state() !== 'ready'"
+        placeholder="Search an address, district, landmark, or place"
+        autocomplete="off"
+        (ngModelChange)="handleGoogleQueryChange($event)"
+      />
+    </label>
+    <p>{{ statusMessage() }}</p>
+
+    @if (state() === 'ready') {
+      @if (placePredictions().length > 0) {
+        <div class="place-results" aria-label="Google Places suggestions">
+          @for (prediction of placePredictions(); track prediction.placeId) {
+            <button type="button" (click)="selectGooglePrediction(prediction)">
+              <strong>{{ prediction.mainText?.text ?? prediction.text.text }}</strong>
+              <span>{{ prediction.secondaryText?.text ?? 'Google Places result' }}</span>
+            </button>
+          }
+        </div>
+      }
+      @if (placeSearchMessage()) {
+        <p>{{ placeSearchMessage() }}</p>
+      }
+    }
+
+    @if (state() === 'fallback') {
+      <div class="fallback-search">
+        <label>
+          Fallback place search
+          <input
+            [(ngModel)]="fallbackQuery"
+            placeholder="Ari, Siam, Chatuchak, or 13.767484, 100.512869"
+            (keydown.enter)="searchFallbackLocations(); $event.preventDefault()"
+          />
+        </label>
+        <button type="button" (click)="searchFallbackLocations()">Move private pin</button>
+        @if (fallbackResults().length > 0) {
+          <div class="fallback-results" aria-label="Fallback location search results">
+            @for (result of fallbackResults(); track result.id) {
+              <button type="button" (click)="selectFallbackResult(result)">
+                <strong>{{ result.label }}</strong>
+                <span>{{ result.description }}</span>
+              </button>
+            }
+          </div>
+        }
+        @if (fallbackMessage()) {
+          <p>{{ fallbackMessage() }}</p>
+        }
+      </div>
+    }
+  </div>
+
+  <div
+    #mapHost
+    class="google-map-shell"
+    [class.unavailable]="state() !== 'ready'"
+    aria-label="Google Maps exact private pin picker"
+  >
+    @if (state() === 'loading') {
+      <span>Loading Google Maps...</span>
+    }
+    @if (state() === 'fallback') {
+      <span>Google map picker unavailable</span>
+    }
+  </div>
+
+  <footer>
+    <div>
+      <strong>{{ label() }}</strong>
+      <span>Exact private coordinate to submit</span>
+    </div>
+    <b>{{ coordinateLabel() }}</b>
+  </footer>
+</section>

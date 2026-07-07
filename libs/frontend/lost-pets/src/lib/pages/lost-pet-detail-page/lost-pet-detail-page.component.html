@@ -12,7 +12,10 @@
     <div>
       <p class="eyebrow">Lost pet detail</p>
       <h1>{{ item.petName }}</h1>
-      <p>{{ item.species }} · {{ item.breed ?? 'Mixed breed' }} · {{ item.sex }} · {{ item.ageDescription ?? 'Age unknown' }}</p>
+      <p>
+        {{ item.species }} · {{ item.breed ?? 'Mixed breed' }} · {{ item.sex }} ·
+        {{ item.ageDescription ?? 'Age unknown' }}
+      </p>
     </div>
   </section>
 
@@ -21,19 +24,54 @@
 
     <article class="detail-card">
       <div class="title-row">
-        <pr-status-badge [label]="item.status" [tone]="item.status === 'Possible match' ? 'match' : item.status === 'Reunited' ? 'success' : 'default'" />
+        <pr-status-badge
+          [label]="item.status"
+          [tone]="
+            item.status === 'Possible match'
+              ? 'match'
+              : item.status === 'Reunited'
+                ? 'success'
+                : 'default'
+          "
+        />
         <span>{{ item.reference }}</span>
       </div>
       <h2>{{ item.petName }}</h2>
       <p>{{ item.description }}</p>
 
       <dl>
-        <div><dt>Color</dt><dd>{{ item.color }}</dd></div>
-        <div><dt>Pattern</dt><dd>{{ item.pattern ?? 'Not listed' }}</dd></div>
-        <div><dt>Collar</dt><dd>{{ item.collarDescription ?? 'Not listed' }}</dd></div>
-        <div><dt>Last seen</dt><dd>{{ item.lastSeenAt }}</dd></div>
-        <div><dt>Approximate location</dt><dd>{{ item.approximateLastSeenLocation.label }}</dd></div>
-        <div><dt>Reward</dt><dd>{{ item.rewardLabel }}</dd></div>
+        <div>
+          <dt>Color</dt>
+          <dd>{{ item.color }}</dd>
+        </div>
+        <div>
+          <dt>Pattern</dt>
+          <dd>{{ item.pattern ?? 'Not listed' }}</dd>
+        </div>
+        <div>
+          <dt>Collar</dt>
+          <dd>{{ item.collarDescription ?? 'Not listed' }}</dd>
+        </div>
+        <div>
+          <dt>Last seen</dt>
+          <dd>{{ item.lastSeenAt }}</dd>
+        </div>
+        <div>
+          <dt>Approximate location</dt>
+          <dd>{{ item.approximateLastSeenLocation.label }}</dd>
+        </div>
+        @if (authorizedPet()?.exactLocation; as exactLocation) {
+          <div>
+            <dt>Private saved pin</dt>
+            <dd>
+              {{ exactLocation.latitude.toFixed(6) }}, {{ exactLocation.longitude.toFixed(6) }}
+            </dd>
+          </div>
+        }
+        <div>
+          <dt>Reward</dt>
+          <dd>{{ item.rewardLabel }}</dd>
+        </div>
       </dl>
 
       <section class="contact-panel">
@@ -44,7 +82,9 @@
       @if (canManage()) {
         <section class="owner-actions">
           <a [routerLink]="['/lost-pets', item.id, 'edit']">Edit lost-pet post</a>
-          <a [routerLink]="['/my/lost-pets', item.id, 'matches']" class="secondary">View possible matches</a>
+          <a [routerLink]="['/my/lost-pets', item.id, 'matches']" class="secondary"
+            >View possible matches</a
+          >
           <button type="button" [disabled]="matching()" (click)="runMatching()">
             {{ matching() ? 'Running matching...' : 'Run matching' }}
           </button>
@@ -60,8 +100,11 @@
     </article>
   </section>
 } @else {
-  <pr-empty-state title="Lost pet not found" description="This lost-pet post is not available." icon="?">
+  <pr-empty-state
+    title="Lost pet not found"
+    description="This lost-pet post is not available."
+    icon="?"
+  >
     <a routerLink="/lost-pets" class="back-link">Back to lost pets</a>
   </pr-empty-state>
 }
-

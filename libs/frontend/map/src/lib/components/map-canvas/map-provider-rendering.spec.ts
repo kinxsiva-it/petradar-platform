@@ -6,10 +6,14 @@ import type {
   GoogleMaps3DMapElement,
   GoogleMaps3DMarkerElement,
   GoogleMaps3DMarkerOptions,
+  GoogleMapsAdvancedMarkerElement,
+  GoogleMapsAdvancedMarkerOptions,
   GoogleMapsCircle,
   GoogleMapsListener,
   GoogleMapsMap,
+  GoogleMapsMarkerLibrary,
   GoogleMapsNamespace,
+  GoogleMapsPinElement,
 } from '../../services/google-maps.types';
 import { createGoogle3DMarkerLayers } from './google-3d-marker-layer';
 import { createGoogleMarkerLayers } from './google-map-marker-layer';
@@ -75,23 +79,36 @@ describe('map provider rendering', () => {
 
   it('emits provider-neutral marker selection from Google markers', () => {
     const selected = vi.fn();
-    const { api, markerHandlers } = fakeGoogleApi();
+    const { api, markerHandlers, markerLibrary } = fakeGoogleApi();
 
-    createGoogleMarkerLayers(api, fakeMap(), [marker], null, selected);
+    createGoogleMarkerLayers(api, markerLibrary, fakeMap(), [marker], null, selected);
     markerHandlers[0]?.();
 
     expect(selected).toHaveBeenCalledWith('dog-1');
   });
 
   it('cleans up Google markers, circles, and listeners', () => {
-    const { api, circleSetMap, listenerRemove, markerSetMap } = fakeGoogleApi();
-    const layerSet = createGoogleMarkerLayers(api, fakeMap(), [marker], 'dog-1', vi.fn());
+    const {
+      api,
+      circleSetMap,
+      markerElements,
+      markerLibrary,
+      removeMarkerEventListener,
+    } = fakeGoogleApi();
+    const layerSet = createGoogleMarkerLayers(
+      api,
+      markerLibrary,
+      fakeMap(),
+      [marker],
+      'dog-1',
+      vi.fn(),
+    );
 
     layerSet.cleanup();
 
-    expect(markerSetMap).toHaveBeenCalledWith(null);
+    expect(markerElements[0]?.map).toBeNull();
     expect(circleSetMap).toHaveBeenCalledWith(null);
-    expect(listenerRemove).toHaveBeenCalledTimes(1);
+    expect(removeMarkerEventListener).toHaveBeenCalledWith('gmp-click', expect.any(Function));
   });
 
   it('renders public-safe sightings as clickable Google 3D markers', () => {
@@ -162,6 +179,8 @@ function fakeMap(): GoogleMapsMap {
     addListener: vi.fn(),
     getCenter: () => undefined,
     getZoom: () => 12,
+    panTo: vi.fn(),
+    setCenter: vi.fn(),
   };
 }
 
@@ -261,45 +280,70 @@ function isConnectable(node: unknown): node is { isConnected: boolean } {
 function fakeGoogleApi(): {
   api: GoogleMapsNamespace;
   circleSetMap: ReturnType<typeof vi.fn>;
-  listenerRemove: ReturnType<typeof vi.fn>;
   markerHandlers: (() => void)[];
-  markerSetMap: ReturnType<typeof vi.fn>;
+  markerElements: GoogleMapsAdvancedMarkerElement[];
+  markerLibrary: GoogleMapsMarkerLibrary;
+  removeMarkerEventListener: ReturnType<typeof vi.fn>;
 } {
   const markerHandlers: (() => void)[] = [];
-  const markerSetMap = vi.fn();
+  const markerElements: GoogleMapsAdvancedMarkerElement[] = [];
   const circleSetMap = vi.fn();
-  const listenerRemove = vi.fn();
+  const removeMarkerEventListener = vi.fn();
 
-  class FakeMarker {
-    addListener(_eventName: 'click', handler: () => void): GoogleMapsListener {
-      markerHandlers.push(handler);
-      return { remove: listenerRemove };
+  class FakeAdvancedMarkerElement implements GoogleMapsAdvancedMarkerElement {
+    map: GoogleMapsMap | null;
+    position: GoogleMapsAdvancedMarkerOptions['position'];
+    title: string;
+    zIndex?: number;
+
+    constructor(options: GoogleMapsAdvancedMarkerOptions) {
+      this.map = options.map ?? null;
+      this.position = options.position;
+      this.title = options.title ?? '';
+      this.zIndex = options.zIndex;
+      markerElements.push(this);
     }
 
-    setMap = markerSetMap;
+    addListener(_eventName: 'dragend', handler: () => void): GoogleMapsListener {
+      markerHandlers.push(handler);
+      return { remove: vi.fn() };
+    }
+
+    addEventListener(_eventName: 'gmp-click', handler: () => void): void {
+      markerHandlers.push(handler);
+    }
+
+    removeEventListener = removeMarkerEventListener;
+
+    replaceChildren(..._nodes: GoogleMapsPinElement[]): void {
+      void _nodes;
+      return undefined;
+    }
   }
 
   class FakeCircle implements GoogleMapsCircle {
     setMap = circleSetMap;
   }
 
+  const markerLibrary: GoogleMapsMarkerLibrary = {
+    AdvancedMarkerElement: FakeAdvancedMarkerElement,
+    PinElement: class {},
+  };
+
   return {
     api: {
       maps: {
         Circle: FakeCircle,
         Map: vi.fn(),
-        Marker: FakeMarker,
-        SymbolPath: {
-          CIRCLE: 'circle',
-        },
         event: {
           clearInstanceListeners: vi.fn(),
         },
       },
     },
     circleSetMap,
-    listenerRemove,
     markerHandlers,
-    markerSetMap,
+    markerElements,
+    markerLibrary,
+    removeMarkerEventListener,
   };
 }

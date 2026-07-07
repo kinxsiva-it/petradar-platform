@@ -13,6 +13,10 @@ import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
+  PrivateLocationPickerComponent,
+  type PrivateLocationSelection,
+} from '@petradar/frontend/map';
+import {
   AlertComponent,
   PrivacyBannerComponent,
   StatusBadgeComponent,
@@ -45,9 +49,16 @@ interface SelectedPhoto {
   url: string;
 }
 
+interface ExactLocation {
+  latitude: number;
+  longitude: number;
+}
+
 const acceptedPhotoTypes = ['image/jpeg', 'image/png', 'image/webp'];
 const maxPhotoBytes = 8 * 1024 * 1024;
 const maxPhotos = 5;
+const locationPickerCenter = { latitude: 13.7563, longitude: 100.5018 } as const;
+const coordinatePrecision = 6;
 
 @Component({
   selector: 'pr-report-animal-page',
@@ -57,6 +68,7 @@ const maxPhotos = 5;
     CommonModule,
     FormsModule,
     PrivacyBannerComponent,
+    PrivateLocationPickerComponent,
     ReportStepperComponent,
     ReportSuccessComponent,
     StatusBadgeComponent,
@@ -69,13 +81,15 @@ export class ReportAnimalPageComponent implements OnDestroy {
   private readonly router = inject(Router);
   private readonly sightingsApi = inject(SightingsApiService);
   private readonly objectUrls = new Set<string>();
-  private exactLocation = { latitude: 13.7563, longitude: 100.5018 };
+  exactLocation: ExactLocation = {
+    latitude: locationPickerCenter.latitude,
+    longitude: locationPickerCenter.longitude,
+  };
 
   readonly currentStep = signal(0);
   readonly uploadError = signal('');
   readonly uploadProgress = signal(0);
   readonly permissionDenied = signal(false);
-  readonly mapUnavailable = signal(false);
   readonly submitting = signal(false);
   readonly submitError = signal('');
   readonly submittedReference = signal<string | null>(null);
@@ -108,7 +122,6 @@ export class ReportAnimalPageComponent implements OnDestroy {
     'Unknown',
   ];
   readonly urgencyOptions: UrgencyLevel[] = ['Low', 'Medium', 'High', 'Emergency'];
-  readonly radiusOptions = [200, 300, 500, 800];
 
   species: AnimalSpecies = 'Dog';
   animalCount = 1;
@@ -122,9 +135,11 @@ export class ReportAnimalPageComponent implements OnDestroy {
   urgency: UrgencyLevel = 'Medium';
   photoUrls: string[] = [];
   approximateLocationLabel = 'Ari, Bangkok';
-  publicRadiusMeters = 300;
 
   readonly currentTitle = computed(() => this.steps[this.currentStep()] ?? 'Report');
+  selectedLocationLabel(): string {
+    return coordinateLabel(this.exactLocation.latitude, this.exactLocation.longitude);
+  }
 
   ngOnDestroy(): void {
     for (const url of this.objectUrls) {
@@ -170,21 +185,42 @@ export class ReportAnimalPageComponent implements OnDestroy {
   }
 
   useCurrentLocation(): void {
-    this.permissionDenied.set(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.permissionDenied.set(false);
+        this.setExactLocation(
+          position.coords.latitude,
+          position.coords.longitude,
+          'Current location',
+        );
+      },
+      () => {
+        this.permissionDenied.set(true);
+      },
+      { enableHighAccuracy: true, maximumAge: 60_000, timeout: 10_000 },
+    );
   }
 
   dropPinManually(): void {
     this.permissionDenied.set(false);
-    this.mapUnavailable.set(false);
-    this.exactLocation = {
-      latitude: this.exactLocation.latitude + 0.001,
-      longitude: this.exactLocation.longitude + 0.001,
-    };
-    this.approximateLocationLabel = 'Near Ari, Bangkok';
+    this.setExactLocation(
+      locationPickerCenter.latitude,
+      locationPickerCenter.longitude,
+      'Default private pin',
+    );
   }
 
-  showMapUnavailable(): void {
-    this.mapUnavailable.set(true);
+  moveSelectedLocation(latitudeDelta: number, longitudeDelta: number): void {
+    this.setExactLocation(
+      this.exactLocation.latitude + latitudeDelta,
+      this.exactLocation.longitude + longitudeDelta,
+      'Selected private pin',
+    );
+  }
+
+  selectPrivateMapLocation(selection: PrivateLocationSelection): void {
+    this.permissionDenied.set(false);
+    this.setExactLocation(selection.latitude, selection.longitude, selection.label);
   }
 
   async submit(): Promise<void> {
@@ -289,6 +325,22 @@ export class ReportAnimalPageComponent implements OnDestroy {
     const date = new Date(`${this.seenDate} ${this.seenTime}`);
     return Number.isNaN(date.getTime()) ? null : date;
   }
+
+  private setExactLocation(latitude: number, longitude: number, label: string): void {
+    this.exactLocation = {
+      latitude: roundCoordinate(Math.max(-90, Math.min(90, latitude))),
+      longitude: roundCoordinate(Math.max(-180, Math.min(180, longitude))),
+    };
+    this.approximateLocationLabel = label;
+  }
+}
+
+function roundCoordinate(value: number): number {
+  return Number(value.toFixed(coordinatePrecision));
+}
+
+function coordinateLabel(latitude: number, longitude: number): string {
+  return `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
 }
 
 function toSubmitMessage(error: unknown): string {

@@ -5,7 +5,9 @@ import { RuntimeConfigService } from '@petradar/frontend/core';
 import { GoogleMapsLoadError, GoogleMapsLoaderService } from './google-maps-loader.service';
 import type {
   GoogleMaps3DLibrary,
+  GoogleMapsMarkerLibrary,
   GoogleMapsNamespace,
+  GoogleMapsPlacesLibrary,
 } from './google-maps.types';
 
 interface FakeScript {
@@ -19,12 +21,14 @@ interface FakeScript {
 function setup(key: string | null) {
   let appendedScript: FakeScript | null = null;
   const fakeDocument = {
-    createElement: vi.fn((): FakeScript => ({
-      async: false,
-      dataset: {},
-      defer: false,
-      src: '',
-    })),
+    createElement: vi.fn(
+      (): FakeScript => ({
+        async: false,
+        dataset: {},
+        defer: false,
+        src: '',
+      }),
+    ),
     head: {
       append: vi.fn((script: FakeScript) => {
         appendedScript = script;
@@ -94,6 +98,10 @@ describe('GoogleMapsLoaderService', () => {
     expect(document.head.append).toHaveBeenCalledTimes(1);
     expect(appendedScript()?.src).toContain('maps.googleapis.com/maps/api/js');
     expect(appendedScript()?.src).toContain('libraries=marker');
+    expect(appendedScript()?.src).toContain('places');
+    expect(appendedScript()?.src).toContain('loading=async');
+    expect(appendedScript()?.src).toContain('v=weekly');
+    expect(appendedScript()?.src).not.toContain('v=alpha');
   });
 
   it('does not log the configured Google key', async () => {
@@ -135,7 +143,76 @@ describe('GoogleMapsLoaderService', () => {
     await expect(load).resolves.toBe(library);
     expect(document.head.append).toHaveBeenCalledTimes(1);
     expect(appendedScript()?.src).toContain('libraries=marker');
+    expect(appendedScript()?.src).toContain('places');
     expect(importLibrary).toHaveBeenCalledWith('maps3d');
+  });
+
+  it('loads Places API New through the lazy places library path', async () => {
+    const { document, loader, window } = setup('local-browser-key');
+    const library = fakePlacesLibrary();
+    const importLibrary = vi.fn((name: 'maps3d' | 'marker' | 'places') => {
+      if (name === 'places') {
+        return Promise.resolve(library);
+      }
+      if (name === 'marker') {
+        return Promise.resolve(fakeMarkerLibrary());
+      }
+
+      return Promise.resolve(fakeMaps3dLibrary());
+    }) as GoogleMapsNamespace['maps']['importLibrary'];
+
+    const load = loader.loadPlaces();
+    window.google = fakeGoogleMaps(importLibrary);
+    window.__petradarGoogleMapsReady?.();
+
+    await expect(load).resolves.toBe(library);
+    expect(document.head.append).toHaveBeenCalledTimes(1);
+    expect(importLibrary).toHaveBeenCalledWith('places');
+  });
+
+  it('loads Advanced Markers through the lazy marker library path', async () => {
+    const { document, loader, window } = setup('local-browser-key');
+    const library = fakeMarkerLibrary();
+    const importLibrary = vi.fn((name: 'maps3d' | 'marker' | 'places') => {
+      if (name === 'marker') {
+        return Promise.resolve(library);
+      }
+      if (name === 'places') {
+        return Promise.resolve(fakePlacesLibrary());
+      }
+
+      return Promise.resolve(fakeMaps3dLibrary());
+    }) as GoogleMapsNamespace['maps']['importLibrary'];
+
+    const load = loader.loadMarkerLibrary();
+    window.google = fakeGoogleMaps(importLibrary);
+    window.__petradarGoogleMapsReady?.();
+
+    await expect(load).resolves.toBe(library);
+    expect(document.head.append).toHaveBeenCalledTimes(1);
+    expect(importLibrary).toHaveBeenCalledWith('marker');
+  });
+
+  it('reports a safe Places unavailable error without disabling 2D loading', async () => {
+    const { loader, window } = setup('local-browser-key');
+
+    const placesLoad = loader.loadPlaces();
+    window.google = fakeGoogleMaps();
+    window.__petradarGoogleMapsReady?.();
+
+    await expect(placesLoad).rejects.toMatchObject({ reason: 'places-unavailable' });
+    await expect(loader.load()).resolves.toBe(window.google);
+  });
+
+  it('reports a safe marker unavailable error without disabling 2D loading', async () => {
+    const { loader, window } = setup('local-browser-key');
+
+    const markerLoad = loader.loadMarkerLibrary();
+    window.google = fakeGoogleMaps();
+    window.__petradarGoogleMapsReady?.();
+
+    await expect(markerLoad).rejects.toMatchObject({ reason: 'marker-unavailable' });
+    await expect(loader.load()).resolves.toBe(window.google);
   });
 
   it('imports maps3d once for concurrent 3D loads', async () => {
@@ -183,16 +260,12 @@ describe('GoogleMapsLoaderService', () => {
 });
 
 function fakeGoogleMaps(
-  importLibrary?: (name: 'maps3d') => Promise<GoogleMaps3DLibrary>,
+  importLibrary?: GoogleMapsNamespace['maps']['importLibrary'],
 ): GoogleMapsNamespace {
   return {
     maps: {
       Circle: vi.fn(),
       Map: vi.fn(),
-      Marker: vi.fn(),
-      SymbolPath: {
-        CIRCLE: 'circle',
-      },
       event: {
         clearInstanceListeners: vi.fn(),
       },
@@ -205,5 +278,21 @@ function fakeMaps3dLibrary(): GoogleMaps3DLibrary {
   return {
     Map3DElement: vi.fn(),
     Marker3DInteractiveElement: vi.fn(),
+  };
+}
+
+function fakePlacesLibrary(): GoogleMapsPlacesLibrary {
+  return {
+    AutocompleteSessionToken: vi.fn(),
+    AutocompleteSuggestion: {
+      fetchAutocompleteSuggestions: vi.fn(),
+    },
+  };
+}
+
+function fakeMarkerLibrary(): GoogleMapsMarkerLibrary {
+  return {
+    AdvancedMarkerElement: vi.fn(),
+    PinElement: vi.fn(),
   };
 }

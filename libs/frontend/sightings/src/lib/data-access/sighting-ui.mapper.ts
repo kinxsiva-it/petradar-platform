@@ -65,7 +65,7 @@ export interface UserReport {
   photoUrls: string[];
   publicRadiusMeters: number;
   reference: string;
-  rejectionReason: string | null; 
+  rejectionReason: string | null;
   seenAt: string;
   species: AnimalSpecies;
   title: string;
@@ -176,9 +176,12 @@ export function toUpdateSightingRequest(input: {
 export function toApiListFilters(input: {
   condition?: string;
   lifecycleStatus?: string;
+  latitude?: number;
+  longitude?: number;
   page?: number;
   pageSize?: number;
   query?: string;
+  radiusMeters?: number;
   species?: string;
   verificationStatus?: string;
 }): SightingListFilters {
@@ -189,9 +192,12 @@ export function toApiListFilters(input: {
       input.lifecycleStatus && input.lifecycleStatus !== 'All'
         ? toApiLifecycleStatus(input.lifecycleStatus)
         : undefined,
+    latitude: input.latitude,
+    longitude: input.longitude,
     page: input.page,
     pageSize: input.pageSize,
     query: cleanText(input.query),
+    radiusMeters: input.radiusMeters,
     species: input.species && input.species !== 'All' ? toApiSpecies(input.species) : undefined,
     verificationStatus:
       input.verificationStatus && input.verificationStatus !== 'All'

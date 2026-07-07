@@ -39,6 +39,12 @@ import { MapSearchOverlayComponent } from '../../components/map-search-overlay/m
 import { SightingDetailDrawerComponent } from '../../components/sighting-detail-drawer/sighting-detail-drawer.component.js';
 type MapUiState = 'default' | 'loading' | 'empty' | 'error' | 'location-denied' | 'map-unavailable';
 type NearMeState = 'idle' | 'loading' | 'ready' | 'denied';
+interface NearbyLocation {
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+}
+
 const defaultSightingFilters: DiscoveryFilters = {
   condition: 'All',
   query: '',
@@ -81,6 +87,7 @@ export class CommunityMapPageComponent {
   readonly nearMeState = signal<NearMeState>(
     this.uiState() === 'location-denied' ? 'denied' : 'idle',
   );
+  readonly nearbyLocation = signal<NearbyLocation | null>(null);
   readonly filters = signal<DiscoveryFilters>({ ...defaultSightingFilters });
   readonly sightings = signal<PublicSighting[]>([]);
   readonly selectedSightingId = signal<string | null>(null);
@@ -204,12 +211,28 @@ export class CommunityMapPageComponent {
       return;
     }
     this.nearMeState.set('loading');
-    window.setTimeout(() => {
-      this.nearMeState.set('ready');
-    }, 650);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.nearbyLocation.set({
+          latitude: roundCoordinate(position.coords.latitude),
+          longitude: roundCoordinate(position.coords.longitude),
+          radiusMeters: 5_000,
+        });
+        this.nearMeState.set('ready');
+        void this.loadSightings();
+      },
+      () => {
+        this.nearMeState.set('denied');
+      },
+      { enableHighAccuracy: true, maximumAge: 60_000, timeout: 10_000 },
+    );
   }
   resetMapFilters(): void {
     this.clearFilters();
+    this.nearbyLocation.set(null);
+    if (this.nearMeState() === 'ready') {
+      this.nearMeState.set('idle');
+    }
     this.casesOpen.set(false);
   }
   private async loadSightings(): Promise<void> {
@@ -217,13 +240,17 @@ export class CommunityMapPageComponent {
     this.errorMessage.set('');
     try {
       const filters = this.currentSightingFilters();
+      const nearbyLocation = this.nearbyLocation();
       const response = await firstValueFrom(
         this.sightingsApi.listPublic(
           toApiListFilters({
             condition: filters.condition,
+            latitude: nearbyLocation?.latitude,
             lifecycleStatus: filters.status,
+            longitude: nearbyLocation?.longitude,
             pageSize: 50,
             query: filters.query,
+            radiusMeters: nearbyLocation?.radiusMeters,
             species: filters.species,
             verificationStatus: filters.verification,
           }),
@@ -249,6 +276,10 @@ export class CommunityMapPageComponent {
   private findSighting(id: string | null): PublicSighting | undefined {
     return this.sightings().find((sighting) => sighting.id === id || sighting.reference === id);
   }
+}
+
+function roundCoordinate(value: number): number {
+  return Number(value.toFixed(6));
 }
 function countBy(
   sightings: readonly PublicSighting[],

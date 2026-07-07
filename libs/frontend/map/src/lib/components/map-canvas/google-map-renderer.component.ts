@@ -12,10 +12,13 @@ import {
   viewChild,
 } from '@angular/core';
 
+import { RuntimeConfigService } from '@petradar/frontend/core';
+
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service.js';
 import type {
   GoogleMapsListener,
   GoogleMapsMap,
+  GoogleMapsMarkerLibrary,
   GoogleMapsNamespace,
 } from '../../services/google-maps.types.js';
 import { createGoogleMarkerLayers, type GoogleMarkerLayerSet } from './google-map-marker-layer.js';
@@ -24,6 +27,8 @@ import {
   type MapMarkerViewModel,
   type MapViewport,
 } from './map-marker-view.model.js';
+
+const defaultGoogleVectorMapId = 'DEMO_MAP_ID';
 
 @Component({
   selector: 'pr-google-map-renderer',
@@ -46,10 +51,12 @@ export class GoogleMapRendererComponent implements AfterViewInit, OnDestroy {
   readonly loading = signal(true);
 
   private readonly googleMaps = inject(GoogleMapsLoaderService);
+  private readonly runtimeConfig = inject(RuntimeConfigService);
   private readonly host = viewChild.required<ElementRef<HTMLElement>>('mapHost');
 
   private api: GoogleMapsNamespace | undefined;
   private map: GoogleMapsMap | undefined;
+  private markerLibrary: GoogleMapsMarkerLibrary | undefined;
   private markerLayerSet: GoogleMarkerLayerSet | null = null;
   private listeners: GoogleMapsListener[] = [];
 
@@ -58,11 +65,11 @@ export class GoogleMapRendererComponent implements AfterViewInit, OnDestroy {
       const markers = this.markers();
       const selectedId = this.selectedId();
 
-      if (!this.map || !this.api) {
+      if (!this.map || !this.api || !this.markerLibrary) {
         return;
       }
 
-      this.renderMarkers(this.api, this.map, markers, selectedId);
+      this.renderMarkers(this.api, this.markerLibrary, this.map, markers, selectedId);
     });
   }
 
@@ -72,7 +79,10 @@ export class GoogleMapRendererComponent implements AfterViewInit, OnDestroy {
 
   private async initializeMap(): Promise<void> {
     try {
-      const api = await this.googleMaps.load();
+      const [api, markerLibrary] = await Promise.all([
+        this.googleMaps.load(),
+        this.googleMaps.loadMarkerLibrary(),
+      ]);
       const viewport = this.viewport();
       const map = new api.maps.Map(this.host().nativeElement, {
         center: {
@@ -81,6 +91,7 @@ export class GoogleMapRendererComponent implements AfterViewInit, OnDestroy {
         },
         clickableIcons: false,
         fullscreenControl: false,
+        mapId: this.runtimeConfig.googleMaps3dMapId() ?? defaultGoogleVectorMapId,
         mapTypeControl: false,
         streetViewControl: false,
         zoom: viewport.zoom,
@@ -104,8 +115,9 @@ export class GoogleMapRendererComponent implements AfterViewInit, OnDestroy {
 
       this.api = api;
       this.map = map;
+      this.markerLibrary = markerLibrary;
       this.loading.set(false);
-      this.renderMarkers(api, map, this.markers(), this.selectedId());
+      this.renderMarkers(api, markerLibrary, map, this.markers(), this.selectedId());
     } catch {
       this.loading.set(false);
       this.loadFailed.emit();
@@ -122,18 +134,27 @@ export class GoogleMapRendererComponent implements AfterViewInit, OnDestroy {
       this.api.maps.event.clearInstanceListeners(this.map);
     }
     this.map = undefined;
+    this.markerLibrary = undefined;
   }
 
   private renderMarkers(
     api: GoogleMapsNamespace,
+    markerLibrary: GoogleMapsMarkerLibrary,
     map: GoogleMapsMap,
     markers: readonly MapMarkerViewModel[],
     selectedId: string | null,
   ): void {
     this.clearLayers();
-    this.markerLayerSet = createGoogleMarkerLayers(api, map, markers, selectedId, (id) => {
-      this.markerSelected.emit(id);
-    });
+    this.markerLayerSet = createGoogleMarkerLayers(
+      api,
+      markerLibrary,
+      map,
+      markers,
+      selectedId,
+      (id) => {
+        this.markerSelected.emit(id);
+      },
+    );
   }
 
   private clearLayers(): void {

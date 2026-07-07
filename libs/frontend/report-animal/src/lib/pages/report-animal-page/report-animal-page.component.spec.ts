@@ -2,11 +2,40 @@ import { Injector, runInInjectionContext } from '@angular/core';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 
+import type { PrivateLocationSelection } from '@petradar/frontend/map';
 import { SightingsApiService, type CreateSightingRequest } from '@petradar/frontend/sightings';
 
 import { ReportAnimalPageComponent } from './report-animal-page.component.js';
 
 describe('ReportAnimalPageComponent API submission', () => {
+  it('uses the latitude and longitude fields as the preview and submission source of truth', () => {
+    const component = createComponent(vi.fn(), vi.fn());
+
+    component.exactLocation.latitude = 13.767484;
+    component.exactLocation.longitude = 100.512869;
+
+    expect(component.selectedLocationLabel()).toBe('13.767484, 100.512869');
+  });
+
+  it('moves the same private pin source of truth from a Google map picker result', () => {
+    const component = createComponent(vi.fn(), vi.fn());
+    const selection: PrivateLocationSelection = {
+      label: 'Siam Paragon',
+      latitude: 13.746562,
+      longitude: 100.534799,
+      source: 'google-place',
+    };
+
+    component.selectPrivateMapLocation(selection);
+
+    expect(component.exactLocation).toEqual({
+      latitude: 13.746562,
+      longitude: 100.534799,
+    });
+    expect(component.selectedLocationLabel()).toBe('13.746562, 100.534799');
+    expect(component.approximateLocationLabel).toBe('Siam Paragon');
+  });
+
   it('submits the existing form as a safe create sighting request and navigates to My Reports', async () => {
     const create = vi.fn().mockReturnValue(
       of({
@@ -30,14 +59,15 @@ describe('ReportAnimalPageComponent API submission', () => {
     );
     const navigateByUrl = vi.fn().mockResolvedValue(true);
     const component = createComponent(create, navigateByUrl);
+    component.moveSelectedLocation(0.012345, -0.023456);
 
     await component.submit();
 
     expect(create).toHaveBeenCalledTimes(1);
     const request = createRequest(create);
     expect(request.count).toBe(component.animalCount);
-    expect(typeof request.latitude).toBe('number');
-    expect(typeof request.longitude).toBe('number');
+    expect(request.latitude).toBe(13.768645);
+    expect(request.longitude).toBe(100.478344);
     expect(request.species).toBe('DOG');
     expect(request).not.toHaveProperty('reporterId');
     expect(request).not.toHaveProperty('publicLocation');
@@ -87,10 +117,14 @@ describe('ReportAnimalPageComponent API submission', () => {
     const component = createComponent(create, navigateByUrl, uploadPhotos);
     mockObjectUrls();
 
-    component.addFiles(fileInputEvent([new File([jpegBytes()], 'dog.jpg', { type: 'image/jpeg' })]));
+    component.addFiles(
+      fileInputEvent([new File([jpegBytes()], 'dog.jpg', { type: 'image/jpeg' })]),
+    );
     await component.submit();
 
-    expect(create.mock.invocationCallOrder[0]).toBeLessThan(uploadPhotos.mock.invocationCallOrder[0] ?? 0);
+    expect(create.mock.invocationCallOrder[0]).toBeLessThan(
+      uploadPhotos.mock.invocationCallOrder[0] ?? 0,
+    );
     expect(uploadPhotos).toHaveBeenCalledWith('created-sighting-id', [expect.any(File)]);
     expect(navigateByUrl).toHaveBeenCalledWith('/my/reports');
   });
@@ -124,7 +158,9 @@ describe('ReportAnimalPageComponent API submission', () => {
     const component = createComponent(create, navigateByUrl, uploadPhotos);
     mockObjectUrls();
 
-    component.addFiles(fileInputEvent([new File([jpegBytes()], 'dog.jpg', { type: 'image/jpeg' })]));
+    component.addFiles(
+      fileInputEvent([new File([jpegBytes()], 'dog.jpg', { type: 'image/jpeg' })]),
+    );
     await component.submit();
     expect(component.uploadError()).toContain('saved');
     await component.submit();
@@ -144,14 +180,18 @@ describe('ReportAnimalPageComponent API submission', () => {
     expect(component.uploadError()).toContain('Only JPG');
 
     component.addFiles(
-      fileInputEvent([new File([new Uint8Array(8 * 1024 * 1024 + 1)], 'big.jpg', { type: 'image/jpeg' })]),
+      fileInputEvent([
+        new File([new Uint8Array(8 * 1024 * 1024 + 1)], 'big.jpg', { type: 'image/jpeg' }),
+      ]),
     );
     expect(component.uploadError()).toContain('8 MB');
 
     component.addFiles(
       fileInputEvent(
-        Array.from({ length: 6 }, (_, index) =>
-          new File([jpegBytes()], `photo-${String(index)}.jpg`, { type: 'image/jpeg' }),
+        Array.from(
+          { length: 6 },
+          (_, index) =>
+            new File([jpegBytes()], `photo-${String(index)}.jpg`, { type: 'image/jpeg' }),
         ),
       ),
     );

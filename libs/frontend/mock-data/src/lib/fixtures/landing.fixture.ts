@@ -1,10 +1,26 @@
 import type { LandingFeature, LandingMetric } from '../models/landing.model.js';
 
 export const landingMetrics: LandingMetric[] = [
-  { label: 'Sightings reported', value: '24,860', delta: '+16% this month' },
-  { label: 'Lost pet matches', value: '5,312', delta: '+20% this month' },
-  { label: 'Rescue cases', value: '1,286', delta: '+19% this month' },
-  { label: 'Verified volunteers', value: '2,743', delta: '+23% this month' },
+  {
+    label: 'Sightings and reports',
+    value: 'API-backed',
+    delta: 'Submitted through PetRadar services',
+  },
+  {
+    label: 'Public map safety',
+    value: 'Private pins',
+    delta: 'Exact coordinates stay out of public views',
+  },
+  {
+    label: 'Lost pet matching',
+    value: 'Reviewable',
+    delta: 'Possible matches flow to owner and admin review',
+  },
+  {
+    label: 'Rescue workflow',
+    value: 'Coordinated',
+    delta: 'Cases can be assigned and tracked by verified helpers',
+  },
 ];
 
 export const landingFeatures: LandingFeature[] = [
@@ -15,7 +31,7 @@ export const landingFeatures: LandingFeature[] = [
   },
   {
     title: 'Lost Pet Matching',
-    description: 'Mock matching previews help reconnect pets with families.',
+    description: 'Possible-match reviews help reconnect pets with families.',
     icon: 'heart',
   },
   {

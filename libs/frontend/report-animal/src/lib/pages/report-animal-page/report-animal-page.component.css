@@ -215,48 +215,40 @@ figure button {
   text-decoration: underline;
 }
 
-.mock-map {
-  position: relative;
-  display: grid;
-  min-height: 24rem;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-panel);
-  background:
-    linear-gradient(90deg, rgb(15 118 110 / 0.08) 1px, transparent 1px),
-    linear-gradient(rgb(15 118 110 / 0.08) 1px, transparent 1px),
-    var(--color-surface-muted);
-  background-size: 32px 32px;
-}
-
-.mock-map .radius {
-  position: absolute;
-  width: 12rem;
-  height: 12rem;
-  border: 2px solid var(--color-primary);
-  border-radius: 50%;
-  background: rgb(15 118 110 / 0.16);
-}
-
-.mock-map b {
-  position: relative;
-  color: var(--color-primary);
-  text-align: center;
-}
-
-.mock-map.failed {
-  background: var(--color-danger-subtle);
-  color: var(--color-danger);
-}
-
 .location-panel {
   display: grid;
   align-content: start;
   gap: 1rem;
 }
 
+.privacy-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.privacy-split article,
+.submitted-coordinate {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-muted);
+  padding: 0.85rem;
+}
+
+.privacy-split strong,
+.submitted-coordinate b {
+  color: var(--color-text-strong);
+}
+
+.privacy-split span,
+.submitted-coordinate {
+  color: var(--color-text-muted);
+}
+
 .action-row,
+.pin-controls,
 .wizard-actions {
   display: flex;
   flex-wrap: wrap;
@@ -264,6 +256,7 @@ figure button {
 }
 
 .action-row button,
+.pin-controls button,
 .wizard-actions button {
   min-height: 2.75rem;
   border: 1px solid var(--color-primary);
@@ -281,6 +274,7 @@ figure button {
 }
 
 .wizard-actions .secondary,
+.pin-controls button,
 .action-row button {
   background: var(--color-surface);
   color: var(--color-primary);
@@ -317,6 +311,7 @@ dd {
   .wizard-header,
   .review-grid,
   .location-grid,
+  .privacy-split,
   .condition-grid,
   .form-grid.two {
     grid-template-columns: 1fr;
@@ -332,6 +327,7 @@ dd {
   }
 
   .wizard-actions button,
+  .pin-controls button,
   .action-row button {
     flex: 1 1 100%;
   }

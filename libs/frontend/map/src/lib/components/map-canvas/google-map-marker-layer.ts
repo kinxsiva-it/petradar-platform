@@ -1,8 +1,9 @@
 import type {
+  GoogleMapsAdvancedMarkerElement,
   GoogleMapsCircle,
   GoogleMapsListener,
   GoogleMapsMap,
-  GoogleMapsMarker,
+  GoogleMapsMarkerLibrary,
   GoogleMapsNamespace,
 } from '../../services/google-maps.types.js';
 import {
@@ -15,20 +16,22 @@ import type { MapMarkerViewModel } from './map-marker-view.model.js';
 export interface GoogleMarkerLayerSet {
   circles: GoogleMapsCircle[];
   listeners: GoogleMapsListener[];
-  markers: GoogleMapsMarker[];
+  markers: GoogleMapsAdvancedMarkerElement[];
   cleanup(): void;
 }
 
 export function createGoogleMarkerLayers(
   api: GoogleMapsNamespace,
+  markerLibrary: GoogleMapsMarkerLibrary,
   map: GoogleMapsMap,
   markers: readonly MapMarkerViewModel[],
   selectedId: string | null,
   markerSelected: (id: string) => void,
 ): GoogleMarkerLayerSet {
   const circles: GoogleMapsCircle[] = [];
-  const mapMarkers: GoogleMapsMarker[] = [];
+  const mapMarkers: GoogleMapsAdvancedMarkerElement[] = [];
   const listeners: GoogleMapsListener[] = [];
+  const cleanupHandlers: (() => void)[] = [];
 
   for (const marker of markers) {
     const color = markerColor(marker);
@@ -51,31 +54,29 @@ export function createGoogleMarkerLayers(
       }),
     );
 
-    const mapMarker = new api.maps.Marker({
-      icon: {
-        fillColor: color,
-        fillOpacity: 1,
-        path: api.maps.SymbolPath.CIRCLE,
-        scale: isSelected ? 12 : 10,
-        strokeColor: '#ffffff',
-        strokeWeight: isSelected ? 4 : 3,
-      },
-      label: {
-        color: '#ffffff',
-        fontSize: '12px',
-        fontWeight: '800',
-        text: markerShortLabel(marker),
-      },
+    const pin = new markerLibrary.PinElement({
+      background: color,
+      borderColor: '#ffffff',
+      glyphColor: '#ffffff',
+      glyphText: markerShortLabel(marker),
+      scale: isSelected ? 1.16 : 1,
+    });
+    const mapMarker = new markerLibrary.AdvancedMarkerElement({
+      gmpClickable: true,
       map,
       position,
       title: markerTitle(marker),
+      zIndex: isSelected ? 20 : 10,
     });
+    mapMarker.replaceChildren(pin);
 
-    listeners.push(
-      mapMarker.addListener('click', () => {
-        markerSelected(marker.id);
-      }),
-    );
+    const markerClickHandler = () => {
+      markerSelected(marker.id);
+    };
+    mapMarker.addEventListener('gmp-click', markerClickHandler);
+    cleanupHandlers.push(() => {
+      mapMarker.removeEventListener('gmp-click', markerClickHandler);
+    });
     mapMarkers.push(mapMarker);
   }
 
@@ -83,10 +84,13 @@ export function createGoogleMarkerLayers(
     circles,
     cleanup: () => {
       for (const marker of mapMarkers) {
-        marker.setMap(null);
+        marker.map = null;
       }
       for (const circle of circles) {
         circle.setMap(null);
+      }
+      for (const cleanupHandler of cleanupHandlers) {
+        cleanupHandler();
       }
       for (const listener of listeners) {
         listener.remove();
