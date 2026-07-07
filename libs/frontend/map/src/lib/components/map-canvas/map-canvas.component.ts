@@ -71,6 +71,13 @@ export class MapCanvasComponent {
       return;
     }
 
+    if (provider === 'google3d') {
+      this.providerState.fallbackFromGoogle3d(
+        'Google 3D could not load. Google Maps is still available.',
+      );
+      return;
+    }
+
     this.unavailable.set(true);
   }
 

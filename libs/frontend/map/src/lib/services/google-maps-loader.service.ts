@@ -188,7 +188,7 @@ export class GoogleMapsLoaderService {
     const params = new URLSearchParams({
       callback: '__petradarGoogleMapsReady',
       key,
-      libraries: 'marker,places',
+      libraries: 'marker,maps3d,places',
       loading: 'async',
       v: 'weekly',
     });

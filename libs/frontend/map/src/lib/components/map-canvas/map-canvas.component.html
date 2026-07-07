@@ -52,22 +52,24 @@
     >
       Google Maps
     </button>
-    <button
-      type="button"
-      [class.active]="providerState.activeProvider() === 'google3d'"
-      [class.unavailable]="!providerState.googleConfigured()"
-      [disabled]="!providerState.googleConfigured()"
-      [attr.aria-pressed]="providerState.activeProvider() === 'google3d'"
-      [attr.aria-describedby]="providerState.googleConfigured() ? null : 'google-maps-disabled'"
-      (click)="selectProvider('google3d')"
-    >
-      Google 3D
-    </button>
+    @if (providerState.google3dExperimentalEnabled()) {
+      <button
+        type="button"
+        [class.active]="providerState.activeProvider() === 'google3d'"
+        [class.unavailable]="!providerState.googleConfigured()"
+        [disabled]="!providerState.googleConfigured()"
+        [attr.aria-pressed]="providerState.activeProvider() === 'google3d'"
+        [attr.aria-describedby]="providerState.googleConfigured() ? null : 'google-maps-disabled'"
+        (click)="selectProvider('google3d')"
+      >
+        Google 3D Experimental
+      </button>
+    }
   </section>
 
   @if (!providerState.googleConfigured()) {
     <section id="google-maps-disabled" class="map-provider-hint" aria-live="polite">
-      Add a local Google Maps browser key to enable Google Maps and Google 3D.
+      Add a local Google Maps browser key to enable Google Maps.
     </section>
   } @else if (providerState.message(); as message) {
     <section class="map-provider-hint" aria-live="polite">

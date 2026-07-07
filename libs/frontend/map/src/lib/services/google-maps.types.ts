@@ -78,7 +78,7 @@ export interface GoogleMapsLatLngAltitudeLiteral {
 
 export type GoogleMaps3DAltitudeMode = 'ABSOLUTE' | 'CLAMP_TO_GROUND' | 'RELATIVE_TO_GROUND';
 
-export type GoogleMaps3DMapMode = 'HYBRID' | 'SATELLITE';
+export type GoogleMaps3DMapMode = 'HYBRID' | 'ROADMAP' | 'SATELLITE';
 
 export interface GoogleMaps3DMapOptions {
   center: GoogleMapsLatLngAltitudeLiteral;
@@ -212,6 +212,7 @@ export interface GoogleMapsNamespace {
       (name: 'marker'): Promise<GoogleMapsMarkerLibrary>;
       (name: 'places'): Promise<GoogleMapsPlacesLibrary>;
     };
+    version?: string;
   };
 }
 

@@ -98,6 +98,7 @@ describe('GoogleMapsLoaderService', () => {
     expect(document.head.append).toHaveBeenCalledTimes(1);
     expect(appendedScript()?.src).toContain('maps.googleapis.com/maps/api/js');
     expect(appendedScript()?.src).toContain('libraries=marker');
+    expect(appendedScript()?.src).toContain('maps3d');
     expect(appendedScript()?.src).toContain('places');
     expect(appendedScript()?.src).toContain('loading=async');
     expect(appendedScript()?.src).toContain('v=weekly');
@@ -143,6 +144,7 @@ describe('GoogleMapsLoaderService', () => {
     await expect(load).resolves.toBe(library);
     expect(document.head.append).toHaveBeenCalledTimes(1);
     expect(appendedScript()?.src).toContain('libraries=marker');
+    expect(appendedScript()?.src).toContain('maps3d');
     expect(appendedScript()?.src).toContain('places');
     expect(importLibrary).toHaveBeenCalledWith('maps3d');
   });

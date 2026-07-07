@@ -18,6 +18,7 @@ import { RuntimeConfigService } from '@petradar/frontend/core';
 import { GoogleMapsLoaderService } from '../../services/google-maps-loader.service';
 import type {
   GoogleMaps3DMapElement,
+  GoogleMaps3DMapMode,
   GoogleMaps3DMapOptions,
 } from '../../services/google-maps.types';
 import {
@@ -31,8 +32,13 @@ import {
 } from './map-marker-view.model';
 
 const google3dLoadTimeoutMs = 20_000;
+const google3dVisualReadyCheckDelayMs = 300;
+const google3dVisualReadyTimeoutMs = 8_000;
+const defaultGoogle3DMapId = 'DEMO_MAP_ID';
 const overviewFov = 58;
+const overviewMode: GoogleMaps3DMapMode = 'ROADMAP';
 const overviewTilt = 63;
+const maximumDiagnosticEvents = 12;
 
 @Component({
   selector: 'pr-google-3d-map-renderer',
@@ -64,18 +70,25 @@ export class Google3DMapRendererComponent implements AfterViewInit, OnDestroy {
 
   private layerSet: Google3DMarkerLayerSet | null = null;
   private loadingTimeoutId: number | null = null;
+  private visualReadyStartedAt: number | null = null;
+  private visualReadyTimeoutId: number | null = null;
   private map: GoogleMaps3DMapElement | null = null;
+  private initializedAt: number | null = null;
   private destroyed = false;
   private failureReported = false;
+  private steadyEventSeen = false;
+  private diagnosticEvents: Google3DDiagnosticEvent[] = [];
 
   private readonly mapReadyHandler = (): void => {
     this.ngZone.run(() => {
-      this.clearLoadingTimeout();
-      this.loading.set(false);
+      this.steadyEventSeen = true;
+      this.recordDiagnosticEvent('google-3d-steady');
+      this.checkVisualReady();
     });
   };
   private readonly mapErrorHandler = (): void => {
     this.ngZone.run(() => {
+      this.recordDiagnosticEvent('google-3d-error');
       this.reportLoadFailure();
     });
   };
@@ -99,17 +112,22 @@ export class Google3DMapRendererComponent implements AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.writeDiagnosticSnapshot('destroyed', 'component-destroyed');
     this.clearLoadingTimeout();
+    this.clearVisualReadyTimeout();
     this.cleanupMap();
   }
 
   private async initializeMap(): Promise<void> {
     try {
+      this.initializedAt = Date.now();
+      this.writeDiagnosticSnapshot('loading-library', 'load-maps3d-started');
       const library = await this.googleMaps.loadMaps3d();
       if (this.destroyed) {
         return;
       }
 
+      this.writeDiagnosticSnapshot('creating-map', 'maps3d-loaded');
       this.ngZone.runOutsideAngular(() => {
         const options = this.cameraOptions(this.markers());
         const map = new library.Map3DElement(options);
@@ -136,34 +154,75 @@ export class Google3DMapRendererComponent implements AfterViewInit, OnDestroy {
             });
           },
         );
+        this.startVisualReadyChecks();
       });
 
+      this.writeDiagnosticSnapshot('waiting-for-visual-ready', 'map-element-created');
       this.loadingTimeoutId = window.setTimeout(() => {
+        this.recordDiagnosticEvent('load-timeout');
         this.reportLoadFailure();
       }, google3dLoadTimeoutMs);
     } catch {
       if (!this.destroyed) {
+        this.recordDiagnosticEvent('maps3d-load-failed');
         this.reportLoadFailure();
       }
     }
   }
 
   private cameraOptions(markers: readonly MapMarkerViewModel[]): GoogleMaps3DMapOptions {
-    const mapId = this.runtimeConfig.googleMaps3dMapId();
-    const options: GoogleMaps3DMapOptions = {
-      center: cameraCenter(markers, this.viewport()),
-      fov: overviewFov,
-      heading: 0,
-      mode: 'HYBRID',
-      range: cameraRange(markers, this.viewport()),
-      tilt: overviewTilt,
-    };
+    return buildGoogle3DMapOptions(
+      markers,
+      this.viewport(),
+      this.runtimeConfig.googleMaps3dMapId(),
+    );
+  }
 
-    if (mapId) {
-      options.mapId = mapId;
+  private startVisualReadyChecks(): void {
+    this.visualReadyStartedAt = Date.now();
+    this.queueVisualReadyCheck();
+  }
+
+  private queueVisualReadyCheck(): void {
+    this.clearVisualReadyTimeout();
+    this.visualReadyTimeoutId = window.setTimeout(() => {
+      this.ngZone.run(() => {
+        this.checkVisualReady();
+      });
+    }, google3dVisualReadyCheckDelayMs);
+  }
+
+  private checkVisualReady(): void {
+    if (this.destroyed || this.failureReported) {
+      return;
     }
 
-    return options;
+    if (this.map && isGoogle3DVisuallyReady(this.map, this.markers().length, this.steadyEventSeen)) {
+      this.finishLoading();
+      return;
+    }
+
+    const startedAt = this.visualReadyStartedAt ?? Date.now();
+    if (Date.now() - startedAt >= google3dVisualReadyTimeoutMs) {
+      this.recordDiagnosticEvent('visual-ready-timeout');
+      this.reportLoadFailure();
+      return;
+    }
+
+    this.writeDiagnosticSnapshot('waiting-for-visual-ready', 'visual-ready-check');
+    this.queueVisualReadyCheck();
+  }
+
+  private finishLoading(): void {
+    if (this.destroyed || this.failureReported) {
+      return;
+    }
+
+    this.clearLoadingTimeout();
+    this.clearVisualReadyTimeout();
+    this.visualReadyStartedAt = null;
+    this.loading.set(false);
+    this.writeDiagnosticSnapshot('ready', 'visual-ready');
   }
 
   private reportLoadFailure(): void {
@@ -174,7 +233,10 @@ export class Google3DMapRendererComponent implements AfterViewInit, OnDestroy {
     this.failureReported = true;
     this.loading.set(false);
     this.clearLoadingTimeout();
+    this.clearVisualReadyTimeout();
+    this.visualReadyStartedAt = null;
     this.cleanupMap();
+    this.writeDiagnosticSnapshot('fallback', 'load-failed');
     this.loadFailed.emit();
   }
 
@@ -202,6 +264,226 @@ export class Google3DMapRendererComponent implements AfterViewInit, OnDestroy {
     window.clearTimeout(this.loadingTimeoutId);
     this.loadingTimeoutId = null;
   }
+
+  private clearVisualReadyTimeout(): void {
+    if (this.visualReadyTimeoutId === null) {
+      return;
+    }
+
+    window.clearTimeout(this.visualReadyTimeoutId);
+    this.visualReadyTimeoutId = null;
+  }
+
+  private recordDiagnosticEvent(event: Google3DDiagnosticEventName): void {
+    const elapsedMs = this.elapsedMs();
+    this.diagnosticEvents = [
+      ...this.diagnosticEvents.slice(-(maximumDiagnosticEvents - 1)),
+      { elapsedMs, event },
+    ];
+  }
+
+  private writeDiagnosticSnapshot(
+    phase: Google3DDiagnosticPhase,
+    event: Google3DDiagnosticEventName,
+  ): void {
+    this.recordDiagnosticEvent(event);
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    window.__PETRADAR_GOOGLE_3D_DIAGNOSTICS__ = {
+      elapsedMs: this.elapsedMs(),
+      events: this.diagnosticEvents,
+      googleMapsVersion: window.google?.maps.version ?? null,
+      loading: this.loading(),
+      mapIdSource: this.runtimeConfig.googleMaps3dMapId() ? 'configured' : 'demo',
+      mode: overviewMode,
+      phase,
+      visualState: this.map
+        ? describeGoogle3DVisualReadiness(this.map, this.markers().length, this.steadyEventSeen)
+        : null,
+    };
+  }
+
+  private elapsedMs(): number {
+    if (this.initializedAt === null) {
+      return 0;
+    }
+
+    return Date.now() - this.initializedAt;
+  }
+}
+
+type Google3DDiagnosticEventName =
+  | 'component-destroyed'
+  | 'google-3d-error'
+  | 'google-3d-steady'
+  | 'load-failed'
+  | 'load-maps3d-started'
+  | 'load-timeout'
+  | 'map-element-created'
+  | 'maps3d-load-failed'
+  | 'maps3d-loaded'
+  | 'visual-ready'
+  | 'visual-ready-check'
+  | 'visual-ready-timeout';
+
+type Google3DDiagnosticPhase =
+  | 'creating-map'
+  | 'destroyed'
+  | 'fallback'
+  | 'loading-library'
+  | 'ready'
+  | 'waiting-for-visual-ready';
+
+interface Google3DDiagnosticEvent {
+  readonly elapsedMs: number;
+  readonly event: Google3DDiagnosticEventName;
+}
+
+export interface Google3DDiagnosticSnapshot {
+  readonly elapsedMs: number;
+  readonly events: readonly Google3DDiagnosticEvent[];
+  readonly googleMapsVersion: string | null;
+  readonly loading: boolean;
+  readonly mapIdSource: 'configured' | 'demo';
+  readonly mode: GoogleMaps3DMapMode;
+  readonly phase: Google3DDiagnosticPhase;
+  readonly visualState: Google3DVisualReadinessState | null;
+}
+
+declare global {
+  interface Window {
+    __PETRADAR_GOOGLE_3D_DIAGNOSTICS__?: Google3DDiagnosticSnapshot;
+  }
+}
+
+export interface Google3DVisualReadinessTarget {
+  readonly childElementCount: number;
+  getBoundingClientRect(): DOMRectReadOnly;
+  readonly innerHTML: string;
+  readonly isConnected: boolean;
+}
+
+export interface Google3DVisualReadinessState {
+  readonly childElementCount: number;
+  readonly height: number;
+  readonly innerHTMLLength: number;
+  readonly isConnected: boolean;
+  readonly markerCount: number;
+  readonly reason:
+    | 'content-ready'
+    | 'empty-map-ready'
+    | 'not-connected'
+    | 'steady-event-ready'
+    | 'waiting-for-content'
+    | 'zero-size';
+  readonly steadyEventSeen: boolean;
+  readonly width: number;
+  readonly ready: boolean;
+}
+
+export function isGoogle3DVisuallyReady(
+  map: Google3DVisualReadinessTarget,
+  markerCount: number,
+  steadyEventSeen = false,
+): boolean {
+  return describeGoogle3DVisualReadiness(map, markerCount, steadyEventSeen).ready;
+}
+
+export function describeGoogle3DVisualReadiness(
+  map: Google3DVisualReadinessTarget,
+  markerCount: number,
+  steadyEventSeen = false,
+): Google3DVisualReadinessState {
+  const rect = map.getBoundingClientRect();
+  const innerHTMLLength = map.innerHTML.trim().length;
+
+  if (!map.isConnected) {
+    return {
+      childElementCount: map.childElementCount,
+      height: rect.height,
+      innerHTMLLength,
+      isConnected: false,
+      markerCount,
+      ready: false,
+      reason: 'not-connected',
+      steadyEventSeen,
+      width: rect.width,
+    };
+  }
+
+  if (rect.width < 1 || rect.height < 1) {
+    return {
+      childElementCount: map.childElementCount,
+      height: rect.height,
+      innerHTMLLength,
+      isConnected: true,
+      markerCount,
+      ready: false,
+      reason: 'zero-size',
+      steadyEventSeen,
+      width: rect.width,
+    };
+  }
+
+  if (markerCount === 0) {
+    return {
+      childElementCount: map.childElementCount,
+      height: rect.height,
+      innerHTMLLength,
+      isConnected: true,
+      markerCount,
+      ready: true,
+      reason: 'empty-map-ready',
+      steadyEventSeen,
+      width: rect.width,
+    };
+  }
+
+  if (steadyEventSeen) {
+    return {
+      childElementCount: map.childElementCount,
+      height: rect.height,
+      innerHTMLLength,
+      isConnected: true,
+      markerCount,
+      ready: true,
+      reason: 'steady-event-ready',
+      steadyEventSeen,
+      width: rect.width,
+    };
+  }
+
+  const hasContent = map.childElementCount > 0 || innerHTMLLength > 0;
+  return {
+    childElementCount: map.childElementCount,
+    height: rect.height,
+    innerHTMLLength,
+    isConnected: true,
+    markerCount,
+    ready: hasContent,
+    reason: hasContent ? 'content-ready' : 'waiting-for-content',
+    steadyEventSeen,
+    width: rect.width,
+  };
+}
+
+export function buildGoogle3DMapOptions(
+  markers: readonly MapMarkerViewModel[],
+  viewport: MapViewport,
+  configuredMapId: string | null,
+): GoogleMaps3DMapOptions {
+  return {
+    center: cameraCenter(markers, viewport),
+    fov: overviewFov,
+    heading: 0,
+    mapId: configuredMapId ?? defaultGoogle3DMapId,
+    mode: overviewMode,
+    range: cameraRange(markers, viewport),
+    tilt: overviewTilt,
+  };
 }
 
 function cameraCenter(

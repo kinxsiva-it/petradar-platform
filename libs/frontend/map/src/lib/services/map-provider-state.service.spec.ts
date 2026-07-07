@@ -29,7 +29,13 @@ class MemoryStorage implements Storage {
   }
 }
 
-function setup(options: { googleKey?: string | null; storedProvider?: string } = {}) {
+function setup(
+  options: {
+    google3dSearch?: string;
+    googleKey?: string | null;
+    storedProvider?: string;
+  } = {},
+) {
   const storage = new MemoryStorage();
   if (options.storedProvider) {
     storage.setItem('petradar.mapProvider', options.storedProvider);
@@ -38,6 +44,12 @@ function setup(options: { googleKey?: string | null; storedProvider?: string } =
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
     value: storage,
+  });
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: {
+      search: options.google3dSearch ?? '',
+    },
   });
 
   const injector = Injector.create({
@@ -61,6 +73,7 @@ function setup(options: { googleKey?: string | null; storedProvider?: string } =
 describe('MapProviderStateService', () => {
   afterEach(() => {
     Reflect.deleteProperty(globalThis, 'localStorage');
+    Reflect.deleteProperty(globalThis, 'location');
   });
 
   it('uses Leaflet as the default provider', () => {
@@ -75,10 +88,21 @@ describe('MapProviderStateService', () => {
     expect(service.activeProvider()).toBe('google');
   });
 
-  it('restores a saved Google 3D preference only when a key is configured', () => {
+  it('normalizes a saved Google 3D preference to Google Maps by default', () => {
     const { service } = setup({ googleKey: 'local-browser-key', storedProvider: 'google3d' });
 
+    expect(service.activeProvider()).toBe('google');
+  });
+
+  it('restores a saved Google 3D preference only when explicitly enabled', () => {
+    const { service } = setup({
+      google3dSearch: '?google3d=1',
+      googleKey: 'local-browser-key',
+      storedProvider: 'google3d',
+    });
+
     expect(service.activeProvider()).toBe('google3d');
+    expect(service.google3dExperimentalEnabled()).toBe(true);
   });
 
   it('falls back to Leaflet for unknown saved providers', () => {
@@ -108,14 +132,24 @@ describe('MapProviderStateService', () => {
     expect(service.message()).toContain('Google Maps');
   });
 
-  it('handles a missing Google key safely for Google 3D', () => {
-    const { service, storage } = setup();
+  it('keeps Google 3D hidden from normal provider selection', () => {
+    const { service, storage } = setup({ googleKey: 'local-browser-key' });
+
+    expect(service.selectProvider('google3d')).toBe(false);
+
+    expect(service.activeProvider()).toBe('google');
+    expect(storage.getItem('petradar.mapProvider')).toBe('google');
+    expect(service.message()).toContain('experimental');
+  });
+
+  it('handles a missing Google key safely for experimental Google 3D', () => {
+    const { service, storage } = setup({ google3dSearch: '?google3d=true' });
 
     expect(service.selectProvider('google3d')).toBe(false);
 
     expect(service.activeProvider()).toBe('leaflet');
     expect(storage.getItem('petradar.mapProvider')).toBe('leaflet');
-    expect(service.message()).toContain('Google 3D');
+    expect(service.message()).toContain('Google Maps');
   });
 
   it('falls back to Leaflet after a Google load failure', () => {

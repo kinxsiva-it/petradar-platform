@@ -11,6 +11,7 @@ import { RuntimeConfigService } from '@petradar/frontend/core';
 import type { MapProvider } from '../components/map-canvas/map-marker-view.model.js';
 
 const storageKey = 'petradar.mapProvider';
+const google3dExperimentParam = 'google3d';
 
 @Injectable({
   providedIn: 'root',
@@ -36,13 +37,34 @@ export class MapProviderStateService {
     Boolean(this.runtimeConfig.googleMapsApiKey()),
   );
 
+  readonly google3dExperimentalEnabled: Signal<boolean> =
+    signal(this.isGoogle3dExperimentEnabled()).asReadonly();
+
   selectProvider(provider: MapProvider): boolean {
+    if (
+      provider === 'google3d' &&
+      !this.google3dExperimentalEnabled()
+    ) {
+      const fallbackProvider: MapProvider =
+        this.googleConfigured()
+          ? 'google'
+          : 'leaflet';
+
+      this.messageState.set(
+        'Google 3D is hidden while it is experimental. Google Maps is still available.',
+      );
+      this.provider.set(fallbackProvider);
+      this.storeProvider(fallbackProvider);
+
+      return false;
+    }
+
     if (
       isGoogleProvider(provider) &&
       !this.googleConfigured()
     ) {
       this.messageState.set(
-        'Add a local Google Maps browser key to enable Google Maps and Google 3D.',
+        'Add a local Google Maps browser key to enable Google Maps.',
       );
 
       this.provider.set('leaflet');
@@ -94,6 +116,15 @@ export class MapProviderStateService {
     }
 
     if (
+      stored === 'google3d' &&
+      !this.isGoogle3dExperimentEnabled()
+    ) {
+      return this.runtimeConfig.googleMapsApiKey()
+        ? 'google'
+        : 'leaflet';
+    }
+
+    if (
       isGoogleProvider(stored) &&
       !this.runtimeConfig.googleMapsApiKey()
     ) {
@@ -116,9 +147,28 @@ export class MapProviderStateService {
     try {
       return typeof localStorage === 'undefined'
         ? null
-        : localStorage;
+      : localStorage;
     } catch {
       return null;
+    }
+  }
+
+  private isGoogle3dExperimentEnabled(): boolean {
+    try {
+      const search =
+        typeof location === 'undefined'
+          ? ''
+          : location.search;
+      const params = new URLSearchParams(search);
+      const value = params.get(google3dExperimentParam);
+
+      return (
+        value === '1' ||
+        value === 'true' ||
+        value === 'enabled'
+      );
+    } catch {
+      return false;
     }
   }
 }
