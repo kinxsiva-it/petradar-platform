@@ -8,6 +8,11 @@ export const SIGHTINGS_ROUTES: Routes = [
     component: PublicLayoutComponent,
     children: [
       {
+        path: '',
+        redirectTo: '/map',
+        pathMatch: 'full',
+      },
+      {
         path: ':id',
         loadComponent: () =>
           import('./pages/sighting-detail-page/sighting-detail-page.component.js').then(
