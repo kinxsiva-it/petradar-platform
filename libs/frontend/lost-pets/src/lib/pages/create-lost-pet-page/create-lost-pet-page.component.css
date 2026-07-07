@@ -153,107 +153,14 @@ figure button {
   right: 0.4rem;
 }
 
-.mock-map {
-  position: relative;
-  display: grid;
-  min-height: 24rem;
-  place-items: center;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-panel);
-  background:
-    linear-gradient(90deg, rgb(15 118 110 / 0.08) 1px, transparent 1px),
-    linear-gradient(rgb(15 118 110 / 0.08) 1px, transparent 1px), var(--color-surface-muted);
-  background-size: 32px 32px;
-  cursor: crosshair;
-  overflow: hidden;
-  text-align: center;
-}
-
-.mock-map span {
-  position: absolute;
-  left: var(--pin-x, 50%);
-  top: var(--pin-y, 50%);
-  width: 8rem;
-  height: 8rem;
-  border: 2px solid var(--color-primary);
-  border-radius: 50%;
-  background: rgb(15 118 110 / 0.16);
-  transform: translate(-50%, -50%);
-}
-
-.mock-map span::after {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 1rem;
-  height: 1rem;
-  border: 3px solid white;
-  border-radius: 50%;
-  background: var(--color-primary);
-  box-shadow: var(--shadow-card);
-  content: '';
-  transform: translate(-50%, -50%);
-}
-
-.mock-map b {
-  position: relative;
-  color: var(--color-primary);
-}
-
-.mock-map small {
-  position: absolute;
-  right: 0.8rem;
-  bottom: 0.8rem;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-control);
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  padding: 0.35rem 0.55rem;
-  font-weight: 750;
-}
-
 .pin-controls {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
-.location-search,
-.location-search-results {
-  display: grid;
-  gap: 0.75rem;
-}
-
-.location-search {
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-card);
-  background: var(--color-surface-muted);
-  padding: 0.85rem;
-}
-
-.location-search > button,
-.location-search-result {
-  min-height: 2.75rem;
-  border: 1px solid var(--color-primary);
-  border-radius: var(--radius-control);
-  background: var(--color-surface);
-  color: var(--color-primary);
-  padding: 0 1rem;
-  font-weight: 800;
-}
-
-.location-search-result {
-  display: grid;
-  justify-items: start;
-  gap: 0.2rem;
-  height: auto;
-  padding: 0.75rem;
-  text-align: left;
-}
-
-.location-search-result span {
-  color: var(--color-text-muted);
-  font-weight: 600;
+.pin-controls p {
+  grid-column: 1 / -1;
 }
 
 .wizard-actions,

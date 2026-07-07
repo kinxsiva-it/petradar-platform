@@ -2,33 +2,15 @@ import { Injector, runInInjectionContext } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 
-import { PrivateLocationSearchService } from '@petradar/frontend/core';
+import type { PrivateLocationSelection } from '@petradar/frontend/map';
 import {
   type CreateLostPetRequest,
   type LostPetApiResponse,
   LostPetsApiService,
 } from '../../data-access/index.js';
-import {
-  CreateLostPetPageComponent,
-  exactLocationFromPickerPoint,
-} from './create-lost-pet-page.component.js';
+import { CreateLostPetPageComponent } from './create-lost-pet-page.component.js';
 
 describe('CreateLostPetPageComponent location flow', () => {
-  it('maps selected map positions to latitude and longitude without swapping axes', () => {
-    expect(exactLocationFromPickerPoint(0.5, 0.5)).toEqual({
-      latitude: 13.7563,
-      longitude: 100.5018,
-    });
-    expect(exactLocationFromPickerPoint(1, 0)).toEqual({
-      latitude: 13.7813,
-      longitude: 100.5268,
-    });
-    expect(exactLocationFromPickerPoint(0, 1)).toEqual({
-      latitude: 13.7313,
-      longitude: 100.4768,
-    });
-  });
-
   it('submits the selected private pin coordinates to the Lost Pet API', async () => {
     const createLostPet = vi.fn().mockReturnValue(of(lostPetResponse()));
     const navigateByUrl = vi.fn().mockResolvedValue(true);
@@ -48,34 +30,30 @@ describe('CreateLostPetPageComponent location flow', () => {
     expect(navigateByUrl).toHaveBeenCalledWith('/lost-pets/lost-pet-id');
   });
 
-  it('uses the latitude and longitude fields as the preview source of truth', () => {
+  it('uses the latitude and longitude fields as the picker source of truth', () => {
     const component = createComponent({});
 
     component.latitude = 13.767484;
     component.longitude = 100.512869;
 
     expect(component.selectedLocationLabel()).toBe('13.767484, 100.512869');
-    expect(component.locationMarkerStyle()).not.toEqual({
-      '--pin-x': '50.00%',
-      '--pin-y': '50.00%',
-    });
   });
 
-  it('moves the same private pin source of truth from a location search result', () => {
+  it('moves the same private pin source of truth from the shared picker selection', () => {
     const component = createComponent({});
-    component.locationSearchQuery = 'Siam';
+    const selection: PrivateLocationSelection = {
+      label: 'Siam Paragon',
+      latitude: 13.746562,
+      longitude: 100.534799,
+      source: 'google-place',
+    };
 
-    component.searchPrivateLocations();
-    const result = firstLocationSearchResult(component);
-    component.selectLocationSearchResult(result);
+    component.selectPrivateLocation(selection);
 
     expect(component.latitude).toBe(13.746562);
     expect(component.longitude).toBe(100.534799);
     expect(component.selectedLocationLabel()).toBe('13.746562, 100.534799');
-    expect(component.locationMarkerStyle()).not.toEqual({
-      '--pin-x': '50.00%',
-      '--pin-y': '50.00%',
-    });
+    expect(component.approximateLastSeenLabel).toBe('Siam Paragon');
   });
 
   it('loads exact owner coordinates back into the edit form instead of public approximate coordinates', async () => {
@@ -116,7 +94,6 @@ function createComponent(overrides: {
           updateLostPet: overrides.updateLostPet ?? vi.fn().mockReturnValue(of(lostPetResponse())),
         },
       },
-      PrivateLocationSearchService,
       {
         provide: Router,
         useValue: { navigateByUrl: overrides.navigateByUrl ?? vi.fn().mockResolvedValue(true) },
@@ -171,16 +148,6 @@ function createRequest(createLostPet: ReturnType<typeof vi.fn>): CreateLostPetRe
   }
 
   return request;
-}
-
-function firstLocationSearchResult(
-  component: CreateLostPetPageComponent,
-): ReturnType<CreateLostPetPageComponent['locationSearchResults']>[number] {
-  const result = component.locationSearchResults()[0];
-  if (!result) {
-    throw new Error('Expected a location search result.');
-  }
-  return result;
 }
 
 async function flushPromises(): Promise<void> {

@@ -113,57 +113,18 @@
         }
         @case (3) {
           <div class="location-grid">
-            <div
-              class="mock-map"
-              role="button"
-              tabindex="0"
-              aria-label="Select private last-seen location"
-              (click)="selectLocationFromMap($event)"
-              (keydown)="handleMapKeydown($event)"
-            >
-              <span [ngStyle]="locationMarkerStyle()" aria-hidden="true"></span>
-              <b>{{ approximateLastSeenLabel }}</b>
-              <small>{{ selectedLocationLabel() }}</small>
-            </div>
+            <pr-private-location-picker
+              [latitude]="latitude"
+              [longitude]="longitude"
+              [label]="approximateLastSeenLabel"
+              [coordinateLabel]="selectedLocationLabel()"
+              (locationSelected)="selectPrivateLocation($event)"
+            />
             <div class="location-panel">
               <p class="empty-note">
                 The backend stores this exact private pin and generates the public approximate
                 location.
               </p>
-              <div class="location-search">
-                <label
-                  >Search for a place
-                  <input
-                    [(ngModel)]="locationSearchQuery"
-                    placeholder="Ari, Siam, Chatuchak, or 13.767484, 100.512869"
-                    (keydown.enter)="searchPrivateLocations(); $event.preventDefault()"
-                  />
-                </label>
-                <button type="button" class="secondary" (click)="searchPrivateLocations()">
-                  Move private pin
-                </button>
-                <p class="empty-note">
-                  Search moves the exact private last-seen pin only. Public lost-pet pages still use
-                  the backend approximate area.
-                </p>
-                @if (locationSearchResults().length > 0) {
-                  <div class="location-search-results" aria-label="Location search results">
-                    @for (result of locationSearchResults(); track result.id) {
-                      <button
-                        type="button"
-                        class="location-search-result"
-                        (click)="selectLocationSearchResult(result)"
-                      >
-                        <strong>{{ result.label }}</strong>
-                        <span>{{ result.description }}</span>
-                      </button>
-                    }
-                  </div>
-                }
-                @if (locationSearchMessage()) {
-                  <p class="empty-note">{{ locationSearchMessage() }}</p>
-                }
-              </div>
               <label
                 >Private latitude
                 <input type="number" min="-90" max="90" step="0.0001" [(ngModel)]="latitude"
@@ -174,6 +135,7 @@
               /></label>
               <label>Last seen <input type="datetime-local" [(ngModel)]="lastSeenAt" /></label>
               <div class="pin-controls" aria-label="Adjust selected private pin">
+                <p class="empty-note">Nudge the exact private pin.</p>
                 <button type="button" class="secondary" (click)="moveSelectedLocation(0.001, 0)">
                   North
                 </button>
