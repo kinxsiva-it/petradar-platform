@@ -2,60 +2,89 @@
   <header class="page-header">
     <div>
       <p class="eyebrow">Volunteer profile</p>
-      <h1>{{ rescue.volunteerProfile().volunteer.name }}</h1>
-      <p>{{ rescue.volunteerProfile().volunteer.roleLabel }} · Joined {{ rescue.volunteerProfile().joinedAt }}</p>
+      <h1>{{ user()?.displayName ?? 'PetRadar volunteer' }}</h1>
+      <p>Account details and rescue activity are loaded from protected PetRadar APIs.</p>
     </div>
-    @if (!editing()) {
-      <button type="button" (click)="edit()">Edit profile</button>
-    }
+    <nav>
+      <a routerLink="/volunteer/rescue-cases">View Rescue Cases</a>
+      <a routerLink="/profile" class="secondary">Account Profile</a>
+    </nav>
   </header>
 
-  @if (saved()) {
-    <pr-alert title="Volunteer profile saved" tone="success">Changes are stored only in frontend mock state.</pr-alert>
-  }
-  @if (error()) {
-    <pr-alert title="Validation issue" tone="danger">{{ error() }}</pr-alert>
-  }
-
-  <section class="profile-grid">
-    <article class="identity-card">
-      <img [src]="rescue.volunteerProfile().volunteer.avatarUrl" alt="Mock volunteer avatar" />
-      <h2>{{ rescue.volunteerProfile().volunteer.name }}</h2>
-      <span>Verified volunteer</span>
-      <p>{{ rescue.volunteerProfile().bio }}</p>
-    </article>
-
-    <section class="stats-grid">
-      <pr-volunteer-stat-card [value]="rescue.volunteerProfile().casesAssisted" label="Cases assisted" hint="Mock total" />
-      <pr-volunteer-stat-card [value]="rescue.assignedCases().length" label="Active cases" hint="Assigned now" />
-      <pr-volunteer-stat-card [value]="rescue.volunteerProfile().completedCases" label="Completed cases" hint="Historical mock" />
-    </section>
-
-    <article class="form-card">
-      <h2>Contact and coverage</h2>
-      <label>Name <input [(ngModel)]="draft.volunteer.name" [disabled]="!editing()" /></label>
-      <label>Email <input [(ngModel)]="draft.volunteer.email" [disabled]="!editing()" /></label>
-      <label>Phone <input [(ngModel)]="draft.volunteer.phone" [disabled]="!editing()" /></label>
-      <label>Coverage area <input [(ngModel)]="draft.coverageArea" [disabled]="!editing()" /></label>
-      <label>About <textarea rows="4" [(ngModel)]="draft.bio" [disabled]="!editing()"></textarea></label>
-      @if (editing()) {
-        <footer>
-          <button type="button" class="secondary" (click)="editing.set(false)">Cancel</button>
-          <button type="button" (click)="save()">Save</button>
-        </footer>
-      }
-    </article>
-
-    <aside class="side-column">
-      <pr-volunteer-availability-card [availability]="rescue.volunteerProfile().availability" (statusChanged)="availabilityChanged($event)" />
-      <article class="skills-card">
-        <h2>Skills</h2>
-        <div>
-          @for (skill of rescue.volunteerProfile().skills; track skill) {
-            <span>{{ skill }}</span>
+  @if (user(); as currentUser) {
+    <section class="profile-grid">
+      <article class="identity-card">
+        <span class="avatar-initials" aria-hidden="true">{{ initials() }}</span>
+        <h2>{{ currentUser.displayName }}</h2>
+        <p>{{ currentUser.email }}</p>
+        <div class="badge-row">
+          @for (role of currentUser.roles; track role) {
+            <pr-status-badge [label]="role" tone="success" />
           }
         </div>
+        <dl>
+          <div><dt>Account</dt><dd>{{ currentUser.status }}</dd></div>
+          <div><dt>Volunteer review</dt><dd>{{ currentUser.volunteerVerification }}</dd></div>
+          <div><dt>Joined</dt><dd>{{ currentUser.createdAt | date: 'mediumDate' }}</dd></div>
+        </dl>
       </article>
-    </aside>
-  </section>
+
+      <section class="main-column">
+        @if (uiState() === 'loading') {
+          <article class="panel"><pr-loading-skeleton [rows]="6" /></article>
+        } @else if (uiState() === 'error') {
+          <pr-empty-state title="Volunteer activity unavailable" [description]="errorMessage()" icon="!" />
+        } @else {
+          <section class="stats-grid">
+            <pr-volunteer-stat-card [value]="activeCases().length" label="Active cases" hint="Assigned to you" />
+            <pr-volunteer-stat-card [value]="completedCases().length" label="Completed cases" hint="Resolved or closed" />
+            <pr-volunteer-stat-card [value]="urgentCases().length" label="High urgency" hint="High or emergency severity" />
+            <pr-volunteer-stat-card [value]="cases().length" label="Total assigned" hint="Visible to your role" />
+          </section>
+
+          @if (uiState() === 'empty') {
+            <pr-empty-state
+              title="No assigned rescue cases"
+              description="Assigned rescue cases will appear here after an Admin assigns them."
+              icon="0"
+            />
+          } @else {
+            <article class="panel">
+              <h2>Recent assigned rescue cases</h2>
+              <div class="case-list">
+                @for (item of activeCases().slice(0, 3); track item.id) {
+                  <a [routerLink]="['/volunteer/rescue-cases', item.id]">
+                    <span>{{ item.caseNumber }}</span>
+                    <strong>{{ item.summary }}</strong>
+                    <small>{{ item.status }} &middot; {{ item.severity }}</small>
+                  </a>
+                }
+              </div>
+            </article>
+          }
+        }
+      </section>
+
+      <aside class="side-column">
+        <article class="form-card">
+          <h2>Account contact</h2>
+          <p>These fields come from the authenticated session.</p>
+          <label>Name <input [value]="currentUser.displayName" disabled /></label>
+          <label>Email <input [value]="currentUser.email" disabled /></label>
+          <label>Phone <input [value]="currentUser.phone ?? 'Not provided'" disabled /></label>
+          <pr-alert title="Profile editing unavailable" tone="info">
+            PetRadar does not expose a volunteer profile-update API yet, so this page shows verified account data without saving local-only edits.
+          </pr-alert>
+        </article>
+
+        <pr-alert title="Volunteer privacy" tone="privacy">
+          Keep rescue coordination inside protected case notes. Public pages continue to show approximate areas only.
+        </pr-alert>
+      </aside>
+    </section>
+  } @else {
+    <pr-alert title="Volunteer profile unavailable" tone="warning">
+      Sign in again to refresh your current account details.
+    </pr-alert>
+  }
 </section>
