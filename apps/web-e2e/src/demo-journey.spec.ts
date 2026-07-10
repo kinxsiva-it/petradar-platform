@@ -4,6 +4,8 @@ import {
   adminBaseUrl,
   apiLogin,
   assertApiHealthy,
+  cleanupE2eTestData,
+  createE2eRunMarker,
   decodeBrowserLostPetResponse,
   decodeBrowserSightingResponse,
   demoUsers,
@@ -11,6 +13,7 @@ import {
   listLostPetMatches,
   listPendingMatches,
   loginViaUi,
+  type E2eCreatedEntityIds,
   type LostPetResponse,
   type MatchResponse,
   type SightingResponse,
@@ -21,6 +24,16 @@ import {
 
 test.describe('PetRadar demo journey', () => {
   test.describe.configure({ timeout: 120_000 });
+
+  let testData: { createdIds: E2eCreatedEntityIds; marker: string } | undefined;
+
+  test.afterEach(async () => {
+    if (testData) {
+      const completedTestData = testData;
+      testData = undefined;
+      await cleanupE2eTestData(completedTestData.marker, completedTestData.createdIds);
+    }
+  });
 
   test('auth and creation forms reject empty submissions instead of using mock defaults', async ({
     browser,
@@ -54,16 +67,17 @@ test.describe('PetRadar demo journey', () => {
   test('runs the report-to-match-review demo journey with public-safe data', async ({
     browser,
     request,
-  }, testInfo) => {
+  }) => {
+    testData = { createdIds: {}, marker: createE2eRunMarker() };
     await assertApiHealthy(request);
 
-    const suffix = uniqueSuffix(`${testInfo.project.name}-${testInfo.title}`);
+    const suffix = uniqueSuffix(testData.marker);
     const location = {
       latitude: '13.8123',
       longitude: '100.6123',
     };
-    const sightingDescription = `E2E ${suffix} orange tabby with red collar near the demo park`;
-    const lostPetName = `E2E Match Cat ${suffix}`;
+    const sightingDescription = `${testData.marker} orange tabby with red collar near the demo park`;
+    const lostPetName = `${testData.marker} Match Cat`;
     const privateContact = `private-owner-contact-${suffix}@example.invalid`;
 
     const adminSession = await apiLogin(request, demoUsers.admin);
@@ -79,6 +93,7 @@ test.describe('PetRadar demo journey', () => {
       seenDate: '2026-07-10',
       seenTime: '10:45',
     });
+    testData.createdIds.sightingId = sighting.id;
 
     await verifySighting(request, adminSession.accessToken, sighting.id);
 
@@ -95,12 +110,20 @@ test.describe('PetRadar demo journey', () => {
     const ownerPage = await newLoggedInPage(browser, demoUsers.owner);
     const lostPet = await createLostPetThroughUi(ownerPage, {
       contactDetail: privateContact,
+      description: `${testData.marker} Friendly orange tabby lost near the demo park.`,
       latitude: location.latitude,
       longitude: location.longitude,
       name: lostPetName,
     });
+    testData.createdIds.lostPetId = lostPet.id;
 
-    const match = await waitForAutoMatch(request, ownerSession.accessToken, lostPet.id, sighting.id);
+    const match = await waitForAutoMatch(
+      request,
+      ownerSession.accessToken,
+      lostPet.id,
+      sighting.id,
+    );
+    testData.createdIds.matchResultId = match.id;
 
     await ownerPage.goto('/matches');
     await expect(
@@ -158,7 +181,9 @@ test.describe('PetRadar demo journey', () => {
     await expect(
       adminPage.getByRole('heading', { level: 1, name: new RegExp(escapeRegExp(lostPet.name)) }),
     ).toBeVisible();
-    await expect(adminPage.getByText(/exact last-seen coordinates are not returned/i)).toBeVisible();
+    await expect(
+      adminPage.getByText(/exact last-seen coordinates are not returned/i),
+    ).toBeVisible();
 
     await adminPage.goto(`${adminBaseUrl}/rescue-cases`);
     await expect(adminPage.getByRole('heading', { name: /rescue case board/i })).toBeVisible();
@@ -214,7 +239,9 @@ async function createSightingThroughUi(
   await page.getByRole('button', { name: /^continue$/i }).click();
   await page.getByRole('button', { name: /^continue$/i }).click();
   await page.getByRole('spinbutton', { name: /latitude submitted to api/i }).fill(values.latitude);
-  await page.getByRole('spinbutton', { name: /longitude submitted to api/i }).fill(values.longitude);
+  await page
+    .getByRole('spinbutton', { name: /longitude submitted to api/i })
+    .fill(values.longitude);
   await page.getByRole('button', { name: /^continue$/i }).click();
 
   const responsePromise = page.waitForResponse(
@@ -234,6 +261,7 @@ async function createLostPetThroughUi(
   page: Page,
   values: {
     contactDetail: string;
+    description: string;
     latitude: string;
     longitude: string;
     name: string;
@@ -249,7 +277,7 @@ async function createLostPetThroughUi(
   await page.getByRole('textbox', { name: /primary color/i }).fill('Orange');
   await page.getByRole('textbox', { name: /pattern/i }).fill('Tabby');
   await page.getByRole('textbox', { name: /collar description/i }).fill('Red collar');
-  await page.locator('textarea').fill('Friendly orange tabby lost near the demo park.');
+  await page.locator('textarea').fill(values.description);
   await page.getByRole('button', { name: /^continue$/i }).click();
   await page.getByRole('button', { name: /^continue$/i }).click();
   await page.getByRole('spinbutton', { name: /private latitude/i }).fill(values.latitude);

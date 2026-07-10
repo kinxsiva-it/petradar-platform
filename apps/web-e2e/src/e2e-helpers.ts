@@ -1,4 +1,9 @@
+import 'dotenv/config';
+
+import { randomUUID } from 'node:crypto';
+
 import { expect, type APIRequestContext, type APIResponse, type Page } from '@playwright/test';
+import { PrismaClient } from '@prisma/client';
 
 export const apiBaseUrl = 'http://localhost:3000/api/v1';
 export const webBaseUrl = 'http://localhost:4200';
@@ -51,6 +56,23 @@ export interface PublicLocation {
 export interface PaginatedResponse<TItem> {
   items: TItem[];
   total: number;
+}
+
+export interface E2eCreatedEntityIds {
+  lostPetId?: string;
+  matchResultId?: string;
+  sightingId?: string;
+}
+
+export interface E2eCleanupResult {
+  deleted: {
+    auditLogs: number;
+    lostPets: number;
+    matchResults: number;
+    sightings: number;
+  };
+  skipped: boolean;
+  verified: boolean;
 }
 
 interface ApiRequestOptions {
@@ -150,8 +172,156 @@ export async function loginViaUi(
 }
 
 export function uniqueSuffix(testTitle: string): string {
-  const cleaned = testTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const cleaned = testTitle
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
   return `${cleaned.slice(0, 24)}-${Date.now().toString(36)}`;
+}
+
+export function createE2eRunMarker(): string {
+  const runId = `e2e-${String(Date.now())}-${randomUUID().slice(0, 8)}`;
+  return `[E2E-DEMO-JOURNEY:${runId}]`;
+}
+
+export async function cleanupE2eTestData(
+  marker: string,
+  createdIds: Readonly<E2eCreatedEntityIds>,
+): Promise<E2eCleanupResult> {
+  assertSafeE2eMarker(marker);
+
+  if (process.env['PETRADAR_E2E_KEEP_DATA'] === '1') {
+    console.info(`[PetRadar E2E cleanup] skipped for ${marker} (PETRADAR_E2E_KEEP_DATA=1)`);
+    return {
+      deleted: { auditLogs: 0, lostPets: 0, matchResults: 0, sightings: 0 },
+      skipped: true,
+      verified: false,
+    };
+  }
+
+  if (process.env['NODE_ENV']?.trim().toLowerCase() === 'production') {
+    throw new Error('PetRadar E2E cleanup is disabled when NODE_ENV=production.');
+  }
+  if (!process.env['DATABASE_URL']) {
+    throw new Error('PetRadar E2E cleanup requires DATABASE_URL from the E2E environment.');
+  }
+
+  const prisma = new PrismaClient();
+  try {
+    const result = await prisma.$transaction(async (client) => {
+      const markedSightings = await client.animalSighting.findMany({
+        where: { description: { startsWith: marker } },
+        select: { id: true },
+      });
+      const markedLostPets = await client.lostPet.findMany({
+        where: {
+          OR: [{ name: { startsWith: marker } }, { description: { startsWith: marker } }],
+        },
+        select: { id: true },
+      });
+
+      const trackedSighting = createdIds.sightingId
+        ? await client.animalSighting.findUnique({
+            where: { id: createdIds.sightingId },
+            select: { description: true },
+          })
+        : null;
+      if (trackedSighting && !trackedSighting.description?.startsWith(marker)) {
+        throw new Error(
+          'Refusing E2E cleanup because the tracked sighting is not owned by this run.',
+        );
+      }
+
+      const trackedLostPet = createdIds.lostPetId
+        ? await client.lostPet.findUnique({
+            where: { id: createdIds.lostPetId },
+            select: { description: true, name: true },
+          })
+        : null;
+      if (
+        trackedLostPet &&
+        !trackedLostPet.name.startsWith(marker) &&
+        !trackedLostPet.description?.startsWith(marker)
+      ) {
+        throw new Error(
+          'Refusing E2E cleanup because the tracked lost pet is not owned by this run.',
+        );
+      }
+
+      const sightingIds = markedSightings.map(({ id }) => id);
+      const lostPetIds = markedLostPets.map(({ id }) => id);
+      const markedMatches =
+        sightingIds.length > 0 && lostPetIds.length > 0
+          ? await client.matchResult.findMany({
+              where: {
+                lostPetId: { in: lostPetIds },
+                sightingId: { in: sightingIds },
+              },
+              select: { id: true },
+            })
+          : [];
+
+      const trackedMatch = createdIds.matchResultId
+        ? await client.matchResult.findUnique({
+            where: { id: createdIds.matchResultId },
+            select: { lostPetId: true, sightingId: true },
+          })
+        : null;
+      if (
+        trackedMatch &&
+        (!lostPetIds.includes(trackedMatch.lostPetId) ||
+          !sightingIds.includes(trackedMatch.sightingId))
+      ) {
+        throw new Error(
+          'Refusing E2E cleanup because the tracked match result is not owned by this run.',
+        );
+      }
+      const matchResultIds = markedMatches.map(({ id }) => id);
+      const entityIds = [...sightingIds, ...lostPetIds, ...matchResultIds];
+
+      const deletedMatches = await client.matchResult.deleteMany({
+        where: { id: { in: matchResultIds } },
+      });
+      const deletedLostPets = await client.lostPet.deleteMany({
+        where: { id: { in: lostPetIds } },
+      });
+      const deletedSightings = await client.animalSighting.deleteMany({
+        where: { id: { in: sightingIds } },
+      });
+      const deletedAuditLogs = await client.auditLog.deleteMany({
+        where: { entityId: { in: entityIds } },
+      });
+
+      const [remainingSightings, remainingLostPets, remainingMatches] = await Promise.all([
+        client.animalSighting.count({ where: { id: { in: sightingIds } } }),
+        client.lostPet.count({ where: { id: { in: lostPetIds } } }),
+        client.matchResult.count({ where: { id: { in: matchResultIds } } }),
+      ]);
+      if (remainingSightings + remainingLostPets + remainingMatches !== 0) {
+        throw new Error(`PetRadar E2E cleanup verification failed for ${marker}.`);
+      }
+
+      return {
+        deleted: {
+          auditLogs: deletedAuditLogs.count,
+          lostPets: deletedLostPets.count,
+          matchResults: deletedMatches.count,
+          sightings: deletedSightings.count,
+        },
+        skipped: false,
+        verified: true,
+      } satisfies E2eCleanupResult;
+    });
+
+    console.info(
+      `[PetRadar E2E cleanup] ${marker}: deleted ${String(result.deleted.sightings)} sighting(s), ` +
+        `${String(result.deleted.lostPets)} lost pet(s), ${String(result.deleted.matchResults)} match result(s), ` +
+        `${String(result.deleted.auditLogs)} audit log(s); verification passed`,
+    );
+    return result;
+  } finally {
+    await prisma.$disconnect();
+  }
 }
 
 export async function expectPageDoesNotExposePrivateValues(
@@ -169,7 +339,9 @@ async function apiGet<TResponse>(
   path: string,
   options: ApiRequestOptions & { decode: (value: unknown) => TResponse },
 ): Promise<TResponse> {
-  const response = await request.get(`${apiBaseUrl}${path}`, { headers: authHeaders(options.token) });
+  const response = await request.get(`${apiBaseUrl}${path}`, {
+    headers: authHeaders(options.token),
+  });
   return decodeApiResponse(response, options.decode);
 }
 
@@ -202,8 +374,8 @@ async function decodeApiResponse<TResponse>(
   decode: (value: unknown) => TResponse,
 ): Promise<TResponse> {
   const text = await response.text();
-  const value = text.length === 0 ? null : JSON.parse(text);
-  expect(response.ok(), `API ${response.url()} returned ${response.status()}`).toBe(true);
+  const value: unknown = text.length === 0 ? null : JSON.parse(text);
+  expect(response.ok(), `API ${response.url()} returned ${String(response.status())}`).toBe(true);
   return decode(value);
 }
 
@@ -309,4 +481,10 @@ function expectNumber(value: unknown, label: string): number {
     throw new Error(`Expected ${label} to be a finite number.`);
   }
   return value;
+}
+
+function assertSafeE2eMarker(marker: string): void {
+  if (!/^\[E2E-DEMO-JOURNEY:e2e-\d+-[0-9a-f]{8}\]$/.test(marker)) {
+    throw new Error('Refusing E2E cleanup because the run marker is missing or invalid.');
+  }
 }
