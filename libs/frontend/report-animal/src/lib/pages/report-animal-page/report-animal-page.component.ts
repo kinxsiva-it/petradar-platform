@@ -37,6 +37,9 @@ type ReportCondition =
 type AnimalSpecies = 'Cat' | 'Dog' | 'Other';
 type CollarStatus = 'Blue collar' | 'No collar' | 'Red collar with bell' | 'Unknown';
 type UrgencyLevel = 'Emergency' | 'High' | 'Low' | 'Medium';
+type OptionalAnimalSpecies = AnimalSpecies | '';
+type OptionalReportCondition = ReportCondition | '';
+type OptionalUrgencyLevel = UrgencyLevel | '';
 
 interface ConditionOption {
   label: ReportCondition;
@@ -59,6 +62,22 @@ const maxPhotoBytes = 8 * 1024 * 1024;
 const maxPhotos = 5;
 const locationPickerCenter = { latitude: 13.7563, longitude: 100.5018 } as const;
 const coordinatePrecision = 6;
+const requiredAnimalSpecies = new Set<OptionalAnimalSpecies>(['Cat', 'Dog', 'Other']);
+const requiredReportConditions = new Set<OptionalReportCondition>([
+  'Normal stray',
+  'Injured',
+  'Sick',
+  'Pregnant',
+  'Newborn litter',
+  'Aggressive',
+  'Possible lost pet',
+]);
+const requiredUrgencyLevels = new Set<OptionalUrgencyLevel>([
+  'Emergency',
+  'High',
+  'Low',
+  'Medium',
+]);
 
 @Component({
   selector: 'pr-report-animal-page',
@@ -92,7 +111,9 @@ export class ReportAnimalPageComponent implements OnDestroy {
   readonly permissionDenied = signal(false);
   readonly submitting = signal(false);
   readonly submitError = signal('');
+  readonly submitAttempted = signal(false);
   readonly submittedReference = signal<string | null>(null);
+  readonly locationSelected = signal(false);
   private createdSightingId: string | null = null;
   private selectedPhotos: SelectedPhoto[] = [];
 
@@ -123,18 +144,18 @@ export class ReportAnimalPageComponent implements OnDestroy {
   ];
   readonly urgencyOptions: UrgencyLevel[] = ['Low', 'Medium', 'High', 'Emergency'];
 
-  species: AnimalSpecies = 'Dog';
-  animalCount = 1;
-  condition: ReportCondition = 'Normal stray';
-  color = 'White';
-  pattern = 'Solid white';
-  collarStatus: CollarStatus = 'No collar';
-  description = 'White dog limping near the roadside. Appears tired and may need attention.';
-  seenDate = 'May 20, 2025';
-  seenTime = '10:38 AM';
-  urgency: UrgencyLevel = 'Medium';
+  species: OptionalAnimalSpecies = '';
+  animalCount: number | null = null;
+  condition: OptionalReportCondition = '';
+  color = '';
+  pattern = '';
+  collarStatus: CollarStatus = 'Unknown';
+  description = '';
+  seenDate = '';
+  seenTime = '';
+  urgency: OptionalUrgencyLevel = '';
   photoUrls: string[] = [];
-  approximateLocationLabel = 'Ari, Bangkok';
+  approximateLocationLabel = 'Choose a private pin';
 
   readonly currentTitle = computed(() => this.steps[this.currentStep()] ?? 'Report');
   selectedLocationLabel(): string {
@@ -206,7 +227,7 @@ export class ReportAnimalPageComponent implements OnDestroy {
     this.setExactLocation(
       locationPickerCenter.latitude,
       locationPickerCenter.longitude,
-      'Default private pin',
+      'Map center private pin',
     );
   }
 
@@ -228,6 +249,13 @@ export class ReportAnimalPageComponent implements OnDestroy {
       return;
     }
 
+    this.submitAttempted.set(true);
+    const validationMessage = this.validateForm();
+    if (validationMessage) {
+      this.submitError.set(validationMessage);
+      return;
+    }
+
     const seenAt = this.parseSeenAt();
     if (!seenAt) {
       this.submitError.set('Enter a valid seen date and time before submitting.');
@@ -240,7 +268,7 @@ export class ReportAnimalPageComponent implements OnDestroy {
     try {
       if (!this.createdSightingId) {
         const request = toCreateSightingRequest({
-          animalCount: this.animalCount,
+          animalCount: this.requireAnimalCount(),
           collarStatus: this.collarStatus,
           color: this.color,
           condition: this.condition,
@@ -322,6 +350,9 @@ export class ReportAnimalPageComponent implements OnDestroy {
   }
 
   private parseSeenAt(): Date | null {
+    if (!this.seenDate.trim() || !this.seenTime.trim()) {
+      return null;
+    }
     const date = new Date(`${this.seenDate} ${this.seenTime}`);
     return Number.isNaN(date.getTime()) ? null : date;
   }
@@ -332,6 +363,45 @@ export class ReportAnimalPageComponent implements OnDestroy {
       longitude: roundCoordinate(Math.max(-180, Math.min(180, longitude))),
     };
     this.approximateLocationLabel = label;
+    this.locationSelected.set(true);
+  }
+
+  private validateForm(): string {
+    if (!requiredAnimalSpecies.has(this.species)) {
+      return 'Choose the closest animal type.';
+    }
+    if (this.animalCount === null || this.animalCount < 1 || this.animalCount > 20) {
+      return 'Enter an animal count between 1 and 20.';
+    }
+    if (!requiredReportConditions.has(this.condition)) {
+      return 'Choose the animal condition.';
+    }
+    if (!requiredUrgencyLevels.has(this.urgency)) {
+      return 'Choose an urgency level.';
+    }
+    if (!this.description.trim()) {
+      return 'Add a short description to help moderators and rescuers identify the animal.';
+    }
+    if (!this.parseSeenAt()) {
+      return 'Enter a valid seen date and time before submitting.';
+    }
+    if (!this.locationSelected()) {
+      return 'Choose or confirm the exact private pin before submitting.';
+    }
+    if (this.exactLocation.latitude < -90 || this.exactLocation.latitude > 90) {
+      return 'Latitude must be between -90 and 90.';
+    }
+    if (this.exactLocation.longitude < -180 || this.exactLocation.longitude > 180) {
+      return 'Longitude must be between -180 and 180.';
+    }
+    return '';
+  }
+
+  private requireAnimalCount(): number {
+    if (typeof this.animalCount === 'number' && this.animalCount >= 1 && this.animalCount <= 20) {
+      return this.animalCount;
+    }
+    throw new Error('A valid animal count is required before saving a report.');
   }
 }
 

@@ -102,8 +102,15 @@ h2 {
 
 .choice-card small,
 .condition-card span,
-.empty-note {
+.empty-note,
+.field-help {
   color: var(--color-text-muted);
+}
+
+.field-help {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .choice-card.selected,

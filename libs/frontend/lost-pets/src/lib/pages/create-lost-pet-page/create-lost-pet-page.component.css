@@ -48,8 +48,15 @@ h1 {
 }
 
 .page-header p,
-.empty-note {
+.empty-note,
+.field-help {
   color: var(--color-text-muted);
+}
+
+.field-help {
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
 }
 
 .stepper {

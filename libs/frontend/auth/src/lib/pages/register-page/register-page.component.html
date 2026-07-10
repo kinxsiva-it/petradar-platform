@@ -14,10 +14,12 @@
       <label>
         Full name
         <input [(ngModel)]="form.name" name="name" placeholder="Your full name" />
+        <small class="field-help">Use the name neighbors or moderators should recognize.</small>
       </label>
       <label>
         Email address
         <input [(ngModel)]="form.email" name="email" type="email" placeholder="you@example.com" />
+        <small class="field-help">This email is used for sign-in and account recovery flows when available.</small>
       </label>
     </div>
 
@@ -35,10 +37,12 @@
             {{ showPassword() ? 'Hide' : 'Show' }}
           </button>
         </span>
+        <small class="field-help">Use at least 12 characters.</small>
       </label>
       <label>
         Confirm password
         <input [(ngModel)]="form.confirmPassword" name="confirmPassword" type="password" />
+        <small class="field-help">Type the same password again to catch mistakes.</small>
       </label>
     </div>
 

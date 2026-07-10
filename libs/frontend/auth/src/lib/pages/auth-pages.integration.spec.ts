@@ -26,6 +26,26 @@ function setup(auth: Partial<AuthStateService>) {
 }
 
 describe('auth pages integration', () => {
+  it('starts login empty and blocks invalid submission', async () => {
+    const login = vi.fn().mockResolvedValue(true);
+    const { injector, router } = setup({
+      error: () => null,
+      loading: () => false,
+      login,
+      resetError: vi.fn(),
+    } as Partial<AuthStateService>);
+    const component = runInInjectionContext(injector, () => new LoginPageComponent());
+
+    expect(component.form.email).toBe('');
+    expect(component.form.password).toBe('');
+
+    await component.submit();
+
+    expect(login).not.toHaveBeenCalled();
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(component.localError()).toContain('Enter your email address and password');
+  });
+
   it('prevents duplicate login submission while loading', async () => {
     const login = vi.fn().mockResolvedValue(true);
     const { injector } = setup({
@@ -88,5 +108,26 @@ describe('auth pages integration', () => {
     });
     expect(JSON.stringify(register.mock.calls)).not.toContain('ADMIN');
     expect(JSON.stringify(register.mock.calls)).not.toContain('VOLUNTEER');
+  });
+
+  it('starts registration empty and blocks invalid submission', async () => {
+    const register = vi.fn().mockResolvedValue(true);
+    const { injector, router } = setup({
+      error: () => null,
+      loading: () => false,
+      register,
+      resetError: vi.fn(),
+    } as Partial<AuthStateService>);
+    const component = runInInjectionContext(injector, () => new RegisterPageComponent());
+
+    expect(component.form.name).toBe('');
+    expect(component.form.email).toBe('');
+    expect(component.form.password).toBe('');
+
+    await component.submit();
+
+    expect(register).not.toHaveBeenCalled();
+    expect(router.navigateByUrl).not.toHaveBeenCalled();
+    expect(component.localError()).toContain('Enter your name and a valid email');
   });
 });

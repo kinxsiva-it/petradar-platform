@@ -13,6 +13,7 @@
     <label>
       Email address
       <input [(ngModel)]="form.email" name="email" type="email" placeholder="you@example.com" />
+      <small class="field-help">Use the email address on your PetRadar account.</small>
     </label>
 
     <label>
@@ -28,6 +29,7 @@
           {{ showPassword() ? 'Hide' : 'Show' }}
         </button>
       </span>
+      <small class="field-help">Passwords are sent only to the authentication API.</small>
     </label>
 
     <div class="form-row">
@@ -35,7 +37,7 @@
         <input [(ngModel)]="form.remember" name="remember" type="checkbox" />
         Remember me
       </label>
-      <a href="#">Forgot password?</a>
+      <span class="muted-action">Password reset is not available in this build.</span>
     </div>
 
     @if (localError() || authState.error(); as message) {

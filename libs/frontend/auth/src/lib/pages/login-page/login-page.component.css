@@ -84,6 +84,14 @@ input {
   font-weight: 750;
 }
 
+.field-help,
+.muted-action {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .password-row button {
   min-width: 4.5rem;
   border: 1px solid var(--color-border-default);

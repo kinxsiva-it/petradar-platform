@@ -59,6 +59,7 @@ describe('ReportAnimalPageComponent API submission', () => {
     );
     const navigateByUrl = vi.fn().mockResolvedValue(true);
     const component = createComponent(create, navigateByUrl);
+    fillValidReport(component);
     component.moveSelectedLocation(0.012345, -0.023456);
 
     await component.submit();
@@ -80,6 +81,7 @@ describe('ReportAnimalPageComponent API submission', () => {
     const create = vi.fn().mockReturnValue(throwError(() => new Error('network')));
     const navigateByUrl = vi.fn();
     const component = createComponent(create, navigateByUrl);
+    fillValidReport(component);
     component.color = 'Black';
     component.description = 'Still visible after failure.';
 
@@ -89,6 +91,26 @@ describe('ReportAnimalPageComponent API submission', () => {
     expect(component.description).toBe('Still visible after failure.');
     expect(component.submitError()).toContain('could not be submitted');
     expect(navigateByUrl).not.toHaveBeenCalled();
+  });
+
+  it('starts create mode empty and blocks invalid submission', async () => {
+    const create = vi.fn();
+    const navigateByUrl = vi.fn();
+    const component = createComponent(create, navigateByUrl);
+
+    expect(component.species).toBe('');
+    expect(component.condition).toBe('');
+    expect(component.color).toBe('');
+    expect(component.description).toBe('');
+    expect(component.seenDate).toBe('');
+    expect(component.seenTime).toBe('');
+    expect(component.locationSelected()).toBe(false);
+
+    await component.submit();
+
+    expect(create).not.toHaveBeenCalled();
+    expect(navigateByUrl).not.toHaveBeenCalled();
+    expect(component.submitError()).toContain('Choose the closest animal type');
   });
 
   it('creates a sighting before uploading selected photos with the created ID', async () => {
@@ -115,6 +137,7 @@ describe('ReportAnimalPageComponent API submission', () => {
     const uploadPhotos = vi.fn().mockReturnValue(of({ photos: [] }));
     const navigateByUrl = vi.fn().mockResolvedValue(true);
     const component = createComponent(create, navigateByUrl, uploadPhotos);
+    fillValidReport(component);
     mockObjectUrls();
 
     component.addFiles(
@@ -156,6 +179,7 @@ describe('ReportAnimalPageComponent API submission', () => {
       .mockReturnValueOnce(of({ photos: [] }));
     const navigateByUrl = vi.fn().mockResolvedValue(true);
     const component = createComponent(create, navigateByUrl, uploadPhotos);
+    fillValidReport(component);
     mockObjectUrls();
 
     component.addFiles(
@@ -220,6 +244,20 @@ function createComponent(
   });
 
   return runInInjectionContext(injector, () => injector.get(ReportAnimalPageComponent));
+}
+
+function fillValidReport(component: ReportAnimalPageComponent): void {
+  component.species = 'Dog';
+  component.animalCount = 1;
+  component.condition = 'Normal stray';
+  component.color = 'White';
+  component.pattern = 'Solid white';
+  component.collarStatus = 'No collar';
+  component.description = 'White dog seen near the roadside.';
+  component.seenDate = '2026-06-30';
+  component.seenTime = '01:00';
+  component.urgency = 'Medium';
+  component.moveSelectedLocation(0, 0);
 }
 
 function mockObjectUrls(): void {

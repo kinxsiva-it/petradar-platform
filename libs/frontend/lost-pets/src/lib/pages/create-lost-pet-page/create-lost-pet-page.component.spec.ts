@@ -1,6 +1,6 @@
 import { Injector, runInInjectionContext } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import type { PrivateLocationSelection } from '@petradar/frontend/map';
 import {
@@ -19,6 +19,7 @@ describe('CreateLostPetPageComponent location flow', () => {
       navigateByUrl,
     });
 
+    fillValidLostPet(component);
     component.moveSelectedLocation(0.012345, -0.023456);
     await component.submit();
 
@@ -37,6 +38,40 @@ describe('CreateLostPetPageComponent location flow', () => {
     component.longitude = 100.512869;
 
     expect(component.selectedLocationLabel()).toBe('13.767484, 100.512869');
+  });
+
+  it('starts create mode without mock pet details and blocks invalid submission', async () => {
+    const createLostPet = vi.fn();
+    const navigateByUrl = vi.fn();
+    const component = createComponent({ createLostPet, navigateByUrl });
+
+    expect(component.petName).toBe('');
+    expect(component.species).toBe('');
+    expect(component.breed).toBe('');
+    expect(component.color).toBe('');
+    expect(component.description).toBe('');
+    expect(component.lastSeenAt).toBe('');
+    expect(component.contactDetail).toBe('');
+    expect(component.locationSelected()).toBe(false);
+
+    await component.submit();
+
+    expect(createLostPet).not.toHaveBeenCalled();
+    expect(navigateByUrl).not.toHaveBeenCalled();
+    expect(component.submitError()).toContain('Enter the pet name');
+  });
+
+  it('shows API errors without navigating as if the lost pet was saved', async () => {
+    const createLostPet = vi.fn().mockReturnValue(throwError(() => new Error('network')));
+    const navigateByUrl = vi.fn();
+    const component = createComponent({ createLostPet, navigateByUrl });
+    fillValidLostPet(component);
+
+    await component.submit();
+
+    expect(component.petName).toBe('Milo');
+    expect(component.submitError()).toContain('Lost-pet post could not be saved');
+    expect(navigateByUrl).not.toHaveBeenCalled();
   });
 
   it('moves the same private pin source of truth from the shared picker selection', () => {
@@ -73,8 +108,22 @@ describe('CreateLostPetPageComponent location flow', () => {
 
     expect(component.latitude).toBe(12.345678);
     expect(component.longitude).toBe(98.765432);
+    expect(component.locationSelected()).toBe(true);
   });
 });
+
+function fillValidLostPet(component: CreateLostPetPageComponent): void {
+  component.petName = 'Milo';
+  component.species = 'CAT';
+  component.color = 'Orange';
+  component.pattern = 'Tabby';
+  component.collarDescription = 'Red collar';
+  component.description = 'Friendly but shy.';
+  component.lastSeenAt = '2026-07-06T01:00';
+  component.contactPreference = 'Email';
+  component.contactDetail = 'owner@example.com';
+  component.moveSelectedLocation(0, 0);
+}
 
 function createComponent(overrides: {
   createLostPet?: ReturnType<typeof vi.fn>;

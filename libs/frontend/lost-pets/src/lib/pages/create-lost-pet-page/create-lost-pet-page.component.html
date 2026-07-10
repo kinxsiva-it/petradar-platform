@@ -50,16 +50,26 @@
       @switch (step()) {
         @case (0) {
           <div class="form-grid two">
-            <label>Pet name <input [(ngModel)]="petName" /></label>
+            <label>
+              Pet name
+              <input [(ngModel)]="petName" />
+              <small class="field-help">Use the name on the collar or the name your pet responds to.</small>
+            </label>
             <label
               >Species
               <select [(ngModel)]="species">
+                <option value="" disabled>Choose species</option>
                 @for (item of speciesOptions; track item.value) {
                   <option [ngValue]="item.value">{{ item.label }}</option>
                 }
               </select>
+              <small class="field-help">Choose the closest animal type to improve matching accuracy.</small>
             </label>
-            <label>Breed / type <input [(ngModel)]="breed" /></label>
+            <label>
+              Breed / type
+              <input [(ngModel)]="breed" />
+              <small class="field-help">Optional. Leave blank if you are not sure.</small>
+            </label>
             <label
               >Sex
               <select [(ngModel)]="sex">
@@ -68,19 +78,39 @@
                 }
               </select>
             </label>
-            <label>Age <input [(ngModel)]="ageDescription" /></label>
+            <label>
+              Age
+              <input [(ngModel)]="ageDescription" />
+              <small class="field-help">Optional. Approximate ages are okay.</small>
+            </label>
           </div>
         }
         @case (1) {
           <div class="form-grid two">
-            <label>Primary color <input [(ngModel)]="color" /></label>
-            <label>Pattern <input [(ngModel)]="pattern" /></label>
-            <label>Collar description <input [(ngModel)]="collarDescription" /></label>
+            <label>
+              Primary color
+              <input [(ngModel)]="color" />
+              <small class="field-help">Optional, but color improves match scoring.</small>
+            </label>
+            <label>
+              Pattern
+              <input [(ngModel)]="pattern" />
+              <small class="field-help">Optional. Add stripes, spots, or distinctive markings.</small>
+            </label>
+            <label>
+              Collar description
+              <input [(ngModel)]="collarDescription" />
+              <small class="field-help">Optional. Include tag, color, bell, or harness details if known.</small>
+            </label>
             <label class="toggle"
               ><input type="checkbox" [(ngModel)]="microchipped" /> Microchipped</label
             >
           </div>
-          <label>Description <textarea rows="4" [(ngModel)]="description"></textarea></label>
+          <label>
+            Description
+            <textarea rows="4" [(ngModel)]="description"></textarea>
+            <small class="field-help">Add behavior, size, medical needs, or other identification details.</small>
+          </label>
         }
         @case (2) {
           <div class="form-grid two">
@@ -127,13 +157,35 @@
               </p>
               <label
                 >Private latitude
-                <input type="number" min="-90" max="90" step="0.0001" [(ngModel)]="latitude"
-              /></label>
+                <input
+                  type="number"
+                  min="-90"
+                  max="90"
+                  step="0.0001"
+                  [(ngModel)]="latitude"
+                  (ngModelChange)="locationSelected.set(true)"
+                />
+              </label>
               <label
                 >Private longitude
-                <input type="number" min="-180" max="180" step="0.0001" [(ngModel)]="longitude"
-              /></label>
-              <label>Last seen <input type="datetime-local" [(ngModel)]="lastSeenAt" /></label>
+                <input
+                  type="number"
+                  min="-180"
+                  max="180"
+                  step="0.0001"
+                  [(ngModel)]="longitude"
+                  (ngModelChange)="locationSelected.set(true)"
+                />
+              </label>
+              <p class="empty-note">
+                Pick the most accurate last-seen location you can. Exact coordinates are kept
+                private and public views show only an approximate area.
+              </p>
+              <label>
+                Last seen
+                <input type="datetime-local" [(ngModel)]="lastSeenAt" />
+                <small class="field-help">Use the last time you are confident the pet was at this location.</small>
+              </label>
               <div class="pin-controls" aria-label="Adjust selected private pin">
                 <p class="empty-note">Nudge the exact private pin.</p>
                 <button type="button" class="secondary" (click)="moveSelectedLocation(0.001, 0)">
@@ -164,8 +216,16 @@
                 }
               </select>
             </label>
-            <label>Contact detail <input [(ngModel)]="contactDetail" /></label>
-            <label>Reward cents <input type="number" min="0" [(ngModel)]="rewardCents" /></label>
+            <label>
+              Contact detail
+              <input [(ngModel)]="contactDetail" />
+              <small class="field-help">Optional. Contact details stay out of public lost-pet views.</small>
+            </label>
+            <label>
+              Reward cents
+              <input type="number" min="0" [(ngModel)]="rewardCents" />
+              <small class="field-help">Optional. Leave blank if there is no reward.</small>
+            </label>
           </div>
           <p class="empty-note">
             Contact details are sent to the private owner API fields and are not displayed in public
@@ -174,7 +234,7 @@
         }
         @case (5) {
           <section class="review">
-            <h2>Review {{ petName }}</h2>
+            <h2>Review {{ petName || 'lost pet post' }}</h2>
             <dl>
               <div>
                 <dt>Pet</dt>
@@ -195,6 +255,9 @@
             </dl>
             <pr-privacy-banner />
           </section>
+          @if (submitAttempted() && submitError()) {
+            <p class="empty-note">Your entries are still here. Fix the issue above and submit again.</p>
+          }
         }
       }
       <footer class="wizard-actions">

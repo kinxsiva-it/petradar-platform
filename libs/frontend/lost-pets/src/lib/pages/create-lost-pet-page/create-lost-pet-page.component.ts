@@ -24,8 +24,14 @@ import {
 } from '../../data-access/index.js';
 
 type ContactPreference = 'Email' | 'Phone' | 'In-app message';
+type OptionalApiAnimalSpecies = ApiAnimalSpecies | '';
 
 const coordinatePrecision = 6;
+const initialLocation: { latitude: number; longitude: number } = {
+  latitude: 13.7563,
+  longitude: 100.5018,
+};
+const validSpecies = new Set<OptionalApiAnimalSpecies>(['CAT', 'DOG', 'OTHER']);
 
 @Component({
   selector: 'pr-create-lost-pet-page',
@@ -54,7 +60,9 @@ export class CreateLostPetPageComponent {
   readonly submitError = signal('');
   readonly loading = signal(false);
   readonly submitting = signal(false);
+  readonly submitAttempted = signal(false);
   readonly editMode = signal(this.editingId !== null);
+  readonly locationSelected = signal(false);
   readonly steps = ['Identity', 'Appearance', 'Photos', 'Location', 'Contact', 'Review'];
 
   selectedLocationLabel(): string {
@@ -73,24 +81,24 @@ export class CreateLostPetPageComponent {
   ];
   readonly contactOptions: ContactPreference[] = ['Email', 'Phone', 'In-app message'];
 
-  petName = 'Milo';
-  species: ApiAnimalSpecies = 'CAT';
-  breed = 'Domestic Shorthair';
-  sex: ApiLostPetSex = 'MALE';
-  ageDescription = '2 years';
-  color = 'Orange';
-  pattern = 'Tabby';
-  collarDescription = 'Red collar with silver bell';
-  microchipped = true;
-  description = 'Friendly but shy. Please do not chase.';
+  petName = '';
+  species: OptionalApiAnimalSpecies = '';
+  breed = '';
+  sex: ApiLostPetSex = 'UNKNOWN';
+  ageDescription = '';
+  color = '';
+  pattern = '';
+  collarDescription = '';
+  microchipped = false;
+  description = '';
   photoUrls: string[] = [];
   photoUrlDraft = '';
-  approximateLastSeenLabel = 'Near Ari, Bangkok';
-  latitude = 13.7563;
-  longitude = 100.5018;
-  lastSeenAt = '2025-05-20T20:30';
-  contactPreference: ContactPreference = 'Email';
-  contactDetail = 'nicha.owner@example.com';
+  approximateLastSeenLabel = 'Choose a private last-seen pin';
+  latitude = initialLocation.latitude;
+  longitude = initialLocation.longitude;
+  lastSeenAt = '';
+  contactPreference: ContactPreference = 'In-app message';
+  contactDetail = '';
   rewardCents: number | null = null;
 
   constructor() {
@@ -170,6 +178,7 @@ export class CreateLostPetPageComponent {
       return;
     }
 
+    this.submitAttempted.set(true);
     const validationMessage = this.validateForm();
     if (validationMessage) {
       this.submitError.set(validationMessage);
@@ -224,6 +233,7 @@ export class CreateLostPetPageComponent {
       this.latitude = pet.exactLocation?.latitude ?? pet.approximateLastSeenLocation.latitude;
       this.longitude = pet.exactLocation?.longitude ?? pet.approximateLastSeenLocation.longitude;
       this.approximateLastSeenLabel = pet.approximateLastSeenLabel;
+      this.locationSelected.set(true);
     } catch (error) {
       this.submitError.set(toEditLoadMessage(error));
     } finally {
@@ -248,7 +258,7 @@ export class CreateLostPetPageComponent {
       photoUrls: this.photoUrls,
       rewardCents: this.rewardCents ?? undefined,
       sex: this.sex,
-      species: this.species,
+      species: this.requireSpecies(),
     });
   }
 
@@ -270,7 +280,7 @@ export class CreateLostPetPageComponent {
         photoUrls: this.photoUrls,
         rewardCents: this.rewardCents ?? undefined,
         sex: this.sex,
-        species: this.species,
+        species: this.requireSpecies(),
       }),
     };
   }
@@ -285,12 +295,17 @@ export class CreateLostPetPageComponent {
     this.latitude = roundCoordinate(Math.max(-90, Math.min(90, latitude)));
     this.longitude = roundCoordinate(Math.max(-180, Math.min(180, longitude)));
     this.approximateLastSeenLabel = label;
+    this.locationSelected.set(true);
   }
 
   private validateForm(): string {
     if (!this.petName.trim()) return 'Enter the pet name.';
+    if (!validSpecies.has(this.species)) return 'Choose the closest animal type.';
     if (!this.validLastSeenAt()) {
       return 'Enter a valid last-seen date and time.';
+    }
+    if (!this.locationSelected()) {
+      return 'Choose or confirm the exact private last-seen pin.';
     }
     if (this.latitude < -90 || this.latitude > 90) {
       return 'Latitude must be between -90 and 90.';
@@ -298,7 +313,7 @@ export class CreateLostPetPageComponent {
     if (this.longitude < -180 || this.longitude > 180) {
       return 'Longitude must be between -180 and 180.';
     }
-    if (this.rewardCents !== null && this.rewardCents < 0) {
+    if (this.rewardCents !== null && (!Number.isFinite(this.rewardCents) || this.rewardCents < 0)) {
       return 'Reward must be zero or greater.';
     }
     return '';
@@ -310,6 +325,13 @@ export class CreateLostPetPageComponent {
     }
     const date = new Date(this.lastSeenAt);
     return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  }
+
+  private requireSpecies(): ApiAnimalSpecies {
+    if (this.species === 'CAT' || this.species === 'DOG' || this.species === 'OTHER') {
+      return this.species;
+    }
+    throw new Error('A valid species is required before saving a lost-pet post.');
   }
 }
 

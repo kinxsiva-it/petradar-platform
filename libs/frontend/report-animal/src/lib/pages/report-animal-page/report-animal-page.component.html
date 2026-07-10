@@ -41,6 +41,7 @@
           <label class="field">
             Animal count
             <input type="number" min="1" max="20" [(ngModel)]="animalCount" />
+            <small class="field-help">Count only the animals you can clearly see.</small>
           </label>
         }
         @case (1) {
@@ -80,17 +81,30 @@
             <label class="field"
               >Urgency
               <select [(ngModel)]="urgency">
+                <option value="" disabled>Choose urgency</option>
                 @for (item of urgencyOptions; track item) {
                   <option [ngValue]="item">{{ item }}</option>
                 }
               </select>
+              <small class="field-help">Choose the closest level. Emergency reports should still go through local emergency channels.</small>
             </label>
-            <label class="field">Seen date <input [(ngModel)]="seenDate" /></label>
-            <label class="field">Seen time <input [(ngModel)]="seenTime" /></label>
+            <label class="field">
+              Seen date
+              <input [(ngModel)]="seenDate" placeholder="Example: 2026-07-10" />
+              <small class="field-help">Use the date you saw the animal. Examples are guidance only.</small>
+            </label>
+            <label class="field">
+              Seen time
+              <input [(ngModel)]="seenTime" placeholder="Example: 14:30" />
+              <small class="field-help">Approximate time is okay if you are not sure.</small>
+            </label>
           </div>
           <label class="field">
             Description
             <textarea rows="4" [(ngModel)]="description"></textarea>
+            <small class="field-help">
+              Add color, size, collar, behavior, injuries, or other details that help identify the animal.
+            </small>
           </label>
         }
         @case (3) {
@@ -156,7 +170,9 @@
                   max="90"
                   step="0.0001"
                   [(ngModel)]="exactLocation.latitude"
+                  (ngModelChange)="locationSelected.set(true)"
                 />
+                <small class="field-help">Exact coordinates stay private and are used for matching and rescue workflow.</small>
               </label>
               <label class="field">
                 Longitude submitted to API
@@ -166,7 +182,9 @@
                   max="180"
                   step="0.0001"
                   [(ngModel)]="exactLocation.longitude"
+                  (ngModelChange)="locationSelected.set(true)"
                 />
+                <small class="field-help">Public map and detail pages show only a backend-generated approximate area.</small>
               </label>
               <p class="submitted-coordinate">
                 Exact private coordinate to submit: <b>{{ selectedLocationLabel() }}</b>
@@ -179,7 +197,7 @@
               </div>
               <div class="action-row">
                 <button type="button" (click)="useCurrentLocation()">Use current location</button>
-                <button type="button" (click)="dropPinManually()">Reset to demo pin</button>
+                <button type="button" (click)="dropPinManually()">Use map center</button>
               </div>
               @if (permissionDenied()) {
                 <p class="field-error">
@@ -229,6 +247,9 @@
           </section>
           @if (submitError()) {
             <p class="field-error">{{ submitError() }}</p>
+          }
+          @if (submitAttempted() && submitError()) {
+            <p class="empty-note">Your entries are still here. Fix the highlighted issue and submit again.</p>
           }
         }
       }
