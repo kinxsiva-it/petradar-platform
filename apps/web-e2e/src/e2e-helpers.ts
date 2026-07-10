@@ -187,6 +187,7 @@ export function createE2eRunMarker(): string {
 export async function cleanupE2eTestData(
   marker: string,
   createdIds: Readonly<E2eCreatedEntityIds>,
+  prismaClient?: PrismaClient,
 ): Promise<E2eCleanupResult> {
   assertSafeE2eMarker(marker);
 
@@ -206,7 +207,7 @@ export async function cleanupE2eTestData(
     throw new Error('PetRadar E2E cleanup requires DATABASE_URL from the E2E environment.');
   }
 
-  const prisma = new PrismaClient();
+  const prisma = prismaClient ?? new PrismaClient();
   try {
     const result = await prisma.$transaction(async (client) => {
       const markedSightings = await client.animalSighting.findMany({
