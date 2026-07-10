@@ -35,8 +35,9 @@ export class LostPetsController {
   create(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Body() body: CreateLostPetDto,
+    @Req() request: Request,
   ): ReturnType<LostPetsService['create']> {
-    return this.lostPets.create(this.requireUser(user), body);
+    return this.lostPets.create(this.requireUser(user), body, request.header('x-request-id'));
   }
 
   @Get()

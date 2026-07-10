@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 
 import { AuditService } from '@petradar/backend/audit';
 import type { AuthenticatedUser } from '@petradar/backend/auth';
+import { MatchingService } from '@petradar/backend/matching';
 import { LocationPrivacyService, PrismaService } from '@petradar/backend/shared';
 
 import { CreateLostPetDto, ListLostPetsQueryDto, UpdateLostPetDto } from './dto/lost-pet.dto.js';
@@ -45,10 +46,11 @@ export class LostPetsService {
   constructor(
     private readonly audit: AuditService,
     private readonly locationPrivacy: LocationPrivacyService,
+    private readonly matching: MatchingService,
     private readonly prisma: PrismaService,
   ) {}
 
-  async create(user: AuthenticatedUser, dto: CreateLostPetDto) {
+  async create(user: AuthenticatedUser, dto: CreateLostPetDto, requestId?: string | null) {
     const id = randomUUID();
     const publicLocation = await this.locationPrivacy.generatePublicLocationForPublicApi({
       entityId: id,
@@ -111,7 +113,36 @@ export class LostPetsService {
       return requireRow(rows);
     });
 
+    await this.runAutomaticMatching(user, row.id, requestId);
+
     return toLostPetResponse(row, { includeExact: true, includePrivate: true });
+  }
+
+  private async runAutomaticMatching(
+    user: AuthenticatedUser,
+    lostPetId: string,
+    requestId?: string | null,
+  ): Promise<void> {
+    try {
+      await this.matching.runForLostPet(user, lostPetId, requestId);
+    } catch (error) {
+      try {
+        await this.audit.create({
+          action: 'LOST_PET_MATCHING_AUTO_FAILED',
+          actorId: user.id,
+          entityId: lostPetId,
+          entityType: 'LostPet',
+          metadata: {
+            actorId: user.id,
+            errorName: error instanceof Error ? error.name : 'UnknownError',
+            lostPetId,
+          },
+          requestId,
+        });
+      } catch {
+        // Lost-pet creation remains successful even if post-create matching failure audit cannot be recorded.
+      }
+    }
   }
 
   async list(query: ListLostPetsQueryDto) {
