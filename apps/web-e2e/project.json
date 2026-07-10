@@ -5,6 +5,12 @@
   "projectType": "application",
   "tags": ["scope:frontend", "type:e2e"],
   "targets": {
+    "cleanup-safety": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "playwright test --config apps/web-e2e/playwright.cleanup.config.ts"
+      }
+    },
     "e2e": {
       "executor": "nx:run-commands",
       "options": {

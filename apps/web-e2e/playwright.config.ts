@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './src',
+  testIgnore: '**/e2e-cleanup.spec.ts',
   workers: 1,
   use: {
     baseURL: 'http://localhost:4200',

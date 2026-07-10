@@ -64,6 +64,14 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
+Focused E2E verification in PowerShell:
+
+```powershell
+$env:NX_DAEMON='false'
+corepack pnpm nx cleanup-safety web-e2e
+corepack pnpm nx e2e web-e2e
+```
+
 ## Phase Boundaries
 
 Do not start Phase 1 feature work from this baseline without adding backend authorization, privacy service tests, and sighting-specific domain/application layers first.
