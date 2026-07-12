@@ -36,7 +36,7 @@ jobs:
       - run: pnpm audit --prod
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: corepack pnpm nx test api
+      - run: corepack pnpm exec jest --config apps/api/jest.config.cjs --runInBand --verbose
         env:
           NX_DAEMON: 'false'
       - run: corepack pnpm nx test web
