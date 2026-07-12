@@ -36,7 +36,12 @@ jobs:
       - run: pnpm audit --prod
       - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test
+      - run: corepack pnpm nx test api
+        env:
+          NX_DAEMON: 'false'
+      - run: corepack pnpm nx test web
+        env:
+          NX_DAEMON: 'false'
       - run: pnpm build
       - run: pnpm db:migrate
         env:
