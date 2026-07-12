@@ -25,6 +25,13 @@ export const allowedSightingPhotoMimeTypes: readonly AllowedSightingPhotoMimeTyp
 export const maxSightingPhotoBytes = 8 * 1024 * 1024;
 export const maxSightingPhotosPerRequest = 5;
 export const maxSightingPhotosPerSighting = 5;
+export const sightingPhotoUploadLimits = {
+  fieldNameSize: 100,
+  fields: 0,
+  fileSize: maxSightingPhotoBytes,
+  files: maxSightingPhotosPerRequest,
+  parts: maxSightingPhotosPerRequest,
+} as const;
 
 @Injectable()
 export class SightingPhotoValidationService {

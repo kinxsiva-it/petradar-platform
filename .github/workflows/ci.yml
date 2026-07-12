@@ -33,6 +33,7 @@ jobs:
         with:
           version: 10.12.4
       - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
@@ -43,6 +44,7 @@ jobs:
       - run: pnpm db:seed
         env:
           DATABASE_URL: postgresql://petradar:petradar@localhost:5432/petradar?schema=public
+          NODE_ENV: test
       - run: pnpm exec playwright install --with-deps chromium
       - run: corepack pnpm nx cleanup-safety web-e2e
         env:

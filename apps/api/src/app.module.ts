@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 import { AuditModule } from '@petradar/backend/audit';
 import { AdminModule } from '@petradar/backend/admin';
@@ -10,6 +12,7 @@ import { MatchingModule } from '@petradar/backend/matching';
 import { RescueCasesModule } from '@petradar/backend/rescue-cases';
 import { SightingsModule } from '@petradar/backend/sightings';
 import { BackendUsersModule } from '@petradar/backend/users';
+import { globalApiRateLimit } from '@petradar/backend/shared';
 
 import { HealthModule } from './health/health.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
@@ -24,6 +27,7 @@ import { validateEnv } from './config/env.schema.js';
       isGlobal: true,
       validate: validateEnv,
     }),
+    ThrottlerModule.forRoot([globalApiRateLimit]),
     HealthModule,
     AdminModule,
     AnalyticsModule,
@@ -37,5 +41,6 @@ import { validateEnv } from './config/env.schema.js';
     SightingsModule,
     AuditModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

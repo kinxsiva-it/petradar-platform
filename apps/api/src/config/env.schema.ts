@@ -2,6 +2,10 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   ACCESS_TOKEN_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  API_DOCS_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   API_PREFIX: z.string().min(1).default('api/v1'),
   DATABASE_URL: z.string().url(),
   JWT_ACCESS_SECRET: z.string().min(32),
@@ -16,6 +20,7 @@ const envSchema = z.object({
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
   SUPABASE_STORAGE_BUCKET: z.string().min(1).optional(),
   SUPABASE_URL: z.string().url().optional(),
+  TRUST_PROXY_HOPS: z.coerce.number().int().min(0).max(2).default(0),
   WEB_ORIGIN: z.string().url().default('http://localhost:4200'),
 });
 

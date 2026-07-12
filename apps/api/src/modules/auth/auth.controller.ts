@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { CookieOptions, Request, Response } from 'express';
 
 import {
@@ -22,6 +23,7 @@ import {
   type AuthenticatedUser,
   type SafeUserResponse,
 } from '@petradar/backend/auth';
+import { apiRateLimits } from '@petradar/backend/shared';
 
 import type { Env } from '../../config/env.schema.js';
 import { LoginDto } from './dto/login.dto.js';
@@ -52,6 +54,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Throttle(apiRateLimits.authRegister)
   @ApiOkResponse({ description: 'Register a user and start a session.' })
   async register(
     @Body() body: RegisterDto,
@@ -73,6 +76,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle(apiRateLimits.authLogin)
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Authenticate and start a session.' })
   async login(
@@ -87,6 +91,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Throttle(apiRateLimits.authRefresh)
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Rotate the refresh token and return a new access token.' })
   async refresh(
@@ -101,6 +106,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @Throttle(apiRateLimits.authLogout)
   @HttpCode(HttpStatus.OK)
   @ApiOkResponse({ description: 'Revoke the current refresh token.' })
   async logout(

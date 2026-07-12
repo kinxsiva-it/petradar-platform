@@ -12,10 +12,12 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
 import { CurrentUser, JwtAuthGuard, type AuthenticatedUser } from '@petradar/backend/auth';
 import { MatchingService } from '@petradar/backend/matching';
+import { apiRateLimits } from '@petradar/backend/shared';
 
 import { CreateLostPetDto, ListLostPetsQueryDto, UpdateLostPetDto } from './dto/lost-pet.dto.js';
 import { LostPetsService } from './lost-pets.service.js';
@@ -29,6 +31,7 @@ export class LostPetsController {
   ) {}
 
   @Post()
+  @Throttle(apiRateLimits.create)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiCreatedResponse({ description: 'Create an owned lost-pet post.' })
@@ -41,6 +44,7 @@ export class LostPetsController {
   }
 
   @Get()
+  @Throttle(apiRateLimits.publicRead)
   @ApiOkResponse({ description: 'List public lost-pet posts with approximate last-seen locations.' })
   list(@Query() query: ListLostPetsQueryDto): ReturnType<LostPetsService['list']> {
     return this.lostPets.list(query);
@@ -69,6 +73,7 @@ export class LostPetsController {
   }
 
   @Get(':id')
+  @Throttle(apiRateLimits.publicRead)
   @ApiOkResponse({ description: 'Return one public lost-pet post.' })
   detail(@Param('id', ParseUUIDPipe) id: string): ReturnType<LostPetsService['findPublic']> {
     return this.lostPets.findPublic(id);
@@ -87,6 +92,7 @@ export class LostPetsController {
   }
 
   @Post(':id/run-matching')
+  @Throttle(apiRateLimits.matching)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOkResponse({ description: 'Run MVP rule-based matching for an owned lost-pet post.' })

@@ -19,6 +19,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { FilesInterceptor } from '@nestjs/platform-express';
+import { Throttle } from '@nestjs/throttler';
 import { UserRole } from '@prisma/client';
 import type { Request, Response } from 'express';
 
@@ -29,14 +30,15 @@ import {
   RolesGuard,
   type AuthenticatedUser,
 } from '@petradar/backend/auth';
+import { apiRateLimits } from '@petradar/backend/shared';
 
 import { CreateSightingDto } from './dto/create-sighting.dto.js';
 import { ListSightingsQueryDto } from './dto/list-sightings-query.dto.js';
 import { RejectSightingDto } from './dto/reject-sighting.dto.js';
 import { UpdateSightingDto } from './dto/update-sighting.dto.js';
 import {
-  maxSightingPhotoBytes,
   maxSightingPhotosPerRequest,
+  sightingPhotoUploadLimits,
   type UploadedSightingPhotoFile,
 } from './photos/sighting-photo-validation.js';
 import type {
@@ -53,6 +55,7 @@ export class SightingsController {
   constructor(private readonly sightings: SightingsService) {}
 
   @Post()
+  @Throttle(apiRateLimits.create)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiCreatedResponse({ description: 'Create an owned animal sighting.' })
@@ -65,6 +68,7 @@ export class SightingsController {
   }
 
   @Get()
+  @Throttle(apiRateLimits.publicRead)
   @ApiOkResponse({ description: 'Return public-safe animal sightings.' })
   listPublic(
     @Query() query: ListSightingsQueryDto,
@@ -96,6 +100,7 @@ export class SightingsController {
   }
 
   @Get('photos/:photoId/file')
+  @Throttle(apiRateLimits.publicRead)
   @Header('Cache-Control', 'public, max-age=300')
   async readPublicPhoto(
     @Param('photoId', ParseUUIDPipe) photoId: string,
@@ -107,6 +112,7 @@ export class SightingsController {
   }
 
   @Get(':id')
+  @Throttle(apiRateLimits.publicRead)
   @ApiOkResponse({ description: 'Return one public-safe animal sighting.' })
   findPublic(@Param('id', ParseUUIDPipe) id: string): Promise<PublicSightingResponse> {
     return this.sightings.findPublic(id);
@@ -200,13 +206,11 @@ export class SightingsController {
   }
 
   @Post(':id/photos')
+  @Throttle(apiRateLimits.upload)
   @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FilesInterceptor('photos', maxSightingPhotosPerRequest, {
-      limits: {
-        fileSize: maxSightingPhotoBytes,
-        files: maxSightingPhotosPerRequest,
-      },
+      limits: sightingPhotoUploadLimits,
     }),
   )
   @ApiBearerAuth()

@@ -51,7 +51,12 @@ Web app: `http://localhost:4200`
 
 API health: `http://localhost:3000/api/v1/health`
 
-Swagger: `http://localhost:3000/api/docs`
+Swagger: `http://localhost:3000/api/docs` (enabled outside production; production requires
+`API_DOCS_ENABLED=true`)
+
+Set `TRUST_PROXY_HOPS` to the exact number of trusted reverse-proxy hops in deployment so request
+IP logging and rate limiting use the intended client address. Leave it at `0` when the API is
+directly exposed. The demo seed refuses to run when `NODE_ENV=production`.
 
 ## Verify
 
