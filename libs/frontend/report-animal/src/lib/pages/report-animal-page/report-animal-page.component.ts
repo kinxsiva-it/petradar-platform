@@ -19,7 +19,6 @@ import {
 import {
   AlertComponent,
   PrivacyBannerComponent,
-  StatusBadgeComponent,
 } from '@petradar/frontend/shared-ui';
 import { SightingsApiService, toCreateSightingRequest } from '@petradar/frontend/sightings';
 
@@ -40,6 +39,13 @@ type UrgencyLevel = 'Emergency' | 'High' | 'Low' | 'Medium';
 type OptionalAnimalSpecies = AnimalSpecies | '';
 type OptionalReportCondition = ReportCondition | '';
 type OptionalUrgencyLevel = UrgencyLevel | '';
+type ValidationField = 'animalCount' | 'condition' | 'location' | 'seenAt' | 'species' | 'urgency';
+type StepErrors = Partial<Record<ValidationField, string>>;
+
+interface ReviewIssue {
+  message: string;
+  step: number;
+}
 
 interface ConditionOption {
   label: ReportCondition;
@@ -90,7 +96,6 @@ const requiredUrgencyLevels = new Set<OptionalUrgencyLevel>([
     PrivateLocationPickerComponent,
     ReportStepperComponent,
     ReportSuccessComponent,
-    StatusBadgeComponent,
   ],
   styleUrl: './report-animal-page.component.css',
   templateUrl: './report-animal-page.component.html',
@@ -114,6 +119,7 @@ export class ReportAnimalPageComponent implements OnDestroy {
   readonly submitAttempted = signal(false);
   readonly submittedReference = signal<string | null>(null);
   readonly locationSelected = signal(false);
+  readonly fieldErrors = signal<StepErrors>({});
   private createdSightingId: string | null = null;
   private selectedPhotos: SelectedPhoto[] = [];
 
@@ -158,6 +164,7 @@ export class ReportAnimalPageComponent implements OnDestroy {
   approximateLocationLabel = 'Choose a private pin';
 
   readonly currentTitle = computed(() => this.steps[this.currentStep()] ?? 'Report');
+  readonly currentErrors = computed(() => Object.values(this.fieldErrors()).filter(Boolean));
   selectedLocationLabel(): string {
     return coordinateLabel(this.exactLocation.latitude, this.exactLocation.longitude);
   }
@@ -171,18 +178,66 @@ export class ReportAnimalPageComponent implements OnDestroy {
   goToStep(index: number): void {
     if (index <= this.currentStep()) {
       this.currentStep.set(index);
+      this.fieldErrors.set({});
+      return;
     }
+
+    for (let step = this.currentStep(); step < index; step += 1) {
+      const errors = this.validateStep(step);
+      if (Object.keys(errors).length > 0) {
+        this.showStepErrors(step, errors);
+        return;
+      }
+    }
+    this.fieldErrors.set({});
+    this.currentStep.set(index);
   }
 
   next(): void {
     this.submitError.set('');
-    if (this.currentStep() < this.steps.length - 1) {
-      this.currentStep.update((step) => step + 1);
+    const step = this.currentStep();
+    const errors = this.validateStep(step);
+    if (Object.keys(errors).length > 0) {
+      this.showStepErrors(step, errors);
+      return;
     }
+    if (step < this.steps.length - 1) this.currentStep.set(step + 1);
+    this.fieldErrors.set({});
   }
 
   back(): void {
+    this.fieldErrors.set({});
     this.currentStep.update((step) => Math.max(0, step - 1));
+  }
+
+  selectSpecies(species: AnimalSpecies): void {
+    this.species = species;
+    this.clearError('species');
+  }
+
+  updateAnimalCount(value: number | null): void {
+    this.animalCount = value;
+    if (typeof value === 'number' && value >= 1 && value <= 20) this.clearError('animalCount');
+  }
+
+  selectCondition(condition: ReportCondition): void {
+    this.condition = condition;
+    this.clearError('condition');
+  }
+
+  updateUrgency(value: OptionalUrgencyLevel): void {
+    this.urgency = value;
+    if (requiredUrgencyLevels.has(value)) this.clearError('urgency');
+  }
+
+  updateSeenDate(value: string): void {
+    this.seenDate = value;
+    if (this.parseSeenAt()) this.clearError('seenAt');
+  }
+
+  updateSeenTime(value: string): void {
+    this.seenTime = value;
+    if (this.parseSeenAt()) this.clearError('seenAt');
   }
 
   addFiles(event: Event): void {
@@ -364,37 +419,105 @@ export class ReportAnimalPageComponent implements OnDestroy {
     };
     this.approximateLocationLabel = label;
     this.locationSelected.set(true);
+    this.clearError('location');
+  }
+
+  confirmLocationEdit(): void {
+    this.locationSelected.set(true);
+    this.clearError('location');
   }
 
   private validateForm(): string {
-    if (!requiredAnimalSpecies.has(this.species)) {
-      return 'Choose the closest animal type.';
-    }
-    if (this.animalCount === null || this.animalCount < 1 || this.animalCount > 20) {
-      return 'Enter an animal count between 1 and 20.';
-    }
-    if (!requiredReportConditions.has(this.condition)) {
-      return 'Choose the animal condition.';
-    }
-    if (!requiredUrgencyLevels.has(this.urgency)) {
-      return 'Choose an urgency level.';
-    }
-    if (!this.description.trim()) {
-      return 'Add a short description to help moderators and rescuers identify the animal.';
-    }
-    if (!this.parseSeenAt()) {
-      return 'Enter a valid seen date and time before submitting.';
-    }
-    if (!this.locationSelected()) {
-      return 'Choose or confirm the exact private pin before submitting.';
-    }
-    if (this.exactLocation.latitude < -90 || this.exactLocation.latitude > 90) {
-      return 'Latitude must be between -90 and 90.';
-    }
-    if (this.exactLocation.longitude < -180 || this.exactLocation.longitude > 180) {
-      return 'Longitude must be between -180 and 180.';
+    for (let step = 0; step < this.steps.length - 1; step += 1) {
+      const errors = this.validateStep(step);
+      const first = Object.values(errors)[0];
+      if (first) {
+        this.showStepErrors(step, errors);
+        return first;
+      }
     }
     return '';
+  }
+
+  reviewIssues(): ReviewIssue[] {
+    const issues: ReviewIssue[] = [];
+    for (let step = 0; step < this.steps.length - 1; step += 1) {
+      for (const message of Object.values(this.validateStep(step))) {
+        if (message) issues.push({ message, step });
+      }
+    }
+    return issues;
+  }
+
+  animalSummary(): string {
+    return requiredAnimalSpecies.has(this.species) && this.animalCount
+      ? `${this.species} x ${this.animalCount}`
+      : 'Not selected';
+  }
+
+  appearanceSummary(): string {
+    const values = [this.color.trim(), this.pattern.trim(), this.collarStatus].filter(
+      (value) => value && value !== 'Unknown',
+    );
+    return values.length > 0 ? values.join(', ') : 'Not provided';
+  }
+
+  seenSummary(): string {
+    return this.parseSeenAt() ? `${this.seenDate} at ${this.seenTime}` : 'Not provided';
+  }
+
+  private validateStep(step: number): StepErrors {
+    if (step === 0) {
+      return {
+        ...(!requiredAnimalSpecies.has(this.species)
+          ? { species: 'Choose the closest animal type.' }
+          : {}),
+        ...(this.animalCount === null || this.animalCount < 1 || this.animalCount > 20
+          ? { animalCount: 'Enter an animal count between 1 and 20.' }
+          : {}),
+      };
+    }
+    if (step === 1 && !requiredReportConditions.has(this.condition)) {
+      return { condition: "Select the animal's condition." };
+    }
+    if (step === 2) {
+      return {
+        ...(!requiredUrgencyLevels.has(this.urgency)
+          ? { urgency: 'Choose the urgency level.' }
+          : {}),
+        ...(!this.parseSeenAt() ? { seenAt: 'Add when you saw the animal.' } : {}),
+      };
+    }
+    if (step === 4) {
+      if (!this.locationSelected()) return { location: 'Choose the private saved pin location.' };
+      if (this.exactLocation.latitude < -90 || this.exactLocation.latitude > 90) {
+        return { location: 'Choose a valid private latitude.' };
+      }
+      if (this.exactLocation.longitude < -180 || this.exactLocation.longitude > 180) {
+        return { location: 'Choose a valid private longitude.' };
+      }
+    }
+    return {};
+  }
+
+  private showStepErrors(step: number, errors: StepErrors): void {
+    this.currentStep.set(step);
+    this.fieldErrors.set(errors);
+    const firstField = Object.keys(errors)[0];
+    if (firstField) {
+      setTimeout(() => {
+        document.querySelector<HTMLElement>(`[data-validation-field="${firstField}"]`)?.focus();
+      });
+    }
+  }
+
+  private clearError(field: ValidationField): void {
+    this.fieldErrors.update((errors) => {
+      if (!errors[field]) return errors;
+      const next = { ...errors };
+      delete next[field];
+      return next;
+    });
   }
 
   private requireAnimalCount(): number {
