@@ -44,16 +44,7 @@
     @if (auth.isAuthenticated()) {
       <pr-notification-bell />
 
-      <a routerLink="/profile" class="avatar-action" aria-label="Open profile">
-        <span class="avatar-initials" aria-hidden="true">{{ initials() }}</span>
-        <span class="profile-copy">
-          <strong>{{ auth.user()?.displayName ?? 'PetRadar user' }}</strong>
-          <small>{{ roleLabel() || 'Member' }}</small>
-        </span>
-        <svg lucideChevronDown class="avatar-chevron" size="16" strokeWidth="2" aria-hidden="true"></svg>
-      </a>
-
-      <button type="button" class="sign-out" (click)="signOut()">Sign out</button>
+      <pr-account-menu />
     } @else {
       <a routerLink="/login" class="login-link">Log in</a>
       <a routerLink="/register" class="signup-link">Sign up</a>
