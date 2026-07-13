@@ -11,3 +11,7 @@ coverage/
 .env.local
 *.log
 apps/web/public/runtime-config.js
+
+# Next.js
+.next
+out

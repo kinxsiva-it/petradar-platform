@@ -8,7 +8,7 @@ export default tseslint.config(
     ignores: ["dist/**", "coverage/**", "node_modules/**", ".angular/**"]
   },
   {
-    files: ["**/*.ts"],
+    files: ["**/*.{ts,tsx}"],
     extends: [
       ...tseslint.configs.strictTypeChecked,
       ...tseslint.configs.stylisticTypeChecked

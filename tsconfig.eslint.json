@@ -5,5 +5,14 @@
     "noEmit": true,
     "types": ["node", "jest", "vitest/globals"]
   },
-  "include": ["apps/**/*.ts", "libs/**/*.ts", "prisma/**/*.ts", "*.ts", "*.mts", "*.cts"]
+  "include": [
+    "apps/**/*.ts",
+    "apps/**/*.tsx",
+    "libs/**/*.ts",
+    "libs/**/*.tsx",
+    "prisma/**/*.ts",
+    "*.ts",
+    "*.mts",
+    "*.cts"
+  ]
 }
