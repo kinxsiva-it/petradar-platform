@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import {
-  LucideChevronDown,
   LucideGitFork,
   LucideHeart,
   LucideLifeBuoy,
@@ -16,6 +15,7 @@ import { AuthStateService } from '../auth/auth-state.service.js';
 import type { UserRole } from '../auth/auth.models.js';
 import { NotificationBellComponent } from '../notifications/notification-bell.component.js';
 import { NotificationsApiService } from '../notifications/notifications-api.service.js';
+import { AccountMenuComponent } from './account-menu.component.js';
 
 interface NavItem {
   authenticatedOnly?: boolean;
@@ -46,8 +46,8 @@ const mainNavItems: NavItem[] = [
   imports: [
     RouterLink,
     RouterLinkActive,
+    AccountMenuComponent,
     NotificationBellComponent,
-    LucideChevronDown,
     LucideGitFork,
     LucideHeart,
     LucideLifeBuoy,
@@ -66,8 +66,6 @@ export class PetRadarNavbarComponent {
   readonly menuOpen = signal(false);
   readonly notifications = inject(NotificationsApiService);
   readonly navItems = computed(() => mainNavItems.filter((item) => this.canShow(item)));
-  readonly initials = computed(() => initialsFor(this.auth.user()?.displayName));
-  readonly roleLabel = computed(() => this.auth.roles().filter((role) => role !== 'GUEST').join(', '));
   private readonly router = inject(Router);
 
   constructor() {
@@ -101,13 +99,4 @@ export class PetRadarNavbarComponent {
 
     return item.roles.some((role) => this.auth.roles().includes(role));
   }
-}
-
-function initialsFor(name: string | null | undefined): string {
-  const parts = name?.trim().split(/\s+/).filter(Boolean) ?? [];
-  if (parts.length === 0) {
-    return 'PR';
-  }
-
-  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() ?? '').join('');
 }

@@ -1,0 +1,59 @@
+<div class="account-control">
+  <button
+    type="button"
+    class="account-button"
+    aria-haspopup="menu"
+    [attr.aria-expanded]="open()"
+    aria-label="Open account menu"
+    (click)="toggle()"
+  >
+    <span class="avatar-initials" aria-hidden="true">{{ initials() }}</span>
+    <span class="profile-copy">
+      <strong>{{ auth.user()?.displayName ?? 'PetRadar user' }}</strong>
+      <small>{{ roleLabel() }}</small>
+    </span>
+    <svg
+      lucideChevronDown
+      class="account-chevron"
+      [class.open]="open()"
+      size="16"
+      strokeWidth="2"
+      aria-hidden="true"
+    ></svg>
+  </button>
+
+  @if (open()) {
+    <section class="account-dropdown" role="menu" aria-label="Account menu">
+      <header>
+        <span class="menu-avatar" aria-hidden="true">{{ initials() }}</span>
+        <span class="account-identity">
+          <strong>{{ auth.user()?.displayName ?? 'PetRadar user' }}</strong>
+          <small>{{ auth.user()?.email }}</small>
+          <span class="role-badge">{{ roleLabel() }}</span>
+        </span>
+      </header>
+
+      <nav aria-label="Account navigation">
+        <a routerLink="/profile" role="menuitem" (click)="close()">Profile</a>
+        <a routerLink="/my/reports" role="menuitem" (click)="close()">My Reports</a>
+        <a routerLink="/my/lost-pets" role="menuitem" (click)="close()">My Lost Pets</a>
+        <a routerLink="/matches" role="menuitem" (click)="close()">Possible Matches</a>
+        <a routerLink="/settings" role="menuitem" (click)="close()">Settings</a>
+        <a routerLink="/community-guidelines" role="menuitem" (click)="close()">
+          Community Guidelines
+        </a>
+        @if (auth.isVolunteer() || auth.isAdmin()) {
+          <div class="menu-divider" aria-hidden="true"></div>
+          <a routerLink="/volunteer" role="menuitem" (click)="close()">Volunteer Dashboard</a>
+          <a routerLink="/volunteer/rescue-cases" role="menuitem" (click)="close()">
+            Rescue Assignments
+          </a>
+        }
+      </nav>
+
+      <footer>
+        <button type="button" role="menuitem" (click)="signOut()">Sign out</button>
+      </footer>
+    </section>
+  }
+</div>
