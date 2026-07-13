@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -25,6 +25,13 @@ import {
 
 type ContactPreference = 'Email' | 'Phone' | 'In-app message';
 type OptionalApiAnimalSpecies = ApiAnimalSpecies | '';
+type ValidationField = 'lastSeenAt' | 'location' | 'petName' | 'photoUrl' | 'reward' | 'species';
+type StepErrors = Partial<Record<ValidationField, string>>;
+
+interface ReviewIssue {
+  message: string;
+  step: number;
+}
 
 const coordinatePrecision = 6;
 const initialLocation: { latitude: number; longitude: number } = {
@@ -63,6 +70,8 @@ export class CreateLostPetPageComponent {
   readonly submitAttempted = signal(false);
   readonly editMode = signal(this.editingId !== null);
   readonly locationSelected = signal(false);
+  readonly fieldErrors = signal<StepErrors>({});
+  readonly currentErrors = computed(() => Object.values(this.fieldErrors()).filter(Boolean));
   readonly steps = ['Identity', 'Appearance', 'Photos', 'Location', 'Contact', 'Review'];
 
   selectedLocationLabel(): string {
@@ -108,15 +117,67 @@ export class CreateLostPetPageComponent {
   }
 
   next(): void {
-    this.step.update((value) => Math.min(this.steps.length - 1, value + 1));
+    this.submitError.set('');
+    const current = this.step();
+    const errors = this.validateStep(current);
+    if (Object.keys(errors).length > 0) {
+      this.showStepErrors(current, errors);
+      return;
+    }
+    this.fieldErrors.set({});
+    this.step.set(Math.min(this.steps.length - 1, current + 1));
   }
 
   back(): void {
+    this.fieldErrors.set({});
     this.step.update((value) => Math.max(0, value - 1));
   }
 
   go(index: number): void {
-    if (index <= this.step()) this.step.set(index);
+    if (index <= this.step()) {
+      this.fieldErrors.set({});
+      this.step.set(index);
+      return;
+    }
+    for (let candidate = this.step(); candidate < index; candidate += 1) {
+      const errors = this.validateStep(candidate);
+      if (Object.keys(errors).length > 0) {
+        this.showStepErrors(candidate, errors);
+        return;
+      }
+    }
+    this.fieldErrors.set({});
+    this.step.set(index);
+  }
+
+  updatePetName(value: string): void {
+    this.petName = value;
+    if (value.trim()) this.clearError('petName');
+  }
+
+  updateSpecies(value: OptionalApiAnimalSpecies): void {
+    this.species = value;
+    if (validSpecies.has(value)) this.clearError('species');
+  }
+
+  updateLastSeen(value: string): void {
+    this.lastSeenAt = value;
+    if (this.validLastSeenAt()) this.clearError('lastSeenAt');
+  }
+
+  updateReward(value: number | null): void {
+    this.rewardCents = value;
+    if (value === null || (Number.isFinite(value) && value >= 0)) this.clearError('reward');
+  }
+
+  confirmLocationEdit(): void {
+    this.locationSelected.set(true);
+    this.clearError('location');
+  }
+
+  updatePhotoUrlDraft(value: string): void {
+    this.photoUrlDraft = value;
+    this.clearError('photoUrl');
   }
 
   addPhotoUrl(): void {
@@ -130,11 +191,14 @@ export class CreateLostPetPageComponent {
       return;
     }
     if (!/^https?:\/\//i.test(value)) {
-      this.uploadError.set('Use a server-hosted image URL that starts with http:// or https://.');
+      this.showStepErrors(2, {
+        photoUrl: 'Use a photo URL that starts with http:// or https://, or leave it blank.',
+      });
       return;
     }
     this.photoUrls = [...this.photoUrls, value];
     this.photoUrlDraft = '';
+    this.clearError('photoUrl');
   }
 
   removePhoto(url: string): void {
@@ -230,10 +294,15 @@ export class CreateLostPetPageComponent {
       this.lastSeenAt = pet.lastSeenInputValue;
       this.contactDetail = pet.contactMethod ?? '';
       this.rewardCents = pet.rewardCents;
-      this.latitude = pet.exactLocation?.latitude ?? pet.approximateLastSeenLocation.latitude;
-      this.longitude = pet.exactLocation?.longitude ?? pet.approximateLastSeenLocation.longitude;
-      this.approximateLastSeenLabel = pet.approximateLastSeenLabel;
-      this.locationSelected.set(true);
+      if (pet.exactLocation) {
+        this.latitude = pet.exactLocation.latitude;
+        this.longitude = pet.exactLocation.longitude;
+        this.approximateLastSeenLabel = pet.approximateLastSeenLabel;
+        this.locationSelected.set(true);
+      } else {
+        this.approximateLastSeenLabel = 'Choose a private last-seen pin';
+        this.locationSelected.set(false);
+      }
     } catch (error) {
       this.submitError.set(toEditLoadMessage(error));
     } finally {
@@ -296,27 +365,101 @@ export class CreateLostPetPageComponent {
     this.longitude = roundCoordinate(Math.max(-180, Math.min(180, longitude)));
     this.approximateLastSeenLabel = label;
     this.locationSelected.set(true);
+    this.clearError('location');
   }
 
   private validateForm(): string {
-    if (!this.petName.trim()) return 'Enter the pet name.';
-    if (!validSpecies.has(this.species)) return 'Choose the closest animal type.';
-    if (!this.validLastSeenAt()) {
-      return 'Enter a valid last-seen date and time.';
-    }
-    if (!this.locationSelected()) {
-      return 'Choose or confirm the exact private last-seen pin.';
-    }
-    if (this.latitude < -90 || this.latitude > 90) {
-      return 'Latitude must be between -90 and 90.';
-    }
-    if (this.longitude < -180 || this.longitude > 180) {
-      return 'Longitude must be between -180 and 180.';
-    }
-    if (this.rewardCents !== null && (!Number.isFinite(this.rewardCents) || this.rewardCents < 0)) {
-      return 'Reward must be zero or greater.';
+    for (let candidate = 0; candidate < this.steps.length - 1; candidate += 1) {
+      const errors = this.validateStep(candidate);
+      const first = Object.values(errors)[0];
+      if (first) {
+        this.showStepErrors(candidate, errors);
+        return first;
+      }
     }
     return '';
+  }
+
+  reviewIssues(): ReviewIssue[] {
+    const issues: ReviewIssue[] = [];
+    for (let candidate = 0; candidate < this.steps.length - 1; candidate += 1) {
+      for (const message of Object.values(this.validateStep(candidate))) {
+        if (message) issues.push({ message, step: candidate });
+      }
+    }
+    return issues;
+  }
+
+  identitySummary(): string {
+    const species = this.species || 'Not selected';
+    const optional = [this.breed.trim(), this.sex !== 'UNKNOWN' ? this.sex : '', this.ageDescription.trim()]
+      .filter(Boolean);
+    return [species, ...optional].join(' · ');
+  }
+
+  appearanceSummary(): string {
+    const values = [this.color.trim(), this.pattern.trim(), this.collarDescription.trim()].filter(Boolean);
+    return values.length > 0 ? values.join(' · ') : 'Not provided';
+  }
+
+  lastSeenSummary(): string {
+    return this.locationSelected() && this.validLastSeenAt()
+      ? `${this.approximateLastSeenLabel} · ${this.lastSeenAt}`
+      : 'Not provided';
+  }
+
+  private validateStep(candidate: number): StepErrors {
+    if (candidate === 0) {
+      return {
+        ...(!this.petName.trim() ? { petName: "Add your pet's name." } : {}),
+        ...(!validSpecies.has(this.species) ? { species: "Choose your pet's animal type." } : {}),
+      };
+    }
+    if (candidate === 2 && this.photoUrlDraft.trim()) {
+      return /^https?:\/\//i.test(this.photoUrlDraft.trim())
+        ? { photoUrl: 'Select Add photo URL to include this photo, or clear the field.' }
+        : { photoUrl: 'Use a photo URL that starts with http:// or https://, or leave it blank.' };
+    }
+    if (candidate === 3) {
+      return {
+        ...(!this.locationSelected()
+          ? { location: 'Choose the private last-seen location.' }
+          : this.latitude < -90 || this.latitude > 90 || this.longitude < -180 || this.longitude > 180
+            ? { location: 'Choose a valid private saved pin.' }
+            : {}),
+        ...(!this.validLastSeenAt() ? { lastSeenAt: 'Add when your pet was last seen.' } : {}),
+      };
+    }
+    if (
+      candidate === 4 &&
+      this.rewardCents !== null &&
+      (!Number.isFinite(this.rewardCents) || this.rewardCents < 0)
+    ) {
+      return { reward: 'Reward must be zero or greater.' };
+    }
+    return {};
+  }
+
+  private showStepErrors(step: number, errors: StepErrors): void {
+    this.step.set(step);
+    this.fieldErrors.set(errors);
+    const firstField = Object.keys(errors)[0];
+    if (firstField) {
+      setTimeout(() => {
+        const field = document.querySelector<HTMLElement>(`[data-validation-field="${firstField}"]`);
+        field?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        field?.focus();
+      });
+    }
+  }
+
+  private clearError(field: ValidationField): void {
+    this.fieldErrors.update((errors) => {
+      if (!errors[field]) return errors;
+      const next = { ...errors };
+      delete next[field];
+      return next;
+    });
   }
 
   private validLastSeenAt(): string | null {

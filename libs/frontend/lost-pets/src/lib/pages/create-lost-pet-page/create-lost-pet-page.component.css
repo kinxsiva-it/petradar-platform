@@ -23,6 +23,37 @@
   box-shadow: var(--shadow-card);
 }
 
+.step-errors,
+.review-issues {
+  display: grid;
+  gap: 0.45rem;
+  border: 1px solid var(--color-danger);
+  border-radius: var(--radius-card);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger);
+  padding: 0.85rem 1rem;
+}
+
+.step-errors ul {
+  margin: 0;
+  padding-left: 1.2rem;
+}
+
+.review-issues {
+  margin-top: 0.75rem;
+}
+
+.link-button {
+  justify-content: start;
+  min-height: auto;
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  padding: 0;
+  text-align: left;
+  text-decoration: underline;
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
