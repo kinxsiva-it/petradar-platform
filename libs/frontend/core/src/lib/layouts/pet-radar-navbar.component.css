@@ -2,7 +2,7 @@
   display: block;
   position: sticky;
   top: 0;
-  z-index: var(--z-header);
+  z-index: var(--z-app-chrome);
 }
 
 .petradar-navbar,
@@ -141,11 +141,6 @@
   box-shadow: var(--shadow-card);
 }
 
-.icon-action:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
-}
-
 .avatar-action {
   width: auto;
   gap: 0.55rem;
@@ -219,7 +214,7 @@
 .mobile-backdrop {
   position: fixed;
   inset: 0;
-  z-index: calc(var(--z-header) - 1);
+  z-index: calc(var(--z-app-chrome) - 1);
   border: 0;
   background: rgb(15 23 42 / 0.18);
 }
@@ -228,7 +223,7 @@
   position: fixed;
   top: 5.75rem;
   right: 0.75rem;
-  z-index: var(--z-header);
+  z-index: var(--z-app-chrome);
   display: grid;
   width: min(22rem, calc(100vw - 1.5rem));
   gap: 1rem;

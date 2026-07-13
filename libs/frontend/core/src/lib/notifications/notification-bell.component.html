@@ -1,0 +1,74 @@
+<div class="notification-control">
+  <button
+    type="button"
+    class="bell-button"
+    [attr.aria-expanded]="open()"
+    aria-haspopup="dialog"
+    [attr.aria-label]="notifications.unreadCount() > 0
+      ? 'Notifications, ' + notifications.unreadCount() + ' unread'
+      : 'Notifications'"
+    (click)="toggle()"
+  >
+    <svg lucideBell size="21" strokeWidth="2" aria-hidden="true"></svg>
+    @if (notifications.unreadCount() > 0) {
+      <span class="notification-badge" aria-hidden="true">
+        {{ notifications.unreadCount() > 99 ? '99+' : notifications.unreadCount() }}
+      </span>
+    }
+  </button>
+
+  @if (open()) {
+    <section class="notification-dropdown" aria-label="Recent notifications">
+      <header>
+        <h2>Notifications</h2>
+        <button
+          type="button"
+          class="text-action"
+          [disabled]="notifications.unreadCount() === 0 || markingAll()"
+          (click)="markAllRead()"
+        >
+          {{ markingAll() ? 'Marking...' : 'Mark all as read' }}
+        </button>
+      </header>
+
+      <div class="notification-content">
+        @if (loading()) {
+          <div class="state-message">Loading notifications...</div>
+        } @else if (errorMessage()) {
+          <div class="state-message error" role="alert">
+            <span>{{ errorMessage() }}</span>
+            <button type="button" class="text-action" (click)="load()">Retry</button>
+          </div>
+        } @else if (items().length === 0) {
+          <div class="state-message">
+            <strong>You're all caught up</strong>
+            <span>No notifications to show.</span>
+          </div>
+        } @else {
+          <div class="notification-list">
+            @for (item of items(); track item.id) {
+              <button
+                type="button"
+                class="notification-item"
+                [class.unread]="item.readAt === null"
+                [disabled]="markingId() !== null"
+                (click)="select(item)"
+              >
+                <span class="unread-indicator" aria-hidden="true"></span>
+                <span class="notification-copy">
+                  <strong>{{ item.title }}</strong>
+                  <span>{{ item.message }}</span>
+                  <time [attr.datetime]="item.createdAt">{{ item.createdAt | date: 'short' }}</time>
+                </span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <footer>
+        <a routerLink="/notifications" (click)="close()">View all notifications</a>
+      </footer>
+    </section>
+  }
+</div>

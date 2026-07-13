@@ -42,14 +42,7 @@
 
   <div class="actions">
     @if (auth.isAuthenticated()) {
-      <button
-        type="button"
-        class="icon-action"
-        aria-label="Notifications unavailable"
-        disabled
-      >
-        <svg lucideBell size="21" strokeWidth="2" aria-hidden="true"></svg>
-      </button>
+      <pr-notification-bell />
 
       <a routerLink="/profile" class="avatar-action" aria-label="Open profile">
         <span class="avatar-initials" aria-hidden="true">{{ initials() }}</span>
@@ -102,6 +95,7 @@
       @if (auth.isAuthenticated()) {
         <a routerLink="/profile" (click)="closeMenu()">Profile</a>
         <a routerLink="/settings" (click)="closeMenu()">Settings</a>
+        <a routerLink="/notifications" (click)="closeMenu()">Notifications</a>
         <button type="button" (click)="signOut()">Sign out</button>
       } @else {
         <a routerLink="/login" (click)="closeMenu()">Log in</a>

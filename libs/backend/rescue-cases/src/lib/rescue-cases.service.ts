@@ -4,10 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, UserRole, VolunteerVerificationState } from '@prisma/client';
+import { NotificationType, Prisma, UserRole, VolunteerVerificationState } from '@prisma/client';
 
 import { AuditService } from '@petradar/backend/audit';
 import type { AuthenticatedUser } from '@petradar/backend/auth';
+import { NotificationsService } from '@petradar/backend/notifications';
 import { PrismaService } from '@petradar/backend/shared';
 
 import {
@@ -62,6 +63,7 @@ interface NoteRow {
 export class RescueCasesService {
   constructor(
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -159,6 +161,10 @@ export class RescueCasesService {
       return created;
     });
 
+    if (dto.assignedVolunteerId) {
+      await this.notifyAssignment(row.id, dto.assignedVolunteerId);
+    }
+
     return this.detail(admin, row.id);
   }
 
@@ -222,6 +228,17 @@ export class RescueCasesService {
         metadata: { actorId: user.id, newStatus: dto.status, previousStatus: current.status, rescueCaseId: id },
       });
     });
+    if (current.assignedVolunteerId) {
+      await this.notifications.createNotificationIfNotExists({
+        actionUrl: `/volunteer/rescue-cases/${id}`,
+        message: 'A rescue case assigned to you has been updated.',
+        resourceId: id,
+        resourceType: 'rescue_case',
+        title: 'Rescue case updated',
+        type: NotificationType.RESCUE_STATUS_UPDATED,
+        userId: current.assignedVolunteerId,
+      });
+    }
     return this.detail(user, id);
   }
 
@@ -250,7 +267,20 @@ export class RescueCasesService {
         metadata: { actorId: admin.id, rescueCaseId: id, volunteerId: dto.volunteerId },
       });
     });
+    await this.notifyAssignment(id, dto.volunteerId);
     return this.detail(admin, id);
+  }
+
+  private async notifyAssignment(id: string, volunteerId: string): Promise<void> {
+    await this.notifications.createNotificationIfNotExists({
+      actionUrl: `/volunteer/rescue-cases/${id}`,
+      message: 'You have been assigned to a rescue case.',
+      resourceId: id,
+      resourceType: 'rescue_case',
+      title: 'New rescue assignment',
+      type: NotificationType.RESCUE_ASSIGNED,
+      userId: volunteerId,
+    });
   }
 
   async addNote(user: AuthenticatedUser, id: string, dto: CreateInternalNoteDto) {

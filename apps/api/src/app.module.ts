@@ -9,6 +9,7 @@ import { AnalyticsModule } from '@petradar/backend/analytics';
 import { LostPetsModule } from '@petradar/backend/lost-pets';
 import { MapModule } from '@petradar/backend/map';
 import { MatchingModule } from '@petradar/backend/matching';
+import { NotificationsModule } from '@petradar/backend/notifications';
 import { RescueCasesModule } from '@petradar/backend/rescue-cases';
 import { SightingsModule } from '@petradar/backend/sightings';
 import { BackendUsersModule } from '@petradar/backend/users';
@@ -35,6 +36,7 @@ import { validateEnv } from './config/env.schema.js';
     LostPetsModule,
     MapModule,
     MatchingModule,
+    NotificationsModule,
     RescueCasesModule,
     UsersModule,
     BackendUsersModule,

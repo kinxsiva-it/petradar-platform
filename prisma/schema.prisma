@@ -133,6 +133,16 @@ enum RescueTimelineEventType {
   NOTE_ADDED
 }
 
+enum NotificationType {
+  SIGHTING_VERIFIED
+  SIGHTING_REJECTED
+  MATCH_FOUND
+  MATCH_CONFIRMED
+  MATCH_REJECTED
+  RESCUE_ASSIGNED
+  RESCUE_STATUS_UPDATED
+}
+
 model User {
   id                    String                     @id @default(uuid()) @db.Uuid
   email                 String                     @unique
@@ -154,10 +164,33 @@ model User {
   createdRescueCases   RescueCase[]              @relation("CreatedRescueCase")
   rescueTimelineEvents RescueCaseTimelineEvent[]
   internalNotes        RescueInternalNote[]
+  notifications        Notification[]
 
   @@index([status])
   @@index([volunteerVerification])
   @@map("users")
+}
+
+model Notification {
+  id           String           @id @default(uuid()) @db.Uuid
+  userId       String           @map("user_id") @db.Uuid
+  type         NotificationType
+  title        String           @db.VarChar(160)
+  message      String           @db.VarChar(500)
+  actionUrl    String?          @map("action_url") @db.VarChar(500)
+  resourceType String?          @map("resource_type") @db.VarChar(80)
+  resourceId   String?          @map("resource_id") @db.Uuid
+  metadata     Json?
+  readAt       DateTime?        @map("read_at") @db.Timestamptz(6)
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
+  @@index([userId, type])
+  @@unique([userId, type, resourceType, resourceId])
+  @@map("notifications")
 }
 
 model RefreshToken {

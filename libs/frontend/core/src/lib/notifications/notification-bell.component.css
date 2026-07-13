@@ -1,0 +1,204 @@
+:host {
+  display: block;
+}
+
+.notification-control {
+  position: relative;
+}
+
+.bell-button {
+  position: relative;
+  display: flex;
+  width: 3.25rem;
+  height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border-default);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  color: var(--color-text-strong);
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+
+.bell-button:hover,
+.bell-button[aria-expanded='true'] {
+  color: var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.notification-badge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  min-width: 1.4rem;
+  min-height: 1.4rem;
+  border: 2px solid var(--color-surface);
+  border-radius: 999px;
+  background: var(--color-danger, #dc2626);
+  color: white;
+  padding: 0.15rem 0.3rem;
+  font-size: 0.65rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 0.7rem);
+  right: 0;
+  /* App-chrome popups intentionally sit above map drawers, sheets, and controls. */
+  z-index: var(--z-app-chrome-popup);
+  width: min(24rem, calc(100vw - 1.5rem));
+  overflow: hidden;
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+.notification-dropdown header,
+.notification-dropdown footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+}
+
+.notification-dropdown header {
+  border-bottom: 1px solid var(--color-border-default);
+}
+
+.notification-dropdown footer {
+  justify-content: center;
+  border-top: 1px solid var(--color-border-default);
+}
+
+h2 {
+  margin: 0;
+  color: var(--color-text-strong);
+  font-size: 1.15rem;
+}
+
+.text-action,
+footer a {
+  border: 0;
+  background: transparent;
+  color: var(--color-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.text-action:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+.notification-content {
+  max-height: min(30rem, calc(100vh - 9rem));
+  overflow-y: auto;
+}
+
+.notification-list {
+  display: grid;
+}
+
+.notification-item {
+  display: grid;
+  grid-template-columns: 0.55rem minmax(0, 1fr);
+  gap: 0.65rem;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid var(--color-border-default);
+  background: var(--color-surface);
+  padding: 0.9rem 1rem;
+  color: var(--color-text-default);
+  cursor: pointer;
+  text-align: left;
+}
+
+.notification-item:last-child {
+  border-bottom: 0;
+}
+
+.notification-item:hover,
+.notification-item.unread {
+  background: var(--color-primary-subtle);
+}
+
+.notification-item:disabled {
+  cursor: wait;
+}
+
+.unread-indicator {
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.notification-item.unread .unread-indicator {
+  background: var(--color-primary);
+}
+
+.notification-copy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.notification-copy strong {
+  color: var(--color-text-strong);
+  font-size: 0.9rem;
+}
+
+.notification-copy > span {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.notification-item.unread .notification-copy strong {
+  color: var(--color-primary);
+}
+
+time {
+  color: var(--color-text-muted);
+  font-size: 0.72rem;
+}
+
+.state-message {
+  display: grid;
+  gap: 0.35rem;
+  justify-items: center;
+  padding: 2rem 1rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.state-message.error {
+  color: var(--color-danger, #dc2626);
+}
+
+.bell-button:focus-visible,
+.notification-item:focus-visible,
+.text-action:focus-visible,
+footer a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  outline-offset: -3px;
+}
+
+@media (max-width: 900px) {
+  :host {
+    display: none;
+  }
+}
