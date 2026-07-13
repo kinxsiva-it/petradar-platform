@@ -338,8 +338,8 @@ Status: implemented in the migration workspace; production cutover is not approv
   policy and CSRF review.
 - Verify CSP/connect/image/script/style sources for the API, uploaded media, OpenStreetMap tiles, and
   optional Google Maps. Confirm HTTPS-only production content and no mixed-content requests.
-- Add a production build/deploy target and artifact pipeline for `web-next`; this phase intentionally
-  does not change DNS, reverse proxy, CDN, or the existing Angular deployment.
+- Use the explicit production-safe `web-next:build` target and add its artifact to the deployment
+  pipeline; this phase intentionally does not change DNS, reverse proxy, CDN, or Angular deployment.
 - Confirm deep-link rewrites, Next static assets, health monitoring, error reporting, cache headers,
   rate limits, and upload body limits in the deployment environment.
 
@@ -362,3 +362,66 @@ this phase; Google Places search is optional and not implemented; lost-pet binar
 backend endpoint; profile/settings remain read-only where APIs are absent; a production Next build and
 deployment target plus monitoring must be established. The four-phase implementation is complete, but
 the exit criteria remain gated on authorized browser coverage and explicit cutover approval.
+
+## 12. Post-Phase-4 cutover readiness audit
+
+Audit date: 2026-07-13. Recommendation: **ready with caveats; do not cut over yet**.
+
+### Validation results
+
+- `corepack pnpm nx typecheck web-next`: passed.
+- `corepack pnpm nx typecheck api`: passed.
+- `corepack pnpm nx typecheck admin`: passed.
+- The inferred Next build exposed a non-standard inherited `NODE_ENV` and failed while prerendering.
+  The identical build passed with `NODE_ENV=production`; `apps/web-next/project.json` now has an
+  explicit production build target so the normal Nx command is deterministic.
+- Unit tests, Playwright E2E, mobile E2E, and full CI were intentionally not run in this audit.
+
+### Route and feature smoke results
+
+- The production Next server returned HTTP 200 without server-error output for `/`,
+  `/community-guidelines`, `/login`, `/register`, `/lost-pets`, `/map`, `/report-animal`,
+  `/lost-pets/new`, `/my/reports`, `/my/lost-pets`, `/matches`, `/notifications`, `/profile`, and
+  `/settings`.
+- Real API-backed lost-pet detail, owner edit, and match detail paths also returned HTTP 200.
+- Protected route shells are expected to restore a session or redirect when no browser cookie exists.
+- Source review confirmed required-field validation, private location confirmation, map provider
+  fallback, near-me denial feedback, sighting photo limits, create-then-upload retry state, truthful
+  lost-pet URL-only photos, and read-only profile/settings behavior.
+
+### Auth, role, CORS, and privacy results
+
+- A committed development account completed login, `/auth/me`, refresh rotation, logout, and a final
+  refresh rejection with HTTP 401. No credential or token value was logged.
+- An ADMIN account used the same user-facing header and routes. No Admin CMS, rescue board, volunteer
+  dashboard, or moderation mutation/navigation is present in the Next user app.
+- The pre-existing API process on port 3000 was built before the migration commit and still returned
+  its configured origin `http://localhost:4301`. A task-owned current API on port 3001 proved the
+  committed development CORS behavior: origin 4300 was allowed with credentials, while an unapproved
+  origin received no allow-origin header. Rebuild/restart the normal API before browser verification.
+- Live public lost-pet and map responses contained public location/radius data and no exact-location,
+  contact, reporter, owner, or microchip fields. Public Next response types/renderers omit these fields;
+  exact coordinates remain limited to authenticated create/edit state and payloads.
+- Access tokens remain in React memory and refresh tokens remain API-managed HttpOnly cookies.
+
+### Before-cutover checklist
+
+- [x] Strict typechecks pass for Next Web, API, and Admin.
+- [x] Production Next build succeeds through the explicit Nx target.
+- [x] Required static, protected-shell, and real dynamic routes return successfully.
+- [x] Direct development auth lifecycle and committed CORS behavior pass.
+- [x] Source/live-response privacy and user-role boundaries pass.
+- [ ] Rebuild and restart the normal API process so port 3000 runs the committed CORS code.
+- [ ] Attach an interactive browser and verify session restoration, validation focus, dropdown
+  escape/outside behavior, responsive layouts, Leaflet tiles/markers, near-me denial, optional Google
+  2D fallback, and sighting upload failure/retry with a disposable record.
+- [ ] Run the separately authorized smoke/E2E and production-like cookie/CORS/CSP checks.
+- [ ] Configure deployment artifact, monitoring, deep-link routing, and approved production origin.
+- [ ] Obtain explicit product, security, and operations cutover approval.
+
+Known non-blocking follow-ups remain unchanged: Google Places search, lost-pet binary upload, and
+profile/settings persistence require backend/product work and are not represented as working features.
+
+Rollback reminder: keep `apps/web`, its artifact, and its routing configuration available. If any auth,
+privacy, map, upload, or stability gate fails during a later traffic rollout, route user-Web traffic back
+to Angular without changing the shared API or database. Removing Angular requires separate approval.
