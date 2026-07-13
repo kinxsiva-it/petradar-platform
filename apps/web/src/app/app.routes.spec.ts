@@ -25,6 +25,7 @@ describe('appRoutes', () => {
     expect(reportAnimal?.canActivate).toContain(authGuard);
     expect(myReports?.canActivate).toContain(authGuard);
     expect(volunteer?.canActivate).toContain(roleGuard);
-    expect(volunteer?.data?.['roles']).toEqual(['VOLUNTEER', 'ADMIN']);
+    expect(volunteer?.data?.['roles']).toEqual(['VOLUNTEER']);
+    expect(volunteer?.data?.['forbiddenRedirectUrl']).toBe('/map');
   });
 });

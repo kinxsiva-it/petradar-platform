@@ -74,9 +74,11 @@ export class RescueCaseDetailPageComponent {
   readonly selectedVolunteer = signal<RescueVolunteerOption | null>(null);
   readonly updating = signal(false);
   readonly statusNote = signal('');
-  readonly isAdmin = computed(() => this.auth.isAdmin());
   readonly listRoute = computed(() =>
     this.router.url.startsWith('/volunteer/') ? '/volunteer/rescue-cases' : '/rescue-cases',
+  );
+  readonly canAssignVolunteer = computed(
+    () => this.auth.isAdmin() && this.listRoute() === '/rescue-cases',
   );
 
   constructor() {
