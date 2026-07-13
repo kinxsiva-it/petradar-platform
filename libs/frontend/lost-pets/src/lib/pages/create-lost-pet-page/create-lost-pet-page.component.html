@@ -47,23 +47,39 @@
     </nav>
 
     <section class="wizard-card">
+      @if (currentErrors().length > 0) {
+        <div class="step-errors" role="alert" tabindex="-1">
+          <strong>Complete this step before continuing:</strong>
+          <ul>
+            @for (error of currentErrors(); track error) {
+              <li>{{ error }}</li>
+            }
+          </ul>
+        </div>
+      }
       @switch (step()) {
         @case (0) {
           <div class="form-grid two">
             <label>
               Pet name
-              <input [(ngModel)]="petName" />
+              <input [ngModel]="petName" data-validation-field="petName" (ngModelChange)="updatePetName($event)" />
+              @if (fieldErrors().petName) {
+                <small class="field-error">{{ fieldErrors().petName }}</small>
+              }
               <small class="field-help">Use the name on the collar or the name your pet responds to.</small>
             </label>
             <label
               >Species
-              <select [(ngModel)]="species">
+              <select [ngModel]="species" data-validation-field="species" (ngModelChange)="updateSpecies($event)">
                 <option value="" disabled>Choose species</option>
                 @for (item of speciesOptions; track item.value) {
                   <option [ngValue]="item.value">{{ item.label }}</option>
                 }
               </select>
               <small class="field-help">Choose the closest animal type to improve matching accuracy.</small>
+              @if (fieldErrors().species) {
+                <small class="field-error">{{ fieldErrors().species }}</small>
+              }
             </label>
             <label>
               Breed / type
@@ -109,12 +125,24 @@
           <label>
             Description
             <textarea rows="4" [(ngModel)]="description"></textarea>
-            <small class="field-help">Add behavior, size, medical needs, or other identification details.</small>
+            <small class="field-help">Optional, but behavior, size, or medical details help people recognize your pet.</small>
           </label>
         }
         @case (2) {
           <div class="form-grid two">
-            <label>Photo URL <input [(ngModel)]="photoUrlDraft" placeholder="https://..." /></label>
+            <label>
+              Photo URL
+              <input
+                [ngModel]="photoUrlDraft"
+                data-validation-field="photoUrl"
+                placeholder="https://..."
+                (ngModelChange)="updatePhotoUrlDraft($event)"
+              />
+              <small class="field-help">Photos are optional for now, but they help people recognize your pet.</small>
+              @if (fieldErrors().photoUrl) {
+                <small class="field-error">{{ fieldErrors().photoUrl }}</small>
+              }
+            </label>
             <button type="button" class="secondary" (click)="addPhotoUrl()">Add photo URL</button>
           </div>
           <p class="empty-note">
@@ -163,7 +191,8 @@
                   max="90"
                   step="0.0001"
                   [(ngModel)]="latitude"
-                  (ngModelChange)="locationSelected.set(true)"
+                  data-validation-field="location"
+                  (ngModelChange)="confirmLocationEdit()"
                 />
               </label>
               <label
@@ -174,7 +203,7 @@
                   max="180"
                   step="0.0001"
                   [(ngModel)]="longitude"
-                  (ngModelChange)="locationSelected.set(true)"
+                  (ngModelChange)="confirmLocationEdit()"
                 />
               </label>
               <p class="empty-note">
@@ -183,8 +212,11 @@
               </p>
               <label>
                 Last seen
-                <input type="datetime-local" [(ngModel)]="lastSeenAt" />
+                <input type="datetime-local" [ngModel]="lastSeenAt" data-validation-field="lastSeenAt" (ngModelChange)="updateLastSeen($event)" />
                 <small class="field-help">Use the last time you are confident the pet was at this location.</small>
+                @if (fieldErrors().lastSeenAt) {
+                  <small class="field-error">{{ fieldErrors().lastSeenAt }}</small>
+                }
               </label>
               <div class="pin-controls" aria-label="Adjust selected private pin">
                 <p class="empty-note">Nudge the exact private pin.</p>
@@ -202,6 +234,9 @@
                 </button>
               </div>
               <button type="button" (click)="useCurrentLocation()">Use current location</button>
+              @if (fieldErrors().location) {
+                <p class="field-error">{{ fieldErrors().location }}</p>
+              }
               <pr-privacy-banner />
             </div>
           </div>
@@ -223,8 +258,11 @@
             </label>
             <label>
               Reward cents
-              <input type="number" min="0" [(ngModel)]="rewardCents" />
+              <input type="number" min="0" [ngModel]="rewardCents" data-validation-field="reward" (ngModelChange)="updateReward($event)" />
               <small class="field-help">Optional. Leave blank if there is no reward.</small>
+              @if (fieldErrors().reward) {
+                <small class="field-error">{{ fieldErrors().reward }}</small>
+              }
             </label>
           </div>
           <p class="empty-note">
@@ -235,22 +273,36 @@
         @case (5) {
           <section class="review">
             <h2>Review {{ petName || 'lost pet post' }}</h2>
+            @if (reviewIssues().length > 0) {
+              <div class="review-issues" role="alert">
+                <strong>Some details still need attention.</strong>
+                @for (issue of reviewIssues(); track issue.message) {
+                  <button type="button" class="link-button" (click)="go(issue.step)">
+                    {{ issue.message }} Go back to {{ steps[issue.step] }}.
+                  </button>
+                }
+              </div>
+            }
             <dl>
               <div>
                 <dt>Pet</dt>
-                <dd>{{ species }} · {{ breed }} · {{ sex }} · {{ ageDescription }}</dd>
+                <dd>{{ identitySummary() }}</dd>
               </div>
               <div>
                 <dt>Appearance</dt>
-                <dd>{{ color }} · {{ pattern }} · {{ collarDescription }}</dd>
+                <dd>{{ appearanceSummary() }}</dd>
               </div>
               <div>
                 <dt>Last seen</dt>
-                <dd>{{ approximateLastSeenLabel }} · {{ lastSeenAt }}</dd>
+                <dd>{{ lastSeenSummary() }}</dd>
               </div>
               <div>
                 <dt>Contact</dt>
-                <dd>{{ contactPreference }} · Hidden publicly</dd>
+                <dd>{{ contactDetail.trim() ? contactPreference + ' · Hidden publicly' : 'Not provided · Hidden publicly' }}</dd>
+              </div>
+              <div>
+                <dt>Photos</dt>
+                <dd>{{ photoUrls.length > 0 ? photoUrls.length + ' selected image(s)' : 'No photos selected' }}</dd>
               </div>
             </dl>
             <pr-privacy-banner />
