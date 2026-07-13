@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 
 import { AuditModule } from '@petradar/backend/audit';
 import { BackendAuthModule } from '@petradar/backend/auth';
+import { NotificationsModule } from '@petradar/backend/notifications';
 import { LocationPrivacyService, PrismaModule } from '@petradar/backend/shared';
 import { SightingsModule } from '@petradar/backend/sightings';
 
@@ -23,7 +24,7 @@ import { AdminUsersService } from './admin-users.service.js';
     AdminSightingsController,
     AdminUsersController,
   ],
-  imports: [AuditModule, BackendAuthModule, PrismaModule, SightingsModule],
+  imports: [AuditModule, BackendAuthModule, NotificationsModule, PrismaModule, SightingsModule],
   providers: [
     AdminAuditLogsService,
     AdminPrivacyPolicyService,

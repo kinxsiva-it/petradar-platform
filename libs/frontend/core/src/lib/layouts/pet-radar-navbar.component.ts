@@ -1,7 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import {
-  LucideBell,
   LucideChevronDown,
   LucideGitFork,
   LucideHeart,
@@ -15,6 +14,8 @@ import {
 
 import { AuthStateService } from '../auth/auth-state.service.js';
 import type { UserRole } from '../auth/auth.models.js';
+import { NotificationBellComponent } from '../notifications/notification-bell.component.js';
+import { NotificationsApiService } from '../notifications/notifications-api.service.js';
 
 interface NavItem {
   authenticatedOnly?: boolean;
@@ -45,7 +46,7 @@ const mainNavItems: NavItem[] = [
   imports: [
     RouterLink,
     RouterLinkActive,
-    LucideBell,
+    NotificationBellComponent,
     LucideChevronDown,
     LucideGitFork,
     LucideHeart,
@@ -63,10 +64,21 @@ const mainNavItems: NavItem[] = [
 export class PetRadarNavbarComponent {
   readonly auth = inject(AuthStateService);
   readonly menuOpen = signal(false);
+  readonly notifications = inject(NotificationsApiService);
   readonly navItems = computed(() => mainNavItems.filter((item) => this.canShow(item)));
   readonly initials = computed(() => initialsFor(this.auth.user()?.displayName));
   readonly roleLabel = computed(() => this.auth.roles().filter((role) => role !== 'GUEST').join(', '));
   private readonly router = inject(Router);
+
+  constructor() {
+    effect(() => {
+      if (this.auth.isAuthenticated()) {
+        void this.notifications.refreshUnreadCount().catch(() => this.notifications.clearUnreadCount());
+      } else {
+        this.notifications.clearUnreadCount();
+      }
+    });
+  }
 
   async signOut(): Promise<void> {
     await this.auth.logout();

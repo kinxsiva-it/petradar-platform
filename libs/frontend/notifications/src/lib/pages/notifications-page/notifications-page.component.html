@@ -3,13 +3,48 @@
     <div>
       <p class="eyebrow">Notification Center</p>
       <h1>Notifications</h1>
-      <p>No notification API is exposed in the current PetRadar frontend contract.</p>
+      <p>Important updates about your reports, matches, and rescue work.</p>
     </div>
+    <button type="button" [disabled]="!hasUnread() || markingAll()" (click)="markAllRead()">
+      {{ markingAll() ? 'Marking…' : 'Mark all as read' }}
+    </button>
   </header>
 
-  <pr-empty-state
-    title="No notifications available"
-    description="Notification badges and local mock notification records have been removed until a real notification API is available."
-    icon="0"
-  />
+  <div class="tabs" aria-label="Notification filters">
+    <button type="button" [class.active]="filter() === 'all'" (click)="setFilter('all')">All</button>
+    <button type="button" [class.active]="filter() === 'unread'" (click)="setFilter('unread')">Unread</button>
+  </div>
+
+  @if (loading()) {
+    <div class="panel"><p>Loading notifications…</p></div>
+  } @else if (errorMessage()) {
+    <div class="panel error" role="alert">
+      <p>{{ errorMessage() }}</p>
+      <button type="button" (click)="load()">Retry</button>
+    </div>
+  } @else if (items().length === 0) {
+    <div class="panel"><h2>You're all caught up</h2><p>No notifications to show.</p></div>
+  } @else {
+    <div class="notification-list">
+      @for (item of items(); track item.id) {
+        <article class="panel notification" [class.unread]="item.readAt === null">
+          <div>
+            <h2>{{ item.title }}</h2>
+            <p>{{ item.message }}</p>
+            <time [attr.datetime]="item.createdAt">{{ item.createdAt | date: 'medium' }}</time>
+          </div>
+          <div class="notification-actions">
+            @if (item.actionUrl) {
+              <a [routerLink]="item.actionUrl" (click)="markRead(item)">View</a>
+            }
+            @if (item.readAt === null) {
+              <button type="button" [disabled]="markingId() === item.id" (click)="markRead(item)">
+                {{ markingId() === item.id ? 'Marking…' : 'Mark as read' }}
+              </button>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  }
 </section>

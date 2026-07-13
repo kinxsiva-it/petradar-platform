@@ -91,6 +91,8 @@
   --z-overlay: 900;
   --z-drawer: 950;
   --z-sheet: 1000;
+  --z-app-chrome: 1100;
+  --z-app-chrome-popup: 1110;
   color-scheme: light;
   font-family: var(--font-sans);
   background: var(--color-background);

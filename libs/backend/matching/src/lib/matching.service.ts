@@ -1,8 +1,9 @@
 import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, UserRole } from '@prisma/client';
+import { NotificationType, Prisma, UserRole } from '@prisma/client';
 
 import { AuditService } from '@petradar/backend/audit';
 import type { AuthenticatedUser } from '@petradar/backend/auth';
+import { NotificationsService } from '@petradar/backend/notifications';
 import { PrismaService } from '@petradar/backend/shared';
 
 import { ListMatchesQueryDto } from './dto/matches.dto.js';
@@ -60,6 +61,7 @@ interface MatchRow {
 export class MatchingService {
   constructor(
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
   ) {}
 
@@ -121,6 +123,18 @@ export class MatchingService {
         requestId,
       });
     });
+
+    if (scored.length > 0) {
+      await this.notifications.createNotificationIfNotExists({
+        actionUrl: '/matches',
+        message: 'PetRadar found a possible match for your lost pet.',
+        resourceId: lostPet.id,
+        resourceType: 'lost_pet',
+        title: 'Possible match found',
+        type: NotificationType.MATCH_FOUND,
+        userId: lostPet.ownerId,
+      });
+    }
 
     return this.listForLostPet(user, lostPetId);
   }
@@ -223,7 +237,26 @@ export class MatchingService {
       throw new ConflictException('This match has already been reviewed.');
     }
 
-    return this.detail(admin, id);
+    const detail = await this.detail(admin, id);
+    const owner = await this.prisma.matchResult.findUnique({
+      select: { lostPet: { select: { ownerId: true } } },
+      where: { id },
+    });
+    if (owner) {
+      const confirmed = nextStatus === 'CONFIRMED';
+      await this.notifications.createNotificationIfNotExists({
+        actionUrl: `/matches/${id}`,
+        message: confirmed
+          ? 'A possible match for your lost pet has been confirmed.'
+          : 'A possible match for your lost pet was reviewed and rejected.',
+        resourceId: id,
+        resourceType: 'match_result',
+        title: confirmed ? 'Match confirmed' : 'Match rejected',
+        type: confirmed ? NotificationType.MATCH_CONFIRMED : NotificationType.MATCH_REJECTED,
+        userId: owner.lostPet.ownerId,
+      });
+    }
+    return detail;
   }
 
   private async loadLostPetForAccess(

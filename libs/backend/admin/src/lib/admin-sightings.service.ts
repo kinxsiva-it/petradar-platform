@@ -2,6 +2,7 @@ import { ConflictException, ForbiddenException, Injectable, NotFoundException } 
 import {
   AnimalCondition,
   AnimalSpecies,
+  NotificationType,
   Prisma,
   SightingLifecycleStatus,
   UrgencyLevel,
@@ -10,6 +11,7 @@ import {
 
 import { AuditService } from '@petradar/backend/audit';
 import { AuthorizationPolicyService, type AuthenticatedUser } from '@petradar/backend/auth';
+import { NotificationsService } from '@petradar/backend/notifications';
 import { PrismaService } from '@petradar/backend/shared';
 import {
   canModerateSighting,
@@ -134,6 +136,7 @@ export class AdminSightingsService {
   constructor(
     private readonly audit: AuditService,
     private readonly authorization: AuthorizationPolicyService,
+    private readonly notifications: NotificationsService,
     private readonly prisma: PrismaService,
     private readonly sightings: SightingsRepository,
   ) {}
@@ -400,6 +403,21 @@ export class AdminSightingsService {
         requestId: context.requestId,
       });
       throw new ConflictException('This sighting was already moderated.');
+    }
+
+    if (current.reporterId) {
+      const verified = nextStatus === VerificationStatus.VERIFIED;
+      await this.notifications.createNotificationIfNotExists({
+        actionUrl: `/sightings/${id}`,
+        message: verified
+          ? 'Your animal sighting report has been verified.'
+          : 'Your animal sighting report was reviewed and rejected.',
+        resourceId: id,
+        resourceType: 'animal_sighting',
+        title: verified ? 'Report verified' : 'Report rejected',
+        type: verified ? NotificationType.SIGHTING_VERIFIED : NotificationType.SIGHTING_REJECTED,
+        userId: current.reporterId,
+      });
     }
   }
 

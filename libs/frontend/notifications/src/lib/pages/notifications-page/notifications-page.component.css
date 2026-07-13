@@ -51,6 +51,50 @@ button {
   font-weight: 750;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.notification {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.notification.unread {
+  border-left: 0.3rem solid var(--color-primary);
+  background: var(--color-primary-subtle);
+}
+
+.notification h2 {
+  margin: 0 0 0.35rem;
+  color: var(--color-text-strong);
+  font-size: 1.05rem;
+}
+
+.notification time {
+  display: block;
+  margin-top: 0.6rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.notification-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.notification-actions a {
+  color: var(--color-primary);
+  font-weight: 800;
+}
+
+.error {
+  border-color: var(--color-danger, #dc2626);
+}
+
 .tabs {
   display: flex;
   flex-wrap: wrap;
@@ -75,7 +119,13 @@ button {
   }
 
   .page-header button,
-  .tabs button {
+  .tabs button,
+  .notification-actions button {
     width: 100%;
+  }
+
+  .notification,
+  .notification-actions {
+    display: grid;
   }
 }

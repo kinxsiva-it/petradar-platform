@@ -155,6 +155,7 @@ function createService(
   return new AdminSightingsService(
     audit as never,
     authorization,
+    { createNotificationIfNotExists: jest.fn().mockResolvedValue(undefined) } as never,
     prisma as never,
     repository as never,
   );
