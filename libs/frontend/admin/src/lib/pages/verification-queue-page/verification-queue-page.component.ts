@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { injectMutation, injectQuery } from '@tanstack/angular-query-experimental';
 import { lastValueFrom } from 'rxjs';
@@ -72,7 +72,7 @@ export class VerificationQueuePageComponent {
     if (this.queueQuery.isPending()) {
       return 'loading';
     }
-    if (this.actionErrorMessage() || this.queueQuery.isError()) {
+    if (this.queueQuery.isError()) {
       return 'error';
     }
     return 'ready';
@@ -88,15 +88,6 @@ export class VerificationQueuePageComponent {
         (item) => item.urgency === 'HIGH' || item.urgency === 'EMERGENCY',
       ).length ?? 0,
   );
-
-  private readonly selectFirstReportAfterQueueLoad = effect(() => {
-    const dataUpdatedAt = this.queueQuery.dataUpdatedAt();
-    const response = this.response();
-    if (dataUpdatedAt === 0) {
-      return;
-    }
-    this.selected.set(response?.items[0]);
-  });
 
   updateFilters(filters: AdminModerationFilters): void {
     this.actionErrorMessage.set('');
@@ -158,6 +149,7 @@ export class VerificationQueuePageComponent {
       await this.moderationMutation.mutateAsync(variables);
       this.actionMessage.set(successMessage);
       await this.queueQuery.refetch();
+      this.selected.set(undefined);
     } catch (error) {
       this.actionMessage.set('');
       this.actionErrorMessage.set(toUserMessage(error));

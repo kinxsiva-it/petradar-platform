@@ -117,6 +117,36 @@ button,
   color: var(--color-primary);
 }
 
+.board-page.admin-layout .page-header,
+.board-page.admin-layout .filter-bar,
+.board-page.admin-layout .summary-grid article,
+.board-page.admin-layout .board-column,
+.board-page.admin-layout .panel {
+  padding: clamp(0.9rem, 2vw, 1.2rem);
+}
+
+.board-page.admin-layout .filter-bar {
+  grid-template-columns: minmax(16rem, 1.35fr) repeat(4, minmax(8rem, 0.65fr)) auto;
+}
+
+.board-page.admin-layout .board-groups {
+  grid-template-columns: repeat(4, minmax(14rem, 1fr));
+  gap: 0.8rem;
+}
+
+.board-page.admin-layout .board-column {
+  background: color-mix(in srgb, var(--color-surface-muted) 72%, white);
+  box-shadow: none;
+}
+
+.board-page.admin-layout .column-cases {
+  gap: 0.7rem;
+}
+
+.board-page.admin-layout button {
+  cursor: pointer;
+}
+
 @media (max-width: 1360px) {
   .board-groups {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -125,12 +155,22 @@ button,
   .filter-bar {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+
+  .board-page.admin-layout .board-groups,
+  .board-page.admin-layout .filter-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 700px) {
   .summary-grid,
   .filter-bar,
   .board-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .board-page.admin-layout .board-groups,
+  .board-page.admin-layout .filter-bar {
     grid-template-columns: 1fr;
   }
 }

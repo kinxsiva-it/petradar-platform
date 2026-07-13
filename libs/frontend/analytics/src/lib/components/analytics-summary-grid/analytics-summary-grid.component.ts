@@ -20,17 +20,19 @@ import type { AnalyticsMetric } from '../../data-access/analytics-api.models.js'
     `
       .summary-grid {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.8rem;
       }
 
       article {
+        display: grid;
         min-width: 0;
+        min-height: 7.5rem;
+        align-content: start;
         border: 1px solid var(--color-border-default);
         border-radius: var(--radius-card);
-        background: var(--color-surface);
+        background: var(--color-surface-muted);
         padding: 1rem;
-        box-shadow: var(--shadow-card);
       }
 
       span,
@@ -63,9 +65,9 @@ import type { AnalyticsMetric } from '../../data-access/analytics-api.models.js'
         color: var(--color-match);
       }
 
-      @media (max-width: 1180px) {
+      @media (max-width: 1100px) {
         .summary-grid {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
         }
       }
 

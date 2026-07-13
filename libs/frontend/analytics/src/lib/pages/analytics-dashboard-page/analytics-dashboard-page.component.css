@@ -4,18 +4,13 @@
 }
 
 .page-header,
-.panel {
+.panel,
+.dashboard-section {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
   padding: clamp(1rem, 2.5vw, 1.35rem);
   box-shadow: var(--shadow-card);
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
 }
 
 .eyebrow,
@@ -38,39 +33,70 @@ h1 {
 
 h2 {
   color: var(--color-text-strong);
-  font: var(--text-heading-3);
+  font: var(--text-heading-2);
 }
 
-.filter-row {
+.page-header p:not(.eyebrow),
+.section-heading span {
+  color: var(--color-text-muted);
+}
+
+.dashboard-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.section-heading {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-content: start;
-  justify-content: flex-end;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
-select {
-  min-height: 2.75rem;
-  border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-control);
-  background: var(--color-surface);
-  padding: 0 0.75rem;
+.section-heading > div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.section-heading span {
+  font-size: 0.85rem;
+  font-weight: 750;
 }
 
 .chart-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 0.9rem;
 }
 
-@media (max-width: 900px) {
-  .page-header,
+button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary);
+  color: white;
+  padding: 0 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+@media (max-width: 1200px) {
   .chart-grid {
-    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .chart-grid {
     grid-template-columns: 1fr;
   }
 
-  .filter-row {
-    justify-content: stretch;
+  .section-heading {
+    align-items: start;
+    flex-direction: column;
   }
 }

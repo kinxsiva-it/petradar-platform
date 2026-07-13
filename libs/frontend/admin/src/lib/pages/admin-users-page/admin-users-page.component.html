@@ -3,7 +3,7 @@
     <div>
       <p class="eyebrow">User and role management</p>
       <h1>Admin Users</h1>
-      <p>Review safe account summaries from the Admin users API.</p>
+      <p>Review account status, roles, volunteer verification, and platform activity.</p>
     </div>
   </header>
 
@@ -21,44 +21,72 @@
       <pr-admin-summary-card label="Suspended" [value]="suspendedCount()" detail="On this page" />
     </section>
 
-    <section class="filter-bar">
-      <input type="search" [ngModel]="filters().query ?? ''" (ngModelChange)="updateQuery($event)" placeholder="Search name or email" />
-      <select [ngModel]="filters().role ?? 'All'" (ngModelChange)="updateRole($event)">
+    <section class="filter-bar" aria-label="User filters">
+      <input
+        type="search"
+        aria-label="Search users"
+        [ngModel]="filters().query ?? ''"
+        (ngModelChange)="updateQuery($event)"
+        placeholder="Search name or email"
+      />
+      <select aria-label="Filter by role" [ngModel]="filters().role ?? 'All'" (ngModelChange)="updateRole($event)">
         <option>All</option>
         <option>REPORTER</option>
         <option>PET_OWNER</option>
         <option>VOLUNTEER</option>
         <option>ADMIN</option>
       </select>
-      <select [ngModel]="filters().status ?? 'All'" (ngModelChange)="updateStatus($event)">
+      <select aria-label="Filter by account status" [ngModel]="filters().status ?? 'All'" (ngModelChange)="updateStatus($event)">
         <option>All</option>
         <option>ACTIVE</option>
         <option>SUSPENDED</option>
         <option>PENDING_REVIEW</option>
       </select>
-      <select [ngModel]="filters().volunteerVerification ?? 'All'" (ngModelChange)="updateVolunteerVerification($event)">
+      <select
+        aria-label="Filter by volunteer verification"
+        [ngModel]="filters().volunteerVerification ?? 'All'"
+        (ngModelChange)="updateVolunteerVerification($event)"
+      >
         <option>All</option>
         <option>NOT_APPLICABLE</option>
         <option>PENDING</option>
         <option>VERIFIED</option>
         <option>REJECTED</option>
       </select>
-      <button type="button" (click)="clearFilters()">Clear</button>
+      <button type="button" (click)="clearFilters()">Clear filters</button>
     </section>
 
     @if ((response()?.items?.length ?? 0) === 0) {
       <pr-empty-state title="No users match filters" description="Clear filters or search for another role." icon="0" />
     } @else {
       <pr-admin-user-table [users]="response()?.items ?? []" />
-      <section class="mobile-cards">
+      <section class="mobile-cards" aria-label="User results">
         @for (user of response()?.items ?? []; track user.id) {
           <article>
-            <div>
-              <h2>{{ user.displayName }}</h2>
-              <p>{{ user.email }}</p>
-              <pr-status-badge [label]="user.accountStatus" [tone]="user.accountStatus === 'ACTIVE' ? 'success' : 'warning'" />
+            <header>
+              @if (user.avatarUrl) {
+                <img [src]="user.avatarUrl" [alt]="user.displayName" />
+              } @else {
+                <span class="avatar" aria-hidden="true">{{ initials(user.displayName) }}</span>
+              }
+              <div>
+                <h2 [title]="user.displayName">{{ user.displayName }}</h2>
+                <p [title]="user.email">{{ user.email }}</p>
+              </div>
+            </header>
+            <div class="role-list" aria-label="Assigned roles">
+              @for (role of user.roles; track role) {
+                <span>{{ role }}</span>
+              }
             </div>
-            <a [routerLink]="['/users', user.id]">Open detail</a>
+            <div class="badge-row">
+              <pr-status-badge [label]="user.accountStatus" [tone]="user.accountStatus === 'ACTIVE' ? 'success' : 'warning'" />
+              @if (user.volunteerVerification !== 'NOT_APPLICABLE') {
+                <pr-status-badge [label]="user.volunteerVerification" tone="match" />
+              }
+            </div>
+            <p class="activity">{{ user.reportCount }} reports</p>
+            <a [routerLink]="['/users', user.id]" [attr.aria-label]="'Open user details for ' + user.displayName">Open detail</a>
           </article>
         }
       </section>

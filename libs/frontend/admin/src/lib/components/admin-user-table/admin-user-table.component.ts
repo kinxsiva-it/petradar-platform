@@ -75,10 +75,18 @@ function volunteerVerificationValue(user: AdminUserSummary): string {
                 @if (cell.column.id === 'displayName') {
                   <td class="person">
                     <span class="avatar" aria-hidden="true">{{ initials(row.original.displayName) }}</span>
-                    <span>{{ row.original.displayName }}</span>
+                    <span class="person-name" [title]="row.original.displayName">{{ row.original.displayName }}</span>
                   </td>
                 } @else if (cell.column.id === 'email') {
-                  <td class="email">{{ cellValue(cell) }}</td>
+                  <td class="email" [title]="row.original.email">{{ row.original.email }}</td>
+                } @else if (cell.column.id === 'roles') {
+                  <td>
+                    <div class="role-list" aria-label="Assigned roles">
+                      @for (role of row.original.roles; track role) {
+                        <span>{{ role }}</span>
+                      }
+                    </div>
+                  </td>
                 } @else if (cell.column.id === 'accountStatus') {
                   <td>
                     <pr-status-badge
@@ -89,7 +97,16 @@ function volunteerVerificationValue(user: AdminUserSummary): string {
                 } @else if (cell.column.id === 'volunteerVerification') {
                   <td><pr-status-badge [label]="row.original.volunteerVerification" tone="match" /></td>
                 } @else if (cell.column.id === 'detail') {
-                  <td><a [routerLink]="['/users', row.original.id]">Open</a></td>
+                  <td class="action-cell">
+                    <a
+                      [routerLink]="['/users', row.original.id]"
+                      [attr.aria-label]="'Open user details for ' + row.original.displayName"
+                    >
+                      Open detail
+                    </a>
+                  </td>
+                } @else if (cell.column.id === 'reportCount') {
+                  <td class="report-count">{{ row.original.reportCount }}</td>
                 } @else {
                   <td>{{ cellValue(cell) }}</td>
                 }
@@ -112,20 +129,32 @@ function volunteerVerificationValue(user: AdminUserSummary): string {
 
       table {
         width: 100%;
-        min-width: 54rem;
+        min-width: 62rem;
         border-collapse: collapse;
       }
 
       th,
       td {
         border-bottom: 1px solid var(--color-border-default);
-        padding: 0.8rem;
+        padding: 0.75rem 0.85rem;
         text-align: left;
+        vertical-align: middle;
       }
 
       th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--color-surface);
         color: var(--color-text-muted);
         font: var(--text-caption);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      tbody tr:hover {
+        background: var(--color-surface-muted);
       }
 
       .person {
@@ -134,6 +163,14 @@ function volunteerVerificationValue(user: AdminUserSummary): string {
         gap: 0.7rem;
         color: var(--color-text-strong);
         font-weight: 850;
+      }
+
+      .person-name,
+      .email {
+        max-width: 12rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
 
       .avatar {
@@ -148,15 +185,49 @@ function volunteerVerificationValue(user: AdminUserSummary): string {
       }
 
       .email {
-        overflow-wrap: anywhere;
+        max-width: 15rem;
+      }
+
+      .role-list {
+        display: flex;
+        max-width: 13rem;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+
+      .role-list span {
+        border-radius: 999px;
+        background: var(--color-surface-muted);
+        color: var(--color-text-muted);
+        padding: 0.25rem 0.45rem;
+        font-size: 0.7rem;
+        font-weight: 800;
+      }
+
+      .report-count {
+        color: var(--color-text-strong);
+        font-weight: 850;
+        text-align: center;
+      }
+
+      .action-cell {
+        width: 1%;
+        white-space: nowrap;
       }
 
       a {
+        display: inline-flex;
+        min-height: 2.4rem;
+        align-items: center;
+        border: 1px solid var(--color-primary);
+        border-radius: var(--radius-control);
         color: var(--color-primary);
+        padding: 0 0.7rem;
         font-weight: 850;
+        text-decoration: none;
       }
 
-      @media (max-width: 760px) {
+      @media (max-width: 820px) {
         .user-table {
           display: none;
         }

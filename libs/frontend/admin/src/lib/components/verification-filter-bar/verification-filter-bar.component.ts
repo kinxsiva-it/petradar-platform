@@ -11,17 +11,18 @@ import type { AdminModerationFilters } from '../../data-access/admin-sightings-a
     <section class="filter-bar" aria-label="Verification filters">
       <input
         type="search"
+        aria-label="Search verification queue"
         [ngModel]="filters().query ?? ''"
         (ngModelChange)="change('query', $event)"
         placeholder="Search report, animal, reporter, area"
       />
-      <select [ngModel]="filters().species ?? 'All'" (ngModelChange)="change('species', $event)">
+      <select aria-label="Filter by species" [ngModel]="filters().species ?? 'All'" (ngModelChange)="change('species', $event)">
         <option value="All">All</option>
         <option value="CAT">Cat</option>
         <option value="DOG">Dog</option>
         <option value="OTHER">Other</option>
       </select>
-      <select [ngModel]="filters().condition ?? 'All'" (ngModelChange)="change('condition', $event)">
+      <select aria-label="Filter by condition" [ngModel]="filters().condition ?? 'All'" (ngModelChange)="change('condition', $event)">
         <option value="All">All</option>
         <option value="NORMAL_STRAY">Normal stray</option>
         <option value="INJURED">Injured</option>
@@ -29,7 +30,7 @@ import type { AdminModerationFilters } from '../../data-access/admin-sightings-a
         <option value="NEEDS_RESCUE">Needs rescue</option>
         <option value="UNKNOWN">Unknown</option>
       </select>
-      <select [ngModel]="filters().urgency ?? 'All'" (ngModelChange)="change('urgency', $event)">
+      <select aria-label="Filter by urgency" [ngModel]="filters().urgency ?? 'All'" (ngModelChange)="change('urgency', $event)">
         <option value="All">All</option>
         <option value="LOW">LOW</option>
         <option value="MEDIUM">MEDIUM</option>
@@ -37,6 +38,7 @@ import type { AdminModerationFilters } from '../../data-access/admin-sightings-a
         <option value="EMERGENCY">EMERGENCY</option>
       </select>
       <select
+        aria-label="Filter by verification status"
         [ngModel]="filters().verificationStatus ?? 'All'"
         (ngModelChange)="change('verificationStatus', $event)"
       >
@@ -46,7 +48,7 @@ import type { AdminModerationFilters } from '../../data-access/admin-sightings-a
         <option value="VERIFIED">VERIFIED</option>
         <option value="REJECTED">REJECTED</option>
       </select>
-      <button type="button" (click)="cleared.emit()">Clear</button>
+      <button type="button" (click)="cleared.emit()">Clear filters</button>
     </section>
   `,
   styles: [
@@ -80,6 +82,7 @@ import type { AdminModerationFilters } from '../../data-access/admin-sightings-a
         border-color: var(--color-primary);
         color: var(--color-primary);
         font-weight: 800;
+        cursor: pointer;
       }
 
       @media (max-width: 1200px) {

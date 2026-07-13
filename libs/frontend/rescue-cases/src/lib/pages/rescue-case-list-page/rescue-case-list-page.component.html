@@ -1,4 +1,4 @@
-<section class="board-page">
+<section class="board-page" [class.admin-layout]="detailBaseRoute() === '/rescue-cases'">
   <header class="page-header">
     <div>
       <p class="eyebrow">Rescue operations</p>
@@ -14,34 +14,37 @@
     <article><span>{{ completedCases().length }}</span><b>Completed</b></article>
   </section>
 
-  <section class="filter-bar">
+  <section class="filter-bar" aria-label="Rescue case filters">
     <input
       type="search"
+      aria-label="Search rescue cases"
       [ngModel]="filters().query"
       (ngModelChange)="updateFilter('query', $event)"
       placeholder="Search case number, animal, area, or summary"
     />
-    <select [ngModel]="filters().species" (ngModelChange)="updateFilter('species', $event)">
+    <select aria-label="Filter by species" [ngModel]="filters().species" (ngModelChange)="updateFilter('species', $event)">
       @for (item of speciesOptions; track item) {
         <option [ngValue]="item">{{ speciesLabel(item) }}</option>
       }
     </select>
-    <select [ngModel]="filters().severity" (ngModelChange)="updateFilter('severity', $event)">
+    <select aria-label="Filter by severity" [ngModel]="filters().severity" (ngModelChange)="updateFilter('severity', $event)">
       @for (item of severityOptions; track item) {
         <option [ngValue]="item">{{ item }}</option>
       }
     </select>
-    <select [ngModel]="filters().status" (ngModelChange)="updateFilter('status', $event)">
+    <select aria-label="Filter by status" [ngModel]="filters().status" (ngModelChange)="updateFilter('status', $event)">
       @for (item of statusOptions; track item) {
         <option [ngValue]="item">{{ statusLabel(item) }}</option>
       }
     </select>
-    <select [ngModel]="filters().assignment" (ngModelChange)="updateFilter('assignment', $event)">
+    <select aria-label="Filter by assignment" [ngModel]="filters().assignment" (ngModelChange)="updateFilter('assignment', $event)">
       @for (item of assignmentOptions; track item) {
         <option [ngValue]="item">{{ item }}</option>
       }
     </select>
-    <button type="button" (click)="clearFilters()">Clear</button>
+    <button type="button" (click)="clearFilters()">
+      {{ detailBaseRoute() === '/rescue-cases' ? 'Clear filters' : 'Clear' }}
+    </button>
   </section>
 
   @if (uiState() === 'loading') {
@@ -61,7 +64,12 @@
           <h2>{{ group.label }} <span>{{ casesFor(group.statuses).length }}</span></h2>
           <div class="column-cases">
             @for (caseItem of casesFor(group.statuses); track caseItem.id) {
-              <pr-rescue-case-card [caseItem]="caseItem" [detailBaseRoute]="detailBaseRoute()" />
+              <pr-rescue-case-card
+                [caseItem]="caseItem"
+                [compact]="detailBaseRoute() === '/rescue-cases'"
+                [showAssignee]="detailBaseRoute() === '/rescue-cases'"
+                [detailBaseRoute]="detailBaseRoute()"
+              />
             } @empty {
               <p class="empty-column">No cases in this group.</p>
             }

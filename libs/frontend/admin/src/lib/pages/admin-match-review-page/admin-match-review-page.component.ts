@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -69,7 +70,7 @@ function matchScoreValue(item: LostPetMatchView): string {
 @Component({
   selector: 'pr-admin-match-review-page',
   standalone: true,
-  imports: [EmptyStateComponent, FormsModule, LoadingSkeletonComponent, RouterLink, StatusBadgeComponent],
+  imports: [DatePipe, EmptyStateComponent, FormsModule, LoadingSkeletonComponent, RouterLink, StatusBadgeComponent],
   styleUrl: './admin-match-review-page.component.css',
   templateUrl: './admin-match-review-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

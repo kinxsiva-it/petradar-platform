@@ -25,26 +25,37 @@
 
 .cms-brand {
   display: grid;
-  gap: 0.2rem;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
   padding: 1.25rem;
   color: white;
   text-decoration: none;
 }
 
-.cms-brand span {
+.cms-brand-mark {
   display: grid;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 3rem;
+  height: 3rem;
   place-items: center;
-  border-radius: 0.8rem;
-  background: #f4bf4f;
-  color: #12312a;
-  font-weight: 900;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 35% 28%, rgb(255 255 255 / 0.28), transparent 28%),
+    #0f766e;
+  color: white;
+  box-shadow: 0 8px 20px rgb(0 0 0 / 0.16);
+}
+
+.cms-brand-copy {
+  display: grid;
+  min-width: 0;
+  gap: 0.25rem;
 }
 
 .cms-brand strong {
-  margin-top: 0.5rem;
   font-size: 1.05rem;
+  line-height: 1.1;
 }
 
 .cms-brand small {
@@ -68,16 +79,27 @@
   padding: 0 0.75rem;
   font-weight: 750;
   text-decoration: none;
+  transition: background-color 150ms ease, color 150ms ease;
 }
 
-.cms-sidebar nav a span {
+.nav-icon {
   display: grid;
-  width: 1.65rem;
-  height: 1.65rem;
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
   place-items: center;
-  border-radius: 0.5rem;
+  border-radius: 0.6rem;
   background: rgb(255 255 255 / 0.1);
-  font-size: 0.72rem;
+  color: rgb(255 255 255 / 0.72);
+  transition: background-color 150ms ease, color 150ms ease;
+}
+
+.nav-icon svg {
+  display: block;
+}
+
+.nav-label {
+  min-width: 0;
 }
 
 .cms-sidebar nav a.active,
@@ -86,9 +108,19 @@
   color: white;
 }
 
-.cms-sidebar nav a.active span {
+.cms-sidebar nav a:hover .nav-icon {
+  color: white;
+}
+
+.cms-sidebar nav a.active .nav-icon {
   background: #f4bf4f;
   color: #12312a;
+}
+
+.cms-brand:focus-visible,
+.cms-sidebar nav a:focus-visible {
+  outline: 3px solid rgb(244 191 79 / 0.7);
+  outline-offset: -2px;
 }
 
 .cms-main {

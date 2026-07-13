@@ -7,10 +7,14 @@
   ></button>
 
   <aside class="cms-sidebar" aria-label="PetRadar Admin CMS navigation">
-    <a routerLink="/dashboard" class="cms-brand" (click)="closeSidebar()">
-      <span aria-hidden="true">PR</span>
-      <strong>PetRadar CMS</strong>
-      <small>Admin operations</small>
+    <a routerLink="/dashboard" class="cms-brand" aria-label="PetRadar CMS dashboard" (click)="closeSidebar()">
+      <span class="cms-brand-mark" aria-hidden="true">
+        <svg lucidePawPrint size="25" strokeWidth="2.4"></svg>
+      </span>
+      <span class="cms-brand-copy">
+        <strong>PetRadar CMS</strong>
+        <small>Admin operations</small>
+      </span>
     </a>
 
     <nav>
@@ -18,11 +22,45 @@
         <a
           [routerLink]="item.route"
           routerLinkActive="active"
+          ariaCurrentWhenActive="page"
           [routerLinkActiveOptions]="{ exact: item.exact === true }"
           (click)="closeSidebar()"
         >
-          <span aria-hidden="true">{{ item.marker }}</span>
-          {{ item.label }}
+          <span class="nav-icon" aria-hidden="true">
+            @switch (item.icon) {
+              @case ('dashboard') {
+                <svg lucideLayoutDashboard size="19" strokeWidth="2"></svg>
+              }
+              @case ('verification') {
+                <svg lucideShieldCheck size="19" strokeWidth="2"></svg>
+              }
+              @case ('rescue') {
+                <svg lucideLifeBuoy size="19" strokeWidth="2"></svg>
+              }
+              @case ('volunteers') {
+                <svg lucideHandHeart size="19" strokeWidth="2"></svg>
+              }
+              @case ('users') {
+                <svg lucideUserCog size="19" strokeWidth="2"></svg>
+              }
+              @case ('matches') {
+                <svg lucideGitFork size="19" strokeWidth="2"></svg>
+              }
+              @case ('analytics') {
+                <svg lucideChartNoAxesColumn size="19" strokeWidth="2"></svg>
+              }
+              @case ('hotspots') {
+                <svg lucideFlame size="19" strokeWidth="2"></svg>
+              }
+              @case ('privacy') {
+                <svg lucideShield size="19" strokeWidth="2"></svg>
+              }
+              @case ('audit') {
+                <svg lucideScrollText size="19" strokeWidth="2"></svg>
+              }
+            }
+          </span>
+          <span class="nav-label">{{ item.label }}</span>
         </a>
       }
     </nav>

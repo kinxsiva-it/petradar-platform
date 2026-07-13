@@ -25,14 +25,22 @@ import type { AnalyticsChartSegment } from '../../data-access/analytics-api.mode
   `,
   styles: [
     `
+      :host {
+        display: block;
+        height: 100%;
+      }
+
       .distribution-card {
+        display: grid;
         min-width: 0;
+        height: 100%;
+        grid-template-rows: auto 1fr auto;
+        gap: 1rem;
         margin: 0;
         border: 1px solid var(--color-border-default);
         border-radius: var(--radius-panel);
         background: var(--color-surface);
         padding: 1rem;
-        box-shadow: var(--shadow-card);
       }
 
       figcaption,
@@ -53,7 +61,7 @@ import type { AnalyticsChartSegment } from '../../data-access/analytics-api.mode
 
       .bars > div {
         display: grid;
-        grid-template-columns: 7rem minmax(0, 1fr) 3rem;
+        grid-template-columns: minmax(5.5rem, 0.8fr) minmax(4rem, 1fr) 2.5rem;
         gap: 0.6rem;
         align-items: center;
       }
@@ -75,7 +83,7 @@ import type { AnalyticsChartSegment } from '../../data-access/analytics-api.mode
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DistributionChartComponent {
-  readonly description = input('API distribution values.');
+  readonly description = input('Platform distribution values.');
   readonly segments = input.required<AnalyticsChartSegment[]>();
   readonly title = input.required<string>();
   readonly total = computed(() => this.segments().reduce((sum, item) => sum + item.value, 0));
