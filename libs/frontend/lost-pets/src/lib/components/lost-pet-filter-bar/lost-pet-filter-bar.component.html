@@ -1,20 +1,29 @@
 <section class="filter-bar">
   <input
+    aria-label="Search lost pets"
     [ngModel]="filters().query ?? ''"
     (ngModelChange)="filterChanged.emit({ key: 'query', value: $event })"
     placeholder="Search by pet name, breed, or area..."
     type="search"
   />
-  <select [ngModel]="filters().species ?? ''" (ngModelChange)="filterChanged.emit({ key: 'species', value: $event })">
+  <select
+    aria-label="Filter by species"
+    [ngModel]="filters().species ?? ''"
+    (ngModelChange)="filterChanged.emit({ key: 'species', value: $event })"
+  >
     @for (item of speciesOptions; track item.value) {
       <option [ngValue]="item.value">{{ item.label }}</option>
     }
   </select>
-  <select [ngModel]="filters().status ?? ''" (ngModelChange)="filterChanged.emit({ key: 'status', value: $event })">
+  <select
+    aria-label="Filter by status"
+    [ngModel]="filters().status ?? ''"
+    (ngModelChange)="filterChanged.emit({ key: 'status', value: $event })"
+  >
     @for (item of statusOptions; track item.value) {
       <option [ngValue]="item.value">{{ item.label }}</option>
     }
   </select>
-  <button type="button" (click)="clearFilters.emit()">Clear</button>
+  <button type="button" (click)="clearFilters.emit()">Clear filters</button>
 </section>
 

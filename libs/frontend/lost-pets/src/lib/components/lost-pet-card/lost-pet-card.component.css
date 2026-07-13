@@ -1,33 +1,49 @@
 .lost-pet-card {
   display: grid;
-  grid-template-columns: 8rem minmax(0, 1fr) minmax(7rem, auto);
-  gap: 1rem;
-  align-items: center;
-  padding: 1rem;
+  grid-template-columns: 7.5rem minmax(0, 1fr) minmax(9.5rem, auto);
+  gap: clamp(1rem, 2vw, 1.5rem);
+  align-items: stretch;
+  padding: clamp(1rem, 2vw, 1.25rem);
   border: 1px solid var(--color-border-default);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-panel);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
 }
 
-img {
-  width: 8rem;
-  aspect-ratio: 1;
+.thumbnail {
+  width: 7.5rem;
+  min-height: 7.5rem;
+  overflow: hidden;
+  align-self: center;
   border-radius: var(--radius-card);
+  background: var(--color-surface-muted);
+}
+
+img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
   object-fit: cover;
 }
 
 .card-body {
   display: grid;
-  gap: 0.45rem;
   min-width: 0;
+  align-content: center;
+  gap: 0.7rem;
+}
+
+.title-row,
+.pet-meta,
+.last-seen {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .title-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
+  gap: 0.65rem;
 }
 
 h2,
@@ -37,70 +53,132 @@ p {
 
 h2 {
   color: var(--color-text-strong);
-  font-size: 1.25rem;
-  line-height: 1.1;
+  font: var(--text-heading-3);
 }
 
-p {
+.pet-meta {
+  gap: 0.35rem 0;
   color: var(--color-text-muted);
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font: var(--text-body-small);
 }
 
-p strong {
+.pet-meta span + span::before,
+.last-seen span + span::before {
+  content: "•";
+  margin: 0 0.5rem;
+  color: var(--color-border-strong);
+}
+
+.last-seen {
+  gap: 0.25rem 0;
+  color: var(--color-text-muted);
+  font: var(--text-body-small);
+}
+
+.last-seen strong {
+  margin-right: 0.5rem;
   color: var(--color-text-strong);
 }
 
-aside {
+.card-actions {
   display: grid;
-  justify-items: center;
-  gap: 0.35rem;
-  padding-left: 1rem;
+  min-width: 9.5rem;
+  align-content: center;
+  justify-items: stretch;
+  gap: 0.75rem;
+  padding-left: clamp(1rem, 2vw, 1.5rem);
   border-left: 1px solid var(--color-border-default);
+}
+
+.match-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  color: var(--color-match);
+}
+
+.match-count strong {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-match-subtle);
+  font-size: 0.95rem;
+}
+
+.match-count span,
+.no-matches {
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.no-matches {
+  color: var(--color-text-muted);
   text-align: center;
 }
 
-aside span {
-  color: var(--color-match);
-  font-size: 0.78rem;
-  font-weight: 850;
-}
-
-aside strong {
-  display: grid;
-  min-width: 3rem;
-  min-height: 3rem;
-  place-items: center;
-  border-radius: var(--radius-card);
-  background: var(--color-match-subtle);
-  color: var(--color-match);
-  font-size: 1.4rem;
-}
-
 a {
+  display: inline-flex;
+  min-height: 2.55rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-control);
   color: var(--color-primary);
+  padding: 0.55rem 0.85rem;
   font-size: 0.86rem;
-  font-weight: 850;
+  font-weight: 800;
   text-decoration: none;
 }
 
-@media (max-width: 700px) {
+a:hover {
+  background: var(--color-primary-subtle);
+}
+
+@media (max-width: 760px) {
   .lost-pet-card {
-    grid-template-columns: 5.5rem 1fr;
+    grid-template-columns: 6rem minmax(0, 1fr);
   }
 
-  img {
-    width: 5.5rem;
+  .thumbnail {
+    width: 6rem;
+    min-height: 6rem;
+    align-self: start;
   }
 
-  aside {
+  .card-actions {
     grid-column: 1 / -1;
-    grid-template-columns: 1fr auto auto;
-    justify-items: start;
-    width: 100%;
-    padding: 0.75rem 0 0;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    min-width: 0;
+    padding: 0.9rem 0 0;
     border-top: 1px solid var(--color-border-default);
     border-left: 0;
   }
+
+  .match-count {
+    justify-content: flex-start;
+  }
+
+  .no-matches {
+    text-align: left;
+  }
 }
 
+@media (max-width: 480px) {
+  .lost-pet-card {
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+    gap: 0.85rem;
+  }
+
+  .thumbnail {
+    width: 4.75rem;
+    min-height: 4.75rem;
+  }
+
+  .card-actions a {
+    min-width: 7.5rem;
+  }
+}
