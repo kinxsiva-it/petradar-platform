@@ -425,3 +425,85 @@ profile/settings persistence require backend/product work and are not represente
 Rollback reminder: keep `apps/web`, its artifact, and its routing configuration available. If any auth,
 privacy, map, upload, or stability gate fails during a later traffic rollout, route user-Web traffic back
 to Angular without changing the shared API or database. Removing Angular requires separate approval.
+
+## 13. Production-like browser smoke verification
+
+Smoke date: 2026-07-13. Recommendation: **ready with caveats; interactive browser approval remains
+required before cutover**.
+
+### Servers, build, and CORS
+
+- The stale pre-migration API process on port 3000 was positively identified as this workspace's older
+  `nx serve api` process, stopped, and replaced with the current committed source on port 3000.
+- Current API health and Next Web on port 4300 returned HTTP 200. The API allowed origin
+  `http://localhost:4300` with credentials and returned no allow-origin header for an unapproved origin;
+  the stale 4301 response no longer occurred.
+- `web-next` and `api` typechecks passed. The production Next build passed and generated all 17 routes.
+- The task-owned API and Next processes were stopped after verification; restart the current source for
+  the next interactive session.
+
+### Auth, routes, map, and privacy
+
+- An existing owner account completed login, `/auth/me`, refresh rotation, logout, and post-logout
+  refresh rejection with HTTP 401. An ADMIN account completed the same user auth boundary and used the
+  shared user-facing navigation with no CMS, rescue, volunteer, or moderation destinations.
+- All required public and protected-shell routes returned HTTP 200. Real public lost-pet detail,
+  owner-authorized edit, and match detail paths were available and also returned HTTP 200.
+- `/map` rendered without an SSR browser-global error. The public map API returned approximate
+  latitude/longitude/radius fields and public-safe sighting fields only. Google 2D is hidden without a
+  configured browser key, falls back to Leaflet on loader failure in source, and Google 3D is absent.
+- Public `/lost-pets`, real lost-pet detail, and `/map` HTML plus their API payloads contained no exact
+  coordinate field, private note, reporter contact, owner ID, microchip field, or admin-only field.
+- Exact location remains confined to authenticated create/edit state and payloads. Access tokens remain
+  in memory; API refresh cookies remain HttpOnly and SameSite Lax, with Secure enabled in production.
+
+### Upload and interaction result
+
+- No persistent report was created. Source/contract verification confirmed JPEG/PNG/WebP selection,
+  five-file and 8 MB limits, removable previews, required form/location confirmation, create-then-upload
+  ordering, multipart field `photos`, retained sighting ID, and upload-only retry behavior.
+- Lost-pet create/edit continues to expose only the supported photo URL workflow; binary upload is not
+  represented as available.
+- No in-app browser was attached (`browser` discovery returned no available instance). Therefore login
+  UI/session restoration after page reload, desktop/narrow layout, account/notification dropdown
+  interaction, visible focus, live Leaflet tiles/markers, geolocation denial, file selection errors, and
+  upload retry UI remain unverified interactively. No Playwright E2E substitute was run.
+
+### Production-like configuration and remaining gate
+
+- `NEXT_PUBLIC_API_BASE_URL` must target the approved HTTPS `/api/v1` origin. The optional Google key
+  must remain a referrer-restricted browser key; omitting it keeps Leaflet-only behavior.
+- API Helmet headers were present in local verification. The final Next/CDN/reverse-proxy deployment
+  must define and test CSP, framing, MIME sniffing, map tile/script/image sources, and HTTPS behavior.
+- Before cutover, attach an interactive browser and complete the pending auth, responsive, dropdown,
+  map, geolocation, file-picker, and upload-retry checks against a disposable record with cleanup.
+- Keep the Angular Web artifact and routing ready. Any auth, privacy, map, upload, or stability failure
+  during a later rollout must return user traffic to Angular without changing the shared database.
+
+## 14. Browser approval checklist result
+
+Approval attempt date: 2026-07-13. Recommendation: **not ready for cutover until the interactive
+browser checklist is completed**.
+
+- Browser availability: the in-app browser runtime was reachable, but it exposed no browser instance.
+  The required browser interactions could not be run, and Playwright or another browser backend was
+  not substituted for this browser-only gate.
+- Auth result: current-source API health, Next availability, and CORS were healthy, but browser login,
+  HttpOnly refresh-cookie restoration after reload, logout navigation, and ADMIN user-facing behavior
+  were not re-approved interactively in this pass.
+- Route result: the production build generated all 17 expected routes, but public, protected, and
+  dynamic routes were not browser-approved for hydration, visible loading/error states, or navigation.
+- Map result: Leaflet tiles and markers, detail layering, provider controls, and geolocation-denial UI
+  remain pending browser verification.
+- Upload result: report validation, file rejection and previews, removable previews, and upload retry
+  remain pending browser verification. No persistent demo record was created or changed.
+- Dropdown result: account and notification dropdown opening, outside-click close, Escape close,
+  focus behavior, unread state, and map layering remain pending browser verification.
+- Responsive result: desktop and narrow navigation, dropdown sizing, form controls, and map controls
+  remain pending browser verification.
+- Privacy result: the prior production-like response/DOM-source inspection remains valid, but rendered
+  DOM and browser network responses were not re-inspected in this browser-only attempt.
+- Blocker: attach an in-app browser to this session and repeat this checklist. Do not perform the final
+  routing cutover until it passes.
+- Rollback: keep `apps/web` and its deployable artifact intact as the immediate user-Web rollback target;
+  keep Admin CMS separate and unchanged.
