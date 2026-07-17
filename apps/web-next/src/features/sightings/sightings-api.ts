@@ -1,4 +1,5 @@
 import type { AuthenticatedRequest } from '../auth/auth-types';
+import { apiRequest } from '../../lib/api/http-client';
 import {
   arrayField,
   booleanField,
@@ -17,6 +18,7 @@ import type {
   CreateSightingRequest,
   OwnerSighting,
   OwnerSightingPage,
+  PublicSighting,
   SightingLifecycleStatus,
   UrgencyLevel,
   VerificationStatus,
@@ -31,6 +33,10 @@ const verifications: readonly VerificationStatus[] = ['PENDING', 'VERIFIED', 'CO
 
 export async function listMySightings(request: AuthenticatedRequest): Promise<OwnerSightingPage> {
   return parseOwnerSightingPage(await request<unknown>('sightings/mine?page=1&pageSize=50'));
+}
+
+export async function getPublicSighting(id: string): Promise<PublicSighting> {
+  return parsePublicSighting(await apiRequest<unknown>(`sightings/${encodeURIComponent(id)}`));
 }
 
 export async function createSighting(
@@ -94,5 +100,23 @@ function parseOwnerSighting(value: unknown): OwnerSighting {
     species: enumField(value, 'species', species),
     urgency: enumField(value, 'urgency', urgencies),
     verificationStatus: enumField(value, 'verificationStatus', verifications),
+  };
+}
+
+function parsePublicSighting(value: unknown): PublicSighting {
+  if (!isRecord(value)) throw new Error('The public sighting response was not valid.');
+  const publicLocation = recordField(value, 'publicLocation');
+  const photos = arrayField(value, 'photos').map((photo) => {
+    if (!isRecord(photo)) throw new Error('A public sighting photo was not valid.');
+    return { sortOrder: numberField(photo, 'sortOrder'), url: stringField(photo, 'url') };
+  }).filter((photo) => safeMediaUrl(photo.url)).sort((left, right) => left.sortOrder - right.sortOrder);
+  return {
+    animalCount: numberField(value, 'animalCount'), collarStatus: enumField(value, 'collarStatus', collars),
+    color: nullableStringField(value, 'color'), condition: enumField(value, 'condition', conditions),
+    description: nullableStringField(value, 'description'), id: stringField(value, 'id'),
+    lifecycleStatus: enumField(value, 'lifecycleStatus', lifecycles), pattern: nullableStringField(value, 'pattern'),
+    photoUrls: photos.map((photo) => photo.url), publicRadiusMeters: numberField(publicLocation, 'radiusMeters'),
+    seenAt: stringField(value, 'seenAt'), species: enumField(value, 'species', species),
+    urgency: enumField(value, 'urgency', urgencies), verificationStatus: enumField(value, 'verificationStatus', verifications),
   };
 }

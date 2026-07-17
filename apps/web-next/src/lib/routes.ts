@@ -27,6 +27,14 @@ export function matchDetailRoute(id: string): string {
   return `${routes.matches}/${encodeURIComponent(id)}`;
 }
 
+export function sightingDetailRoute(id: string): string {
+  return `/sightings/${encodeURIComponent(id)}`;
+}
+
+export function lostPetMatchesRoute(id: string): string {
+  return `${routes.myLostPets}/${encodeURIComponent(id)}/matches`;
+}
+
 export const primaryNavigation = [
   { href: routes.map, label: 'Map' },
   { href: routes.lostPets, label: 'Lost Pets' },

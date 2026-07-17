@@ -528,3 +528,26 @@ Strict typecheck and the 17-route production build passed. Targeted HTTP markup 
 the corrected CTA and separate protected route shells. An in-app browser was unavailable, so the final
 authenticated visual check of lost-pet form identity and enabled Google search remains a before-cutover
 manual gate. No final cutover, database change, Angular Web change, or Admin CMS change was performed.
+
+## 16. Cutover route closure
+
+Route-closure date: 2026-07-17. This section supersedes the historical browser-pending statements in
+sections 13–15: the subsequent exact-origin browser approval on `http://localhost:4300` passed for auth,
+responsive navigation, dropdowns, map interaction, private location handling, uploads, and public privacy.
+The earlier false Leaflet browser failure was caused by a stale/shared Turbopack `.next` runtime while
+multiple development servers used the same output directory; no Leaflet source defect was found.
+
+- Public `/sightings/:id` now uses the privacy-filtered public sighting contract, renders public photos
+  and approximate-area copy, and provides loading, not-found, retry, and Community Map navigation states.
+- Legacy `/sightings` redirects to `/map`, and user-Web `/dashboard` redirects to `/` without exposing
+  the separate Admin CMS.
+- Authenticated `/my/lost-pets/:id/matches` confirms access through the owner lost-pet endpoint, loads
+  only that pet's matches, reuses the global match cards, and links onward to existing match details.
+- Manual owner matching remains available for Angular parity. Automatic matching on pet creation does
+  not make it obsolete because owners can rerun matching after new sightings arrive. It never runs on
+  page load, disables duplicate submissions, and refreshes per-pet results after success.
+- Notification deep links now use one explicit route policy: supported routes and compatibility redirects
+  remain usable, unknown internal paths fall back to `/notifications`, and external, protocol-relative,
+  malformed, control-character, and backslash destinations are rejected.
+- `/volunteer` remains deliberately outside the Next.js user-Web cutover scope. This route closure does
+  not perform deployment configuration, production routing changes, final cutover, or removal of Angular Web.

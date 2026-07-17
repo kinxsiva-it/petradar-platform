@@ -17,6 +17,14 @@ export async function listMatches(request: AuthenticatedRequest, status?: MatchR
   return parseMatchPage(await request<unknown>(`matches?${query.toString()}`));
 }
 export async function getMatch(request: AuthenticatedRequest, id: string): Promise<MatchResult> { return parseMatch(await request<unknown>(`matches/${encodeURIComponent(id)}`)); }
+export async function listMatchesForLostPet(request: AuthenticatedRequest, lostPetId: string): Promise<MatchResult[]> {
+  const value = await request<unknown>(`lost-pets/${encodeURIComponent(lostPetId)}/matches`);
+  if (!isRecord(value)) throw new Error('The lost-pet matches response was not valid.');
+  return arrayField(value, 'items').map(parseMatch);
+}
+export async function runMatchingForLostPet(request: AuthenticatedRequest, lostPetId: string): Promise<void> {
+  await request<unknown>(`lost-pets/${encodeURIComponent(lostPetId)}/run-matching`, { json: {}, method: 'POST' });
+}
 
 function parseMatchPage(value: unknown): MatchPage { if (!isRecord(value)) throw new Error('The matches response was not valid.'); return { items: arrayField(value,'items').map(parseMatch), page: numberField(value,'page'), pageSize: numberField(value,'pageSize'), total: numberField(value,'total'), totalPages: numberField(value,'totalPages') }; }
 function parseMatch(value: unknown): MatchResult {

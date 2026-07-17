@@ -32,6 +32,23 @@ export interface OwnerSightingPage {
   totalPages: number;
 }
 
+export interface PublicSighting {
+  animalCount: number;
+  collarStatus: CollarStatus;
+  color: string | null;
+  condition: AnimalCondition;
+  description: string | null;
+  id: string;
+  lifecycleStatus: SightingLifecycleStatus;
+  pattern: string | null;
+  photoUrls: string[];
+  publicRadiusMeters: number;
+  seenAt: string;
+  species: AnimalSpecies;
+  urgency: UrgencyLevel;
+  verificationStatus: VerificationStatus;
+}
+
 export interface CreateSightingRequest {
   collarStatus?: CollarStatus;
   color?: string;
