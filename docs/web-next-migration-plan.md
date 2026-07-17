@@ -507,3 +507,24 @@ browser checklist is completed**.
   routing cutover until it passes.
 - Rollback: keep `apps/web` and its deployable artifact intact as the immediate user-Web rollback target;
   keep Admin CMS separate and unchanged.
+
+## 15. Lost-pet create and private place-search bugfix
+
+Bugfix date: 2026-07-17. The public Lost Pets CTA now says **Report lost pet** and routes to
+`/lost-pets/new`; the separate `/report-animal` sighting flow remains unchanged. The create route
+continues to render the authenticated `LostPetForm`, and owner edit remains under `/lost-pets/:id/edit`.
+
+The shared private location picker used by report-animal and lost-pet create/edit now includes optional
+Google geocoding search. With a configured `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`, submitting a place name or
+address moves only the private pin to the first result and the existing consumer callback resets location
+confirmation. Search loading, no-result, provider-error, and success states are explicit. PetRadar does
+not persist the query; the UI discloses that an explicitly submitted query is sent directly to Google.
+
+Without the browser key, place search is visibly disabled with provider-configuration guidance. Current
+location, Leaflet pin placement, pin dragging, manual latitude/longitude, and privacy copy remain usable.
+The key must be referrer-restricted and authorized for the required Google Maps/geocoding functionality.
+
+Strict typecheck and the 17-route production build passed. Targeted HTTP markup verification confirmed
+the corrected CTA and separate protected route shells. An in-app browser was unavailable, so the final
+authenticated visual check of lost-pet form identity and enabled Google search remains a before-cutover
+manual gate. No final cutover, database change, Angular Web change, or Admin CMS change was performed.

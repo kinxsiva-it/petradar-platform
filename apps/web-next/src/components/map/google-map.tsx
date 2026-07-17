@@ -3,17 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { publicEnv } from '../../lib/config/env';
+import { loadGoogleMaps } from './google-maps-loader';
 import type { MapPoint } from './map-types';
-
-interface GoogleMapApi {
-  Map: new (element: HTMLElement, options: { center: { lat: number; lng: number }; mapTypeControl: boolean; streetViewControl: boolean; zoom: number }) => unknown;
-  Circle: new (options: { center: { lat: number; lng: number }; clickable: boolean; fillColor: string; fillOpacity: number; map: unknown; radius: number; strokeColor: string; strokeWeight: number }) => { addListener(name: string, handler: () => void): void };
-  event: { trigger(target: unknown, name: string): void };
-}
-
-declare global { interface Window { google?: { maps: GoogleMapApi }; petradarGoogleMapsReady?: () => void; } }
-
-let googleLoader: Promise<GoogleMapApi> | null = null;
 
 export function GoogleMap({ markers, onSelect, onUnavailable }: { markers: readonly MapPoint[]; onSelect?(id: string): void; onUnavailable(): void }) {
   const container = useRef<HTMLDivElement>(null);
@@ -52,23 +43,4 @@ export function GoogleMap({ markers, onSelect, onUnavailable }: { markers: reado
   }, [markers, onSelect, onUnavailable]);
 
   return <>{error ? <div className="feedback feedback-error" role="alert">{error}</div> : null}<div ref={container} className="leaflet-canvas" role="application" aria-label="Google community map" /></>;
-}
-
-function loadGoogleMaps(key: string): Promise<GoogleMapApi> {
-  if (window.google?.maps) return Promise.resolve(window.google.maps);
-  if (googleLoader) return googleLoader;
-  googleLoader = new Promise((resolve, reject) => {
-    const callback = 'petradarGoogleMapsReady';
-    window.petradarGoogleMapsReady = () => {
-      delete window.petradarGoogleMapsReady;
-      if (window.google?.maps) resolve(window.google.maps); else reject(new Error('Google Maps unavailable.'));
-    };
-    const script = document.createElement('script');
-    script.async = true;
-    script.defer = true;
-    script.onerror = () => reject(new Error('Google Maps failed to load.'));
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=${callback}`;
-    document.head.append(script);
-  });
-  return googleLoader;
 }

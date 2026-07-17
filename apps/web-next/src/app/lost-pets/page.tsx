@@ -34,7 +34,7 @@ export default async function LostPetsPage({ searchParams }: LostPetsPageProps) 
             <h1>Lost pets</h1>
             <p>Browse active community posts using only privacy-safe, approximate locations.</p>
           </div>
-          <Link className="primary-action" href={routes.reportAnimal}>Report an animal</Link>
+          <Link className="primary-action" href={routes.lostPetNew}>Report lost pet</Link>
         </header>
 
         <form className="filter-panel" method="get" role="search">
