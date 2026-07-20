@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 
 import { useAuth } from '../../features/auth/use-auth';
 import { NotificationBell } from '../../features/notifications/notification-bell';
@@ -11,6 +12,46 @@ import { BrandMark } from './brand-mark';
 export function SiteHeader() {
   const pathname = usePathname();
   const auth = useAuth();
+  const accountNavRef = useRef<HTMLElement>(null);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+
+  useEffect(() => {
+    if (!notificationOpen && !accountOpen) return;
+
+    function closeOnOutsidePointer(event: PointerEvent) {
+      const target = event.target;
+      if (target instanceof Node && !accountNavRef.current?.contains(target)) {
+        setNotificationOpen(false);
+        setAccountOpen(false);
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setNotificationOpen(false);
+        setAccountOpen(false);
+      }
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [accountOpen, notificationOpen]);
+
+  function changeNotificationOpen(next: boolean) {
+    setNotificationOpen(next);
+    if (next) setAccountOpen(false);
+  }
+
+  function handleAccountToggle(event: SyntheticEvent<HTMLDetailsElement>) {
+    const next = event.currentTarget.open;
+    setAccountOpen(next);
+    if (next) setNotificationOpen(false);
+  }
 
   return (
     <header className="site-header">
@@ -25,11 +66,11 @@ export function SiteHeader() {
             <Link key={item.href} href={item.href} aria-current={isActivePath(pathname, item.href) ? 'page' : undefined}>{item.label}</Link>
           ))}
         </nav>
-        <nav className="account-nav" aria-label="Account navigation">
+        <nav ref={accountNavRef} className="account-nav" aria-label="Account navigation">
           {auth.status === 'initializing' ? (
             <span className="account-summary" aria-live="polite">Checking session…</span>
           ) : auth.status === 'authenticated' && auth.user ? (
-            <><NotificationBell /><details className="account-menu">
+            <><NotificationBell open={notificationOpen} onOpenChange={changeNotificationOpen} /><details className="account-menu" open={accountOpen} onToggle={handleAccountToggle}>
               <summary aria-label={`Open account menu for ${auth.user.displayName}`}>
                 <span className="account-avatar" aria-hidden="true">{auth.user.displayName.charAt(0).toUpperCase()}</span>
                 <span className="account-summary">{auth.user.displayName}</span>

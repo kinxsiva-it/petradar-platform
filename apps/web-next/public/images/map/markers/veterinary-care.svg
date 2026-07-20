@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" role="img" aria-label="Veterinary care">
+  <defs>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#123d38" flood-opacity=".28"/>
+    </filter>
+  </defs>
+  <circle cx="64" cy="64" r="50" fill="#168f82" stroke="#fff" stroke-width="7" filter="url(#shadow)"/>
+  <path fill="#fff" d="M56 35h16v21h21v16H72v21H56V72H35V56h21z"/>
+  <circle cx="64" cy="64" r="55" fill="none" stroke="#b9eee6" stroke-width="3"/>
+</svg>

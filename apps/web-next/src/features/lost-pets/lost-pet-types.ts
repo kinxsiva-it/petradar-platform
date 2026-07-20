@@ -31,6 +31,8 @@ export interface PublicLostPetPage {
 }
 
 export interface LostPetListFilters {
+  lastSeenFrom?: string;
+  lastSeenTo?: string;
   page?: number;
   pageSize?: number;
   query?: string;
