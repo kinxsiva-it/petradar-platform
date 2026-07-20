@@ -4,7 +4,11 @@ import { NotificationType, Prisma, UserRole } from '@prisma/client';
 import { AuditService } from '@petradar/backend/audit';
 import type { AuthenticatedUser } from '@petradar/backend/auth';
 import { NotificationsService } from '@petradar/backend/notifications';
-import { PrismaService } from '@petradar/backend/shared';
+import {
+  offsetPaginationMeta,
+  PrismaService,
+  resolveOffsetPagination,
+} from '@petradar/backend/shared';
 
 import { ListMatchesQueryDto } from './dto/matches.dto.js';
 
@@ -136,18 +140,42 @@ export class MatchingService {
       });
     }
 
-    return this.listForLostPet(user, lostPetId);
+    // Preserve the pre-pagination Run Matching response window for existing consumers.
+    return this.listForLostPet(user, lostPetId, { limit: 50 });
   }
 
-  async listForLostPet(user: AuthenticatedUser, lostPetId: string) {
+  async listForLostPet(
+    user: AuthenticatedUser,
+    lostPetId: string,
+    query: ListMatchesQueryDto = {},
+  ) {
     await this.loadLostPetForAccess(user, lostPetId);
-    const rows = await this.matchRows(Prisma.sql`m."lost_pet_id" = CAST(${lostPetId} AS uuid)`);
-    return { items: rows.map(toMatchResponse) };
+    const { limit, page, skip } = resolveOffsetPagination(query);
+    const whereSql = Prisma.sql`m."lost_pet_id" = CAST(${lostPetId} AS uuid)`;
+    const [rows, countRows] = await Promise.all([
+      this.matchRows(whereSql, limit, skip),
+      this.prisma.$queryRaw<{ total: bigint | number }[]>(Prisma.sql`
+        SELECT COUNT(*) AS "total"
+        FROM "match_results" m
+        JOIN "lost_pets" lp ON lp."id" = m."lost_pet_id"
+        WHERE ${whereSql}
+      `),
+    ]);
+    const totalValue = countRows[0]?.total ?? 0;
+    const total = typeof totalValue === 'bigint' ? Number(totalValue) : totalValue;
+    const pagination = offsetPaginationMeta(page, limit, total);
+    return {
+      items: rows.map(toMatchResponse),
+      page,
+      pagination,
+      pageSize: limit,
+      total,
+      totalPages: pagination.totalPages,
+    };
   }
 
   async list(user: AuthenticatedUser, query: ListMatchesQueryDto) {
-    const page = Math.max(query.page ?? 1, 1);
-    const pageSize = Math.min(Math.max(query.pageSize ?? 25, 1), 50);
+    const { limit, page, skip } = resolveOffsetPagination(query);
     const where: Prisma.Sql[] = [];
     if (!user.roles.includes(UserRole.ADMIN)) {
       where.push(Prisma.sql`lp."owner_id" = CAST(${user.id} AS uuid)`);
@@ -156,7 +184,7 @@ export class MatchingService {
       where.push(Prisma.sql`m."review_status" = CAST(${query.status} AS "MatchReviewStatus")`);
     }
     const whereSql = where.length > 0 ? Prisma.join(where, ' AND ') : Prisma.sql`TRUE`;
-    const rows = await this.matchRows(whereSql, pageSize, (page - 1) * pageSize);
+    const rows = await this.matchRows(whereSql, limit, skip);
     const countRows = await this.prisma.$queryRaw<{ total: bigint | number }[]>(Prisma.sql`
       SELECT COUNT(*) AS "total"
       FROM "match_results" m
@@ -165,7 +193,15 @@ export class MatchingService {
     `);
     const totalValue = countRows[0]?.total ?? 0;
     const total = typeof totalValue === 'bigint' ? Number(totalValue) : totalValue;
-    return { items: rows.map(toMatchResponse), page, pageSize, total, totalPages: Math.ceil(total / pageSize) };
+    const pagination = offsetPaginationMeta(page, limit, total);
+    return {
+      items: rows.map(toMatchResponse),
+      page,
+      pagination,
+      pageSize: limit,
+      total,
+      totalPages: pagination.totalPages,
+    };
   }
 
   async detail(user: AuthenticatedUser, id: string) {

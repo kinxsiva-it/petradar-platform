@@ -16,7 +16,7 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 
 import { CurrentUser, JwtAuthGuard, type AuthenticatedUser } from '@petradar/backend/auth';
-import { MatchingService } from '@petradar/backend/matching';
+import { ListMatchesQueryDto, MatchingService } from '@petradar/backend/matching';
 import { apiRateLimits } from '@petradar/backend/shared';
 
 import { CreateLostPetDto, ListLostPetsQueryDto, UpdateLostPetDto } from './dto/lost-pet.dto.js';
@@ -107,12 +107,13 @@ export class LostPetsController {
   @Get(':id/matches')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @ApiOkResponse({ description: 'Return match results for an owned lost-pet post.' })
+  @ApiOkResponse({ description: 'Return paginated match results for an owned lost-pet post.' })
   matches(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: ListMatchesQueryDto,
   ): ReturnType<MatchingService['listForLostPet']> {
-    return this.matching.listForLostPet(this.requireUser(user), id);
+    return this.matching.listForLostPet(this.requireUser(user), id, query);
   }
 
   private requireUser(user: AuthenticatedUser | undefined): AuthenticatedUser {

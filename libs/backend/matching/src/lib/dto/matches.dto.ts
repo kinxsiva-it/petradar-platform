@@ -1,4 +1,6 @@
-import { IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsEnum, IsOptional, IsString, MaxLength } from 'class-validator';
+
+import { OffsetPaginationQueryDto } from '@petradar/backend/shared';
 
 export enum MatchReviewStatusValue {
   CONFIRMED = 'CONFIRMED',
@@ -6,18 +8,7 @@ export enum MatchReviewStatusValue {
   REJECTED = 'REJECTED',
 }
 
-export class ListMatchesQueryDto {
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  page?: number;
-
-  @IsOptional()
-  @IsInt()
-  @Min(1)
-  @Max(50)
-  pageSize?: number;
-
+export class ListMatchesQueryDto extends OffsetPaginationQueryDto {
   @IsOptional()
   @IsEnum(MatchReviewStatusValue)
   status?: MatchReviewStatusValue;

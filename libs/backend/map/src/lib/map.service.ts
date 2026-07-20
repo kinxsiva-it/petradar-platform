@@ -111,7 +111,7 @@ export class MapService {
         ],
         ' AND ',
       )}
-      ORDER BY "distanceMeters" ASC, s."seen_at" DESC
+      ORDER BY "distanceMeters" ASC, s."seen_at" DESC, s."id" DESC
       LIMIT ${limit}
     `);
 

@@ -9,13 +9,19 @@ import { NotificationType, Prisma, UserRole, VolunteerVerificationState } from '
 import { AuditService } from '@petradar/backend/audit';
 import type { AuthenticatedUser } from '@petradar/backend/auth';
 import { NotificationsService } from '@petradar/backend/notifications';
-import { PrismaService } from '@petradar/backend/shared';
+import {
+  cursorPaginationMeta,
+  decodeCursor,
+  encodeCursor,
+  PrismaService,
+} from '@petradar/backend/shared';
 
 import {
   AssignVolunteerDto,
   CreateInternalNoteDto,
   CreateRescueCaseDto,
   ListRescueCasesQueryDto,
+  RescueActivityQueryDto,
   RescueCaseStatusValue,
   UpdateRescueStatusDto,
 } from './dto/rescue-cases.dto.js';
@@ -197,8 +203,8 @@ export class RescueCasesService {
   async detail(user: AuthenticatedUser, id: string) {
     const row = await this.loadCase(id);
     this.assertCaseAccess(user, row);
-    const [timeline, notes] = await Promise.all([this.timeline(user, id), this.notesForCase(id)]);
-    return { ...toRescueCaseResponse(row), internalNotes: notes, timeline: timeline.items };
+    const [timeline, notes] = await Promise.all([this.timelineItems(id), this.notesForCase(id)]);
+    return { ...toRescueCaseResponse(row), internalNotes: notes, timeline };
   }
 
   async updateStatus(user: AuthenticatedUser, id: string, dto: UpdateRescueStatusDto) {
@@ -296,9 +302,72 @@ export class RescueCasesService {
     return this.detail(user, id);
   }
 
-  async timeline(user: AuthenticatedUser, id: string) {
+  async timeline(user: AuthenticatedUser, id: string, query: RescueActivityQueryDto = {}) {
     const current = await this.loadCase(id);
     this.assertCaseAccess(user, current);
+    const limit = query.limit ?? 20;
+    const cursor = query.cursor ? decodeCursor(query.cursor) : null;
+    const rows = await this.prisma.$queryRaw<TimelineRow[]>(Prisma.sql`
+      SELECT
+        e."id"::text AS "id",
+        e."event_type"::text AS "eventType",
+        e."previous_status"::text AS "previousStatus",
+        e."new_status"::text AS "newStatus",
+        e."actor_id"::text AS "actorId",
+        u."displayName" AS "actorDisplayName",
+        e."note",
+        e."created_at" AS "createdAt"
+      FROM "rescue_case_timeline_events" e
+      LEFT JOIN "users" u ON u."id" = e."actor_id"
+      WHERE e."rescue_case_id" = CAST(${id} AS uuid)
+        ${cursor ? Prisma.sql`AND (e."created_at", e."id") > (${cursor.createdAt}, CAST(${cursor.id} AS uuid))` : Prisma.empty}
+      ORDER BY e."created_at" ASC, e."id" ASC
+      LIMIT ${limit + 1}
+    `);
+    const hasNextPage = rows.length > limit;
+    const pageRows = hasNextPage ? rows.slice(0, limit) : rows;
+    const last = pageRows.at(-1);
+    return {
+      items: pageRows.map(toTimelineResponse),
+      pagination: cursorPaginationMeta(
+        limit,
+        hasNextPage && last ? encodeCursor({ createdAt: last.createdAt, id: last.id }) : null,
+      ),
+    };
+  }
+
+  async notes(user: AuthenticatedUser, id: string, query: RescueActivityQueryDto = {}) {
+    const current = await this.loadCase(id);
+    this.assertCaseAccess(user, current);
+    const limit = query.limit ?? 20;
+    const cursor = query.cursor ? decodeCursor(query.cursor) : null;
+    const rows = await this.prisma.$queryRaw<NoteRow[]>(Prisma.sql`
+      SELECT
+        n."id"::text AS "id",
+        n."author_id"::text AS "authorId",
+        u."displayName" AS "authorDisplayName",
+        n."body",
+        n."created_at" AS "createdAt"
+      FROM "rescue_internal_notes" n
+      LEFT JOIN "users" u ON u."id" = n."author_id"
+      WHERE n."rescue_case_id" = CAST(${id} AS uuid)
+        ${cursor ? Prisma.sql`AND (n."created_at", n."id") > (${cursor.createdAt}, CAST(${cursor.id} AS uuid))` : Prisma.empty}
+      ORDER BY n."created_at" ASC, n."id" ASC
+      LIMIT ${limit + 1}
+    `);
+    const hasNextPage = rows.length > limit;
+    const pageRows = hasNextPage ? rows.slice(0, limit) : rows;
+    const last = pageRows.at(-1);
+    return {
+      items: pageRows.map(toNoteResponse),
+      pagination: cursorPaginationMeta(
+        limit,
+        hasNextPage && last ? encodeCursor({ createdAt: last.createdAt, id: last.id }) : null,
+      ),
+    };
+  }
+
+  private async timelineItems(id: string) {
     const rows = await this.prisma.$queryRaw<TimelineRow[]>`
       SELECT
         e."id"::text AS "id",
@@ -314,17 +383,7 @@ export class RescueCasesService {
       WHERE e."rescue_case_id" = CAST(${id} AS uuid)
       ORDER BY e."created_at" ASC, e."id" ASC
     `;
-    return {
-      items: rows.map((row) => ({
-        actor: row.actorId ? { displayName: row.actorDisplayName, id: row.actorId } : null,
-        createdAt: row.createdAt.toISOString(),
-        eventType: row.eventType,
-        id: row.id,
-        newStatus: row.newStatus,
-        note: row.note,
-        previousStatus: row.previousStatus,
-      })),
-    };
+    return rows.map(toTimelineResponse);
   }
 
   private async loadCase(id: string): Promise<RescueCaseRow> {
@@ -353,12 +412,7 @@ export class RescueCasesService {
       WHERE n."rescue_case_id" = CAST(${id} AS uuid)
       ORDER BY n."created_at" ASC, n."id" ASC
     `;
-    return rows.map((row) => ({
-      author: row.authorId ? { displayName: row.authorDisplayName, id: row.authorId } : null,
-      body: row.body,
-      createdAt: row.createdAt.toISOString(),
-      id: row.id,
-    }));
+    return rows.map(toNoteResponse);
   }
 
   private async assertAssignableVolunteer(userId: string): Promise<void> {
@@ -424,6 +478,27 @@ export class RescueCasesService {
     }
     throw new ForbiddenException('Rescue case access denied.');
   }
+}
+
+function toTimelineResponse(row: TimelineRow) {
+  return {
+    actor: row.actorId ? { displayName: row.actorDisplayName, id: row.actorId } : null,
+    createdAt: row.createdAt.toISOString(),
+    eventType: row.eventType,
+    id: row.id,
+    newStatus: row.newStatus,
+    note: row.note,
+    previousStatus: row.previousStatus,
+  };
+}
+
+function toNoteResponse(row: NoteRow) {
+  return {
+    author: row.authorId ? { displayName: row.authorDisplayName, id: row.authorId } : null,
+    body: row.body,
+    createdAt: row.createdAt.toISOString(),
+    id: row.id,
+  };
 }
 
 function rescueSelectSql(): Prisma.Sql {

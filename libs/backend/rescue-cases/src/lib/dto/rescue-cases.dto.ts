@@ -12,6 +12,8 @@ import {
   MinLength,
 } from 'class-validator';
 
+import { CursorPaginationQueryDto } from '@petradar/backend/shared';
+
 export enum RescueCaseStatusValue {
   ASSIGNED = 'ASSIGNED',
   CLOSED = 'CLOSED',
@@ -108,3 +110,5 @@ export class CreateInternalNoteDto {
   @MaxLength(2000)
   body!: string;
 }
+
+export class RescueActivityQueryDto extends CursorPaginationQueryDto {}
