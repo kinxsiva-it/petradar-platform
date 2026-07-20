@@ -9,11 +9,20 @@ export interface MatchResult {
   reviewedAt: string | null; score: number; sighting: { condition: string; id: string; publicRadiusMeters: number; seenAt: string; species: string };
 }
 export interface MatchPage { items: MatchResult[]; page: number; pageSize: number; total: number; totalPages: number; }
+export interface MatchListOptions {
+  page?: number;
+  pageSize?: number;
+  status?: MatchReviewStatus;
+}
 const levels: readonly MatchLevel[] = ['HIGH','MEDIUM','LOW'];
 const statuses: readonly MatchReviewStatus[] = ['CONFIRMED','PENDING','REJECTED'];
 
-export async function listMatches(request: AuthenticatedRequest, status?: MatchReviewStatus): Promise<MatchPage> {
-  const query = new URLSearchParams({ page: '1', pageSize: '50' }); if (status) query.set('status', status);
+export async function listMatches(request: AuthenticatedRequest, options: MatchListOptions = {}): Promise<MatchPage> {
+  const query = new URLSearchParams({
+    page: String(options.page ?? 1),
+    pageSize: String(options.pageSize ?? 10),
+  });
+  if (options.status) query.set('status', options.status);
   return parseMatchPage(await request<unknown>(`matches?${query.toString()}`));
 }
 export async function getMatch(request: AuthenticatedRequest, id: string): Promise<MatchResult> { return parseMatch(await request<unknown>(`matches/${encodeURIComponent(id)}`)); }
