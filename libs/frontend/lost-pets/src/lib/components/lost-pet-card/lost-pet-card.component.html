@@ -1,18 +1,37 @@
 <article class="lost-pet-card">
-  <img [src]="pet().photoUrls[0]" [alt]="pet().petName" />
+  <div class="thumbnail">
+    <img [src]="pet().photoUrls[0]" [alt]="pet().petName" />
+  </div>
+
   <div class="card-body">
     <div class="title-row">
       <h2>{{ pet().petName }}</h2>
       <pr-status-badge [label]="pet().status" [tone]="tone(pet().status)" />
     </div>
-    <p>{{ pet().species }} · {{ pet().breed ?? 'Mixed breed' }} · {{ pet().sex }} · {{ pet().ageDescription ?? 'Age unknown' }}</p>
-    <p><strong>Last seen</strong> {{ pet().approximateLastSeenLocation.label }} · {{ pet().lastSeenAt }}</p>
+
+    <div class="pet-meta" aria-label="Pet details">
+      <span>{{ pet().species }}</span>
+      <span>{{ pet().breed ?? 'Mixed breed' }}</span>
+      <span>{{ pet().sex }}</span>
+      <span>{{ pet().ageDescription ?? 'Age unknown' }}</span>
+    </div>
+
+    <p class="last-seen">
+      <strong>Last seen</strong>
+      <span>{{ pet().approximateLastSeenLocation.label }}</span>
+      <span>{{ pet().lastSeenAt }}</span>
+    </p>
   </div>
-  <aside>
+
+  <aside class="card-actions">
     @if (pet().possibleMatchCount > 0) {
-      <span>Possible matches</span>
+      <div class="match-count">
+        <strong>{{ pet().possibleMatchCount }}</strong>
+        <span>{{ pet().possibleMatchCount === 1 ? 'possible match' : 'possible matches' }}</span>
+      </div>
+    } @else {
+      <span class="no-matches">0 matches</span>
     }
-    <strong>{{ pet().possibleMatchCount }}</strong>
     <a [routerLink]="['/lost-pets', pet().id]">View details</a>
   </aside>
 </article>

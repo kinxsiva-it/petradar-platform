@@ -3,9 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { AuthStateService } from '@petradar/frontend/core';
 import {
-  AlertComponent,
   EmptyStateComponent,
   LoadingSkeletonComponent,
   PrivacyBannerComponent,
@@ -26,7 +24,6 @@ type DetailState = 'loading' | 'ready' | 'error' | 'not-found';
   selector: 'pr-match-detail-page',
   standalone: true,
   imports: [
-    AlertComponent,
     EmptyStateComponent,
     LoadingSkeletonComponent,
     MatchScoreRingComponent,
@@ -40,13 +37,10 @@ type DetailState = 'loading' | 'ready' | 'error' | 'not-found';
 })
 export class MatchDetailPageComponent {
   private readonly route = inject(ActivatedRoute);
-  private readonly auth = inject(AuthStateService);
   private readonly lostPetsApi = inject(LostPetsApiService);
   readonly detail = signal<LostPetMatchView | null>(null);
   readonly uiState = signal<DetailState>('loading');
   readonly errorMessage = signal('');
-  readonly actionMessage = signal('');
-  readonly reviewing = signal(false);
 
   constructor() {
     void this.loadDetail();
@@ -70,41 +64,4 @@ export class MatchDetailPageComponent {
     }
   }
 
-  async confirm(): Promise<void> {
-    const detail = this.detail();
-    if (!detail || this.reviewing()) {
-      return;
-    }
-    await this.review(() => this.lostPetsApi.confirmMatch(detail.id), 'Match confirmed.');
-  }
-
-  async reject(): Promise<void> {
-    const detail = this.detail();
-    if (!detail || this.reviewing()) {
-      return;
-    }
-    const reason = window.prompt('Optional rejection reason') ?? undefined;
-    await this.review(() => this.lostPetsApi.rejectMatch(detail.id, reason), 'Match rejected.');
-  }
-
-  private async review(
-    action: () => ReturnType<LostPetsApiService['confirmMatch']>,
-    successMessage: string,
-  ): Promise<void> {
-    this.reviewing.set(true);
-    this.actionMessage.set('');
-    this.errorMessage.set('');
-    try {
-      this.detail.set(toLostPetMatchView(await firstValueFrom(action())));
-      this.actionMessage.set(successMessage);
-    } catch (error) {
-      this.errorMessage.set(toUserMessage(error, 'Match review could not be saved.'));
-    } finally {
-      this.reviewing.set(false);
-    }
-  }
-
-  canReview(): boolean {
-    return this.auth.isAdmin() && this.detail()?.reviewStatus === 'PENDING';
-  }
 }

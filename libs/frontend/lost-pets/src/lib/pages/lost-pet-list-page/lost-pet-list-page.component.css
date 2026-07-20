@@ -1,59 +1,103 @@
 :host {
+  display: block;
+}
+
+.lost-pets-page {
+  padding: var(--space-page);
+}
+
+.lost-pets-container {
   display: grid;
-  gap: 1rem;
+  width: min(100%, 76rem);
+  margin: 0 auto;
+  gap: clamp(1rem, 2vw, 1.5rem);
 }
 
-.list-header,
-.results-header {
+.lost-pets-hero,
+.lost-pets-toolbar,
+.state-panel {
+  border: 1px solid var(--color-border-default);
+  border-radius: var(--radius-panel);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.lost-pets-hero {
   display: flex;
-  align-items: end;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: clamp(1.25rem, 4vw, 3rem);
+  padding: clamp(1.25rem, 3vw, 2rem);
 }
 
-.eyebrow {
-  margin: 0 0 0.25rem;
-  color: var(--color-primary);
-  font-size: 0.78rem;
-  font-weight: 850;
-  text-transform: uppercase;
-}
-
+.eyebrow,
 h1,
 p {
   margin: 0;
 }
 
-h1 {
-  color: var(--color-text-strong);
-  font-size: clamp(2rem, 4vw, 3rem);
-  line-height: 1;
+.eyebrow {
+  margin-bottom: 0.35rem;
+  color: var(--color-primary);
+  font: var(--text-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.list-header p:not(.eyebrow) {
-  margin-top: 0.5rem;
+h1 {
+  color: var(--color-text-strong);
+  font: var(--text-heading-1);
+}
+
+.hero-copy {
+  max-width: 43rem;
+  margin-top: 0.7rem;
   color: var(--color-text-muted);
+  font: var(--text-body);
 }
 
 .create-action,
 .load-more {
   display: inline-flex;
+  min-height: 2.9rem;
+  flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  min-height: 2.9rem;
-  padding: 0.8rem 1rem;
+  border: 1px solid var(--color-primary);
   border-radius: var(--radius-control);
   background: var(--color-primary);
   color: white;
-  font-weight: 850;
+  padding: 0.75rem 1.15rem;
+  font-weight: 800;
   text-decoration: none;
-  box-shadow: var(--shadow-card);
+}
+
+.create-action:hover,
+.load-more:hover {
+  border-color: var(--color-primary-hover);
+  background: var(--color-primary-hover);
+}
+
+.lost-pets-toolbar {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 2vw, 1.25rem);
 }
 
 .results-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--color-border-default);
   color: var(--color-text-muted);
+  padding-top: 0.9rem;
   font-size: 0.88rem;
-  font-weight: 750;
+}
+
+.results-header strong {
+  color: var(--color-text-strong);
+  font-weight: 800;
 }
 
 .pet-list {
@@ -61,16 +105,35 @@ h1 {
   gap: 1rem;
 }
 
-.load-more {
-  justify-self: center;
-  border: 0;
+.state-panel {
+  min-height: 12rem;
+  padding: clamp(1rem, 3vw, 2rem);
 }
 
-@media (max-width: 640px) {
-  .list-header,
+.load-more {
+  justify-self: center;
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .lost-pets-hero,
   .results-header {
     align-items: stretch;
     flex-direction: column;
   }
+
+  .create-action {
+    width: 100%;
+  }
 }
 
+@media (max-width: 520px) {
+  .lost-pets-page {
+    padding: 0.75rem;
+  }
+
+  .lost-pets-hero,
+  .lost-pets-toolbar {
+    padding: 1rem;
+  }
+}

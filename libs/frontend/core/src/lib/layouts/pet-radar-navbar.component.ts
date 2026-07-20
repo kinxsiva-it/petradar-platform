@@ -35,7 +35,7 @@ const mainNavItems: NavItem[] = [
     authenticatedOnly: true,
     kind: 'rescue',
     label: 'Rescue',
-    roles: ['VOLUNTEER', 'ADMIN'],
+    roles: ['VOLUNTEER'],
     route: '/volunteer/rescue-cases',
   },
 ];

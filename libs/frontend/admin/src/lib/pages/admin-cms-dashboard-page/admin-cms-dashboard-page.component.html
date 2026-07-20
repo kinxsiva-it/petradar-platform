@@ -1,26 +1,74 @@
 <section class="cms-dashboard">
-  <header>
-    <p class="eyebrow">Admin CMS</p>
-    <h1>Operations Dashboard</h1>
-    <p>Use the CMS navigation to manage moderation, rescue operations, privacy, analytics, and platform controls.</p>
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Admin CMS</p>
+      <h1>PetRadar Admin Dashboard</h1>
+      <p>Review platform operations, coordinate community response, and keep public data safe.</p>
+    </div>
+    <span class="workspace-chip">Operations workspace</span>
   </header>
 
-  <section class="quick-grid" aria-label="Admin CMS quick links">
-    <a routerLink="/verification">
-      <strong>Verification Queue</strong>
-      <span>Review animal sighting reports</span>
-    </a>
-    <a routerLink="/rescue-cases">
-      <strong>Rescue Case Management</strong>
-      <span>Coordinate protected rescue workflows</span>
-    </a>
-    <a routerLink="/users">
-      <strong>User and Role Management</strong>
-      <span>Manage accounts and permissions</span>
-    </a>
-    <a routerLink="/privacy">
-      <strong>Privacy and Moderation</strong>
-      <span>Review privacy controls</span>
-    </a>
+  <section class="shortcut-section" aria-labelledby="primary-shortcuts-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Core operations</p>
+        <h2 id="primary-shortcuts-heading">Primary shortcuts</h2>
+      </div>
+      <span>4 work areas</span>
+    </div>
+    <div class="quick-grid quick-grid--primary">
+      <a routerLink="/verification" aria-label="Open Verification Queue">
+        <span class="shortcut-marker" aria-hidden="true">V</span>
+        <span class="shortcut-copy"><strong>Verification Queue</strong><small>Review animal reports and protect public-safe data.</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">→</span>
+      </a>
+      <a routerLink="/rescue-cases" aria-label="Open Rescue Cases">
+        <span class="shortcut-marker" aria-hidden="true">R</span>
+        <span class="shortcut-copy"><strong>Rescue Cases</strong><small>Coordinate volunteer response and case status.</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">→</span>
+      </a>
+      <a routerLink="/users" aria-label="Open Users and Roles">
+        <span class="shortcut-marker" aria-hidden="true">U</span>
+        <span class="shortcut-copy"><strong>Users &amp; Roles</strong><small>Inspect account status, roles, and reports.</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">→</span>
+      </a>
+      <a routerLink="/privacy" aria-label="Open Privacy and Moderation">
+        <span class="shortcut-marker" aria-hidden="true">P</span>
+        <span class="shortcut-copy"><strong>Privacy &amp; Moderation</strong><small>Control public location policy and protected data rules.</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="shortcut-section" aria-labelledby="secondary-shortcuts-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">Review and insights</p>
+        <h2 id="secondary-shortcuts-heading">More Admin tools</h2>
+      </div>
+      <span>4 work areas</span>
+    </div>
+    <div class="quick-grid quick-grid--secondary">
+      <a routerLink="/volunteers" aria-label="Open Volunteers">
+        <span class="shortcut-marker" aria-hidden="true">H</span>
+        <span class="shortcut-copy"><strong>Volunteers</strong><small>Review helper activity and assignment readiness.</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">→</span>
+      </a>
+      <a routerLink="/match-review" aria-label="Open Lost Pet Matches">
+        <span class="shortcut-marker" aria-hidden="true">M</span>
+        <span class="shortcut-copy"><strong>Lost Pet Matches</strong><small>Review possible lost-pet and sighting matches.</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">→</span>
+      </a>
+      <a routerLink="/analytics" aria-label="Open Analytics">
+        <span class="shortcut-marker" aria-hidden="true">A</span>
+        <span class="shortcut-copy"><strong>Analytics</strong><small>Track platform activity and distribution trends.</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">→</span>
+      </a>
+      <a routerLink="/audit-logs" aria-label="Open Audit Logs">
+        <span class="shortcut-marker" aria-hidden="true">G</span>
+        <span class="shortcut-copy"><strong>Audit Logs</strong><small>Inspect Admin and system activity history.</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
   </section>
 </section>

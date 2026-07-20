@@ -42,7 +42,7 @@
         <a routerLink="/community-guidelines" role="menuitem" (click)="close()">
           Community Guidelines
         </a>
-        @if (auth.isVolunteer() || auth.isAdmin()) {
+        @if (auth.isVolunteer()) {
           <div class="menu-divider" aria-hidden="true"></div>
           <a routerLink="/volunteer" role="menuitem" (click)="close()">Volunteer Dashboard</a>
           <a routerLink="/volunteer/rescue-cases" role="menuitem" (click)="close()">

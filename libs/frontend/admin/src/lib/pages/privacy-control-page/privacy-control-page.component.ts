@@ -66,6 +66,17 @@ export class PrivacyControlPageComponent {
   readonly actionMessage = signal('');
   readonly saving = computed(() => this.privacyMutation.isPending());
   readonly radiusDraft = signal(300);
+  readonly hasUnsavedChanges = computed(() => {
+    const policy = this.response()?.policy;
+    return policy ? this.radiusDraft() !== policy.defaultRadiusMeters : false;
+  });
+  readonly radiusIsValid = computed(() => {
+    const policy = this.response()?.policy;
+    const radius = this.radiusDraft();
+    return policy
+      ? radius >= policy.minimumRadiusMeters && radius <= policy.maximumRadiusMeters
+      : false;
+  });
   readonly moderationBacklog = computed(() => {
     const moderation = this.response()?.moderation;
     return (moderation?.pendingSightingsCount ?? 0) + (moderation?.needsReviewSightingsCount ?? 0);
@@ -90,6 +101,8 @@ export class PrivacyControlPageComponent {
     const radius = Number(value);
     if (Number.isFinite(radius)) {
       this.radiusDraft.set(Math.round(radius));
+      this.actionErrorMessage.set('');
+      this.actionMessage.set('');
     }
   }
 
@@ -136,6 +149,25 @@ export class PrivacyControlPageComponent {
       return 'Environment default';
     }
     return 'Safe default';
+  }
+
+  protectedControlLabel(key: string): string {
+    if (key === 'publicExactLocationExposure') {
+      return 'Exact location exposure';
+    }
+    if (key === 'publicReporterContactExposure') {
+      return 'Reporter contact exposure';
+    }
+    return 'Protected public data';
+  }
+
+  formatTimestamp(value: string | null): string {
+    if (!value) {
+      return 'No activity recorded';
+    }
+
+    const timestamp = new Date(value);
+    return Number.isNaN(timestamp.getTime()) ? value : timestamp.toLocaleString();
   }
 }
 

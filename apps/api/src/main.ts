@@ -39,7 +39,10 @@ async function bootstrap(): Promise<void> {
   app.use(cookieParser());
   app.enableCors({
     credentials: true,
-    origin: config.get('WEB_ORIGIN', { infer: true }),
+    origin: allowedWebOrigins(
+      config.get('WEB_ORIGIN', { infer: true }),
+      config.get('NODE_ENV', { infer: true }),
+    ),
   });
   app.setGlobalPrefix(config.get('API_PREFIX', { infer: true }));
   app.useGlobalPipes(
@@ -66,6 +69,22 @@ async function bootstrap(): Promise<void> {
   }
 
   await app.listen(config.get('PORT', { infer: true }));
+}
+
+function allowedWebOrigins(configuredOrigin: string, nodeEnv: Env['NODE_ENV']): string | string[] {
+  if (nodeEnv !== 'development') {
+    return configuredOrigin;
+  }
+
+  return Array.from(
+    new Set([
+      configuredOrigin,
+      'http://localhost:4200',
+      'http://localhost:4300',
+      'http://127.0.0.1:4201',
+      'http://127.0.0.1:4300',
+    ]),
+  );
 }
 
 void bootstrap();

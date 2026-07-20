@@ -1,10 +1,11 @@
 <section class="privacy-page">
   <header class="page-header">
     <div>
-      <p class="eyebrow">Privacy and moderation center</p>
-      <h1>Privacy Controls</h1>
-      <p>Review backend-enforced public-location policy and moderation operating status.</p>
+      <p class="eyebrow">Public-safe data policy</p>
+      <h1>Privacy &amp; Moderation</h1>
+      <p>Manage how approximate locations are shown publicly while keeping exact coordinates and reporter details protected.</p>
     </div>
+    <span class="privacy-chip">Admin protected</span>
   </header>
 
   @if (uiState() === 'loading') {
@@ -14,111 +15,143 @@
       <button type="button" (click)="loadPrivacyCenter()">Retry</button>
     </pr-empty-state>
   } @else if (response(); as state) {
-    @if (actionMessage()) {
-      <pr-alert title="Policy updated" tone="success">{{ actionMessage() }}</pr-alert>
-    }
     @if (errorMessage()) {
-      <pr-alert title="Privacy action unavailable" tone="danger">{{ errorMessage() }}</pr-alert>
+      <pr-alert title="Policy not saved" tone="danger">{{ errorMessage() }} Review the value and try saving again.</pr-alert>
     }
 
-    <section class="summary-grid">
-      <article>
+    <section class="summary-grid" aria-label="Privacy policy summary">
+      <article class="summary-card">
+        <span>Approximate area</span>
+        <b>Public location mode</b>
+        <p>Public maps receive privacy-safe coordinates only.</p>
+      </article>
+      <article class="summary-card">
         <span>{{ state.policy.defaultRadiusMeters }}m</span>
         <b>Default public radius</b>
+        <p>{{ policySourceLabel(state.policy.source) }}</p>
       </article>
-      <article>
-        <span>{{ moderationBacklog() }}</span>
-        <b>Pending moderation</b>
+      <article class="summary-card protected">
+        <pr-status-badge label="Protected" tone="success" />
+        <b>Exact location exposure</b>
+        <p>Not allowed for public viewers.</p>
       </article>
-      <article>
-        <span>{{ state.moderation.rejectedSightingsCount }}</span>
-        <b>Rejected sightings</b>
+      <article class="summary-card protected">
+        <pr-status-badge label="Protected" tone="success" />
+        <b>Reporter contact exposure</b>
+        <p>Not allowed for public viewers.</p>
       </article>
     </section>
 
-    <section class="privacy-grid">
+    <section class="privacy-grid policy-layout">
       <article class="panel form-panel">
-        <div>
-          <p class="eyebrow">Supported policy</p>
-          <h2>Public-location radius</h2>
-          <p>
-            Public sighting and lost-pet coordinates are generated from exact coordinates using
-            the backend privacy service. Exact coordinates are not returned by public APIs.
-          </p>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Public location setting</p>
+            <h2>Approximate area radius</h2>
+          </div>
+          @if (hasUnsavedChanges()) {
+            <span class="save-state save-state--unsaved" role="status">Unsaved changes</span>
+          } @else if (actionMessage()) {
+            <span class="save-state save-state--saved" role="status">Saved</span>
+          } @else {
+            <span class="save-state" role="status">Policy is up to date</span>
+          }
         </div>
-        <label>
-          Default public radius in meters
+        <p class="section-copy">
+          Set the default privacy radius used to generate approximate public locations. Exact source coordinates remain private.
+        </p>
+        <label for="public-radius">
+          Default radius
           <input
+            id="public-radius"
             type="number"
             [min]="state.policy.minimumRadiusMeters"
             [max]="state.policy.maximumRadiusMeters"
+            aria-describedby="public-radius-help public-radius-validation"
             [ngModel]="radiusDraft()"
             (ngModelChange)="updateRadiusDraft($event)"
           />
         </label>
-        <p class="hint">
-          Allowed range: {{ state.policy.minimumRadiusMeters }}m to
-          {{ state.policy.maximumRadiusMeters }}m. Current source:
-          {{ policySourceLabel(state.policy.source) }}.
+        <p id="public-radius-help" class="hint">
+          Choose a whole number from {{ state.policy.minimumRadiusMeters }} to
+          {{ state.policy.maximumRadiusMeters }} meters.
         </p>
+        @if (!radiusIsValid()) {
+          <p id="public-radius-validation" class="validation-message" role="alert">
+            Radius must stay within the allowed {{ state.policy.minimumRadiusMeters }}–{{ state.policy.maximumRadiusMeters }} meter range.
+          </p>
+        } @else {
+          <span id="public-radius-validation" class="sr-only">Radius is within the allowed range.</span>
+        }
         <div class="button-row">
-          <button type="button" [disabled]="saving()" (click)="savePolicy()">
+          <button type="button" [disabled]="saving() || !hasUnsavedChanges() || !radiusIsValid()" (click)="savePolicy()">
             {{ saving() ? 'Saving...' : 'Save policy' }}
           </button>
-          <button type="button" class="secondary" [disabled]="saving()" (click)="resetDraft()">
-            Reset
+          <button type="button" class="secondary" [disabled]="saving() || !hasUnsavedChanges()" (click)="resetDraft()">
+            Cancel changes
           </button>
         </div>
       </article>
 
       <article class="panel preview-panel">
-        <div>
-          <p class="eyebrow">Effective policy</p>
-          <h2>Backend state</h2>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Effective policy</p>
+            <h2>Policy details</h2>
+          </div>
+          <pr-status-badge label="Active" tone="success" />
         </div>
-        <dl>
+        <dl class="detail-list">
+          <div><dt>Public location</dt><dd>Approximate area</dd></div>
+          <div><dt>Policy source</dt><dd>{{ policySourceLabel(state.policy.source) }}</dd></div>
           <div><dt>Minimum radius</dt><dd>{{ state.policy.minimumRadiusMeters }}m</dd></div>
           <div><dt>Maximum radius</dt><dd>{{ state.policy.maximumRadiusMeters }}m</dd></div>
-          <div><dt>Last policy update</dt><dd>{{ state.policy.updatedAt ?? 'Not persisted yet' }}</dd></div>
-          <div><dt>Last moderation action</dt><dd>{{ state.moderation.lastModerationActionAt ?? 'No actions recorded' }}</dd></div>
+          <div><dt>Last policy update</dt><dd>{{ state.policy.updatedAt ? formatTimestamp(state.policy.updatedAt) : 'Using default policy' }}</dd></div>
         </dl>
       </article>
     </section>
 
-    <section class="privacy-grid">
-      <article class="panel">
-        <div>
+    <section class="privacy-grid operations-layout">
+      <article class="panel moderation-panel">
+        <div class="section-heading">
+          <div>
           <p class="eyebrow">Operational status</p>
           <h2>Moderation queue</h2>
+          </div>
+          <span class="backlog-count">{{ moderationBacklog() }} awaiting action</span>
         </div>
-        <dl>
+        <dl class="moderation-list">
           <div><dt>Pending sightings</dt><dd>{{ state.moderation.pendingSightingsCount }}</dd></div>
           <div><dt>Needs review</dt><dd>{{ state.moderation.needsReviewSightingsCount }}</dd></div>
           <div><dt>Duplicate sightings</dt><dd>{{ state.moderation.duplicateSightingsCount }}</dd></div>
           <div><dt>Rejected sightings</dt><dd>{{ state.moderation.rejectedSightingsCount }}</dd></div>
+          <div><dt>Last moderation action</dt><dd>{{ formatTimestamp(state.moderation.lastModerationActionAt) }}</dd></div>
         </dl>
       </article>
 
       <article class="panel control-list">
-        <div>
-          <p class="eyebrow">Unsupported controls</p>
-          <h2>Hard-disabled</h2>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Protected data</p>
+            <h2>Public exposure controls</h2>
+          </div>
+          <pr-status-badge label="Locked" tone="default" />
         </div>
+        <p class="section-copy">These protections are enforced by PetRadar and cannot be enabled from the Admin CMS.</p>
         @for (control of state.unsupportedControls; track control.key) {
           <div class="control-row">
             <div>
-              <strong>{{ control.key }}</strong>
+              <strong>{{ protectedControlLabel(control.key) }}</strong>
               <p>{{ control.description }}</p>
             </div>
-            <pr-status-badge label="Unsupported" tone="danger" />
+            <pr-status-badge label="Not allowed" tone="default" />
           </div>
         }
       </article>
     </section>
 
-    <pr-alert title="Public privacy invariant" tone="privacy">
-      The Admin CMS can tune only the approximate public radius. It cannot expose exact locations
-      or reporter contact details publicly.
+    <pr-alert title="Public viewers see an approximate area only" tone="privacy">
+      Exact coordinates and reporter contact details remain private. This page can change only the default public approximation radius.
     </pr-alert>
   }
 </section>

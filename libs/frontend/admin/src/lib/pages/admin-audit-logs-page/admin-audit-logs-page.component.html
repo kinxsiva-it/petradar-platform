@@ -3,15 +3,36 @@
     <div>
       <p class="eyebrow">Audit logs</p>
       <h1>Audit Logs</h1>
-      <p>Review sanitized Admin audit events without raw metadata payloads.</p>
+      <p>Review sanitized Admin audit events without exposing raw metadata payloads.</p>
     </div>
+    @if (uiState() === 'ready') {
+      <span class="result-count">{{ response()?.total ?? 0 }} events</span>
+    }
   </header>
 
-  <section class="filter-bar">
-    <input type="search" [ngModel]="filters().action ?? ''" (ngModelChange)="updateFilter('action', $event)" placeholder="Action" />
-    <input type="search" [ngModel]="filters().entityType ?? ''" (ngModelChange)="updateFilter('entityType', $event)" placeholder="Entity type" />
-    <input type="search" [ngModel]="filters().actorQuery ?? ''" (ngModelChange)="updateFilter('actorQuery', $event)" placeholder="Actor name or email" />
-    <button type="button" (click)="clearFilters()">Clear</button>
+  <section class="filter-bar" aria-label="Audit log filters">
+    <input
+      type="search"
+      aria-label="Filter by action"
+      [ngModel]="filters().action ?? ''"
+      (ngModelChange)="updateFilter('action', $event)"
+      placeholder="Action"
+    />
+    <input
+      type="search"
+      aria-label="Filter by entity type"
+      [ngModel]="filters().entityType ?? ''"
+      (ngModelChange)="updateFilter('entityType', $event)"
+      placeholder="Entity type"
+    />
+    <input
+      type="search"
+      aria-label="Filter by actor"
+      [ngModel]="filters().actorQuery ?? ''"
+      (ngModelChange)="updateFilter('actorQuery', $event)"
+      placeholder="Actor name or email"
+    />
+    <button type="button" (click)="clearFilters()">Clear filters</button>
   </section>
 
   @if (uiState() === 'loading') {
@@ -36,7 +57,13 @@
           @for (row of table.getRowModel().rows; track row.original.id) {
             <tr>
               @for (cell of row.getVisibleCells(); track cell.id) {
-                <td>{{ cellValue(cell) }}</td>
+                @if (cell.column.id === 'createdAt') {
+                  <td class="time-cell" [title]="row.original.createdAt">
+                    {{ row.original.createdAt | date: 'medium' }}
+                  </td>
+                } @else {
+                  <td class="truncate-cell" [title]="cellValue(cell)">{{ cellValue(cell) }}</td>
+                }
               }
             </tr>
           }

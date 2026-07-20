@@ -14,7 +14,7 @@ export class NotificationsController {
   constructor(private readonly notifications: NotificationsService) {}
 
   @Get()
-  @ApiOkResponse()
+  @ApiOkResponse({ description: 'Return an authenticated user notification page using an opaque cursor.' })
   list(@CurrentUser() user: AuthenticatedUser | undefined, @Query() query: NotificationsQueryDto) {
     return this.notifications.listForUser(requireUserId(user), query);
   }

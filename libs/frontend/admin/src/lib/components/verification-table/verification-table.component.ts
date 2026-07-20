@@ -94,7 +94,11 @@ function verificationStatusValue(item: AdminModerationQueueItem): string {
             <tr>
               @for (cell of row.getVisibleCells(); track cell.id) {
                 @if (cell.column.id === 'reference') {
-                  <td><a [routerLink]="['/verification', row.original.id]">{{ row.original.reference }}</a></td>
+                  <td class="reference-cell">
+                    <a [routerLink]="['/verification', row.original.id]" [title]="row.original.reference">
+                      {{ row.original.reference }}
+                    </a>
+                  </td>
                 } @else if (cell.column.id === 'photo') {
                   <td>
                     @if (row.original.thumbnailPhoto) {
@@ -115,9 +119,17 @@ function verificationStatusValue(item: AdminModerationQueueItem): string {
                 } @else if (cell.column.id === 'verificationStatus') {
                   <td><pr-status-badge [label]="row.original.verificationStatus" tone="match" /></td>
                 } @else if (cell.column.id === 'review') {
-                  <td><button type="button" (click)="reviewed.emit(row.original)">Review</button></td>
+                  <td class="action-cell">
+                    <button
+                      type="button"
+                      [attr.data-review-id]="row.original.id"
+                      (click)="reviewed.emit(row.original)"
+                    >
+                      Review
+                    </button>
+                  </td>
                 } @else {
-                  <td>{{ cellValue(cell) }}</td>
+                  <td class="truncate-cell" [title]="cellValue(cell)">{{ cellValue(cell) }}</td>
                 }
               }
             </tr>
@@ -138,14 +150,14 @@ function verificationStatusValue(item: AdminModerationQueueItem): string {
 
       table {
         width: 100%;
-        min-width: 58rem;
+        min-width: 76rem;
         border-collapse: collapse;
       }
 
       th,
       td {
         border-bottom: 1px solid var(--color-border-default);
-        padding: 0.75rem;
+        padding: 0.85rem 0.9rem;
         text-align: left;
         vertical-align: middle;
       }
@@ -157,6 +169,13 @@ function verificationStatusValue(item: AdminModerationQueueItem): string {
         background: var(--color-surface);
         color: var(--color-text-muted);
         font: var(--text-caption);
+        letter-spacing: 0.02em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      tbody tr:hover {
+        background: var(--color-surface-muted);
       }
 
       img {
@@ -172,8 +191,25 @@ function verificationStatusValue(item: AdminModerationQueueItem): string {
       }
 
       a {
+        display: block;
+        max-width: 10rem;
+        overflow: hidden;
         color: var(--color-primary);
         font-weight: 850;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .truncate-cell {
+        max-width: 11rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .action-cell {
+        width: 1%;
+        white-space: nowrap;
       }
 
       button {
@@ -184,6 +220,7 @@ function verificationStatusValue(item: AdminModerationQueueItem): string {
         color: white;
         padding: 0 0.8rem;
         font-weight: 800;
+        cursor: pointer;
       }
 
       @media (max-width: 760px) {

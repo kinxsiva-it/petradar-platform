@@ -372,7 +372,7 @@ export class SightingsRepository {
         ],
         ' AND ',
       )}
-      ORDER BY "distance_meters" ASC
+      ORDER BY "distance_meters" ASC, "seen_at" DESC, "id" DESC
       LIMIT ${limit}
     `);
 

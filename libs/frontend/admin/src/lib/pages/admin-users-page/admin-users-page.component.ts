@@ -111,6 +111,15 @@ export class AdminUsersPageComponent {
     this.filters.update((filters) => ({ ...filters, page: page - 1 }));
   }
 
+  initials(name: string): string {
+    return name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase() ?? '')
+      .join('');
+  }
+
   private updateFilters(patch: Partial<AdminUsersFilters>): void {
     this.filters.update((filters) => ({ ...filters, ...patch, page: 1 }));
   }
@@ -121,7 +130,7 @@ function toUserMessage(error: unknown): string {
     return 'Users could not be loaded.';
   }
   if (error.status === 0) {
-    return 'The PetRadar API is unavailable. Users could not be loaded.';
+    return 'PetRadar services are temporarily unavailable. Users could not be loaded.';
   }
   if (error.status === 403) {
     return 'You do not have permission to view users.';

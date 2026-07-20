@@ -2,23 +2,23 @@ import type { LandingFeature, LandingMetric } from '../models/landing.model.js';
 
 export const landingMetrics: LandingMetric[] = [
   {
-    label: 'Sightings and reports',
-    value: 'API-backed',
-    delta: 'Submitted through PetRadar services',
+    label: 'Sightings and lost-pet posts',
+    value: 'Community reports',
+    delta: 'Shared through PetRadar',
   },
   {
     label: 'Public map safety',
-    value: 'Private pins',
+    value: 'Protected locations',
     delta: 'Exact coordinates stay out of public views',
   },
   {
     label: 'Lost pet matching',
-    value: 'Reviewable',
+    value: 'Reviewed matches',
     delta: 'Possible matches flow to owner and admin review',
   },
   {
     label: 'Rescue workflow',
-    value: 'Coordinated',
+    value: 'Coordinated rescue',
     delta: 'Cases can be assigned and tracked by verified helpers',
   },
 ];

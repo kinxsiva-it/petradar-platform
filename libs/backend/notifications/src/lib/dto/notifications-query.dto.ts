@@ -1,15 +1,12 @@
-import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsIn, IsOptional } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class NotificationsQueryDto {
+import { CursorPaginationQueryDto } from '@petradar/backend/shared';
+
+export class NotificationsQueryDto extends CursorPaginationQueryDto {
+  @ApiPropertyOptional({ default: 'all', enum: ['all', 'unread'] })
   @IsOptional()
   @IsIn(['all', 'unread'])
   status?: 'all' | 'unread';
 
-  @IsOptional()
-  @Transform(({ value }: { value: unknown }) => Number(value))
-  @IsInt()
-  @Min(1)
-  @Max(50)
-  limit?: number;
 }

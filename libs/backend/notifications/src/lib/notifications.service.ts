@@ -1,7 +1,12 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { NotificationType, Prisma } from '@prisma/client';
 
-import { PrismaService } from '@petradar/backend/shared';
+import {
+  cursorPaginationMeta,
+  decodeCursor,
+  encodeCursor,
+  PrismaService,
+} from '@petradar/backend/shared';
 
 import type { NotificationsQueryDto } from './dto/notifications-query.dto.js';
 
@@ -43,19 +48,40 @@ export class NotificationsService {
           },
         },
       });
-    } catch (error: unknown) {
+    } catch {
       this.logger.error(`Notification creation failed for ${input.type}/${input.resourceType}.`);
     }
   }
 
   async listForUser(userId: string, query: NotificationsQueryDto) {
+    const limit = query.limit ?? 20;
+    const cursor = query.cursor ? decodeCursor(query.cursor) : null;
     const items = await this.prisma.notification.findMany({
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       select: notificationSelect,
-      take: query.limit ?? 20,
-      where: { userId, ...(query.status === 'unread' ? { readAt: null } : {}) },
+      take: limit + 1,
+      where: {
+        userId,
+        ...(query.status === 'unread' ? { readAt: null } : {}),
+        ...(cursor
+          ? {
+              OR: [
+                { createdAt: { lt: cursor.createdAt } },
+                { createdAt: cursor.createdAt, id: { lt: cursor.id } },
+              ],
+            }
+          : {}),
+      },
     });
-    return { items: items.map(toResponse) };
+    const hasNextPage = items.length > limit;
+    const pageItems = hasNextPage ? items.slice(0, limit) : items;
+    const last = pageItems.at(-1);
+    const nextCursor =
+      hasNextPage && last ? encodeCursor({ createdAt: last.createdAt, id: last.id }) : null;
+    return {
+      items: pageItems.map(toResponse),
+      pagination: cursorPaginationMeta(limit, nextCursor),
+    };
   }
 
   async getUnreadCount(userId: string) {

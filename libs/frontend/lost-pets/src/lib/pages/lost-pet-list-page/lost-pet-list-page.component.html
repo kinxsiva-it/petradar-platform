@@ -1,38 +1,56 @@
-<section class="list-header">
-  <div>
-    <p class="eyebrow">Public lost-pet posts</p>
-    <h1>Lost Pets</h1>
-    <p>Browse lost pets reported by the community. Exact contact and location details stay protected.</p>
-  </div>
-  <a routerLink="/lost-pets/new" class="create-action">Create Lost Pet</a>
-</section>
+<section class="lost-pets-page">
+  <div class="lost-pets-container">
+    <header class="lost-pets-hero">
+      <div>
+        <p class="eyebrow">Public lost-pet posts</p>
+        <h1>Lost Pets</h1>
+        <p class="hero-copy">
+          Browse lost pets reported by the community. Exact contact and location details stay protected.
+        </p>
+      </div>
+      <a routerLink="/lost-pets/new" class="create-action">Create Lost Pet</a>
+    </header>
 
-<pr-lost-pet-filter-bar
-  [filters]="filters()"
-  (filterChanged)="updateFilter($event)"
-  (clearFilters)="clearFilters()"
-/>
+    <section class="lost-pets-toolbar" aria-label="Search and filter lost pets">
+      <pr-lost-pet-filter-bar
+        [filters]="filters()"
+        (filterChanged)="updateFilter($event)"
+        (clearFilters)="clearFilters()"
+      />
 
-@if (uiState() === 'loading') {
-  <section class="pet-list"><pr-loading-skeleton [rows]="6" /></section>
-} @else if (uiState() === 'error') {
-  <pr-empty-state title="Lost pets could not load" [description]="errorMessage()" icon="!" />
-} @else if (uiState() === 'empty') {
-  <pr-empty-state title="No lost pets yet" description="There are no public lost-pet posts right now." icon="0" />
-} @else if (items().length === 0) {
-  <pr-empty-state title="No lost pets match filters" description="Clear filters or broaden your search." icon="0" />
-} @else {
-  <section class="results-header">
-    <span>{{ total() }} lost pets found</span>
-    <span>Sort by: Last seen</span>
-  </section>
-  <section class="pet-list">
-    @for (pet of items(); track pet.id) {
-      <pr-lost-pet-card [pet]="pet" />
+      @if (uiState() === 'default') {
+        <div class="results-header" aria-live="polite">
+          <span><strong>{{ total() }}</strong> lost pets found</span>
+          <span>Sort by: <strong>Last seen</strong></span>
+        </div>
+      }
+    </section>
+
+    @if (uiState() === 'loading') {
+      <section class="state-panel" aria-label="Loading lost pets">
+        <pr-loading-skeleton [rows]="6" />
+      </section>
+    } @else if (uiState() === 'error') {
+      <section class="state-panel">
+        <pr-empty-state title="Lost pets could not load" [description]="errorMessage()" icon="!" />
+      </section>
+    } @else if (uiState() === 'empty') {
+      <section class="state-panel">
+        <pr-empty-state title="No lost pets yet" description="There are no public lost-pet posts right now." icon="0" />
+      </section>
+    } @else if (items().length === 0) {
+      <section class="state-panel">
+        <pr-empty-state title="No lost pets match filters" description="Clear filters or broaden your search." icon="0" />
+      </section>
+    } @else {
+      <section class="pet-list" aria-label="Lost pet posts">
+        @for (pet of items(); track pet.id) {
+          <pr-lost-pet-card [pet]="pet" />
+        }
+      </section>
+      @if ((filters().page ?? 1) < totalPages()) {
+        <button type="button" class="load-more" (click)="nextPage()">Load more</button>
+      }
     }
-  </section>
-  @if ((filters().page ?? 1) < totalPages()) {
-    <button type="button" class="load-more" (click)="nextPage()">Load more</button>
-  }
-}
-
+  </div>
+</section>

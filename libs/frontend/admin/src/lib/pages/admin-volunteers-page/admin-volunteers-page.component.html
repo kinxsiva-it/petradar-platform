@@ -3,33 +3,49 @@
     <div>
       <p class="eyebrow">Volunteer directory</p>
       <h1>Volunteers</h1>
-      <p>Search safe volunteer account summaries returned by the Admin users API.</p>
+      <p>Search safe, active volunteer account summaries returned by the Admin users API.</p>
     </div>
+    @if (uiState() === 'ready') {
+      <span class="result-count">{{ response()?.total ?? 0 }} active volunteers</span>
+    }
   </header>
 
-  <section class="filter-bar">
-    <input type="search" [ngModel]="query()" (ngModelChange)="search($event)" placeholder="Search volunteer name or email" />
-    <button type="button" (click)="loadVolunteers()">Retry</button>
+  <section class="filter-bar" aria-label="Volunteer search">
+    <input
+      type="search"
+      aria-label="Search volunteers"
+      [ngModel]="query()"
+      (ngModelChange)="search($event)"
+      placeholder="Search volunteer name or email"
+    />
+    <button type="button" (click)="loadVolunteers()">Refresh list</button>
   </section>
 
   @if (uiState() === 'loading') {
     <section class="panel"><pr-loading-skeleton [rows]="8" /></section>
   } @else if (uiState() === 'error') {
-    <pr-empty-state title="Volunteers unavailable" [description]="errorMessage()" icon="!" />
+    <pr-empty-state title="Volunteers unavailable" [description]="errorMessage()" icon="!">
+      <button type="button" (click)="loadVolunteers()">Retry</button>
+    </pr-empty-state>
   } @else if ((response()?.items?.length ?? 0) === 0) {
     <pr-empty-state title="No volunteers found" description="Try another search term." icon="0" />
   } @else {
-    <section class="volunteer-grid">
+    <section class="volunteer-grid" aria-label="Volunteer directory results">
       @for (row of table.getRowModel().rows; track row.original.id) {
         @let volunteer = row.original;
         <article>
-          <span aria-hidden="true">{{ initials(volunteer) }}</span>
-          <div>
+          <span class="avatar" aria-hidden="true">{{ initials(volunteer) }}</span>
+          <div class="volunteer-details">
             <h2>{{ volunteer.displayName }}</h2>
-            <p>{{ volunteer.email }}</p>
-            <pr-status-badge [label]="volunteer.volunteerVerification" [tone]="volunteer.volunteerVerification === 'VERIFIED' ? 'success' : 'warning'" />
+            <p [title]="volunteer.email">{{ volunteer.email }}</p>
+            <pr-status-badge
+              [label]="volunteer.volunteerVerification"
+              [tone]="volunteer.volunteerVerification === 'VERIFIED' ? 'success' : 'warning'"
+            />
           </div>
-          <a [routerLink]="['/users', volunteer.id]">Open user</a>
+          <a [routerLink]="['/users', volunteer.id]" [attr.aria-label]="'Open user details for ' + volunteer.displayName">
+            Open user
+          </a>
         </article>
       }
     </section>

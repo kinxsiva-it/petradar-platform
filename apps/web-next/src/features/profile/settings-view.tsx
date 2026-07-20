@@ -1,0 +1,5 @@
+import Link from 'next/link';
+
+import { routes } from '../../lib/routes';
+
+export function SettingsView(){return <div className="page-container workspace-page"><header className="page-heading"><div><span className="eyebrow">Account</span><h1>Settings</h1><p>Available account preferences will appear here when persisted APIs exist.</p></div></header><section className="settings-grid"><article><h2>Notification preferences</h2><p>No notification-preferences endpoint exists, so no frontend-only toggles pretend to save.</p><div className="feedback feedback-info">Notification read state is implemented on the Notifications page.</div></article><article><h2>Privacy preferences</h2><p>Public maps and lost-pet views continue to use backend-generated approximate locations. Exact coordinates stay in authorized workflows.</p></article><article><h2>Language</h2><p>Language preferences are not persisted by the current backend contract.</p></article><article><h2>Account actions</h2><p>Review safe reporting and community conduct guidance.</p><Link className="secondary-action" href={routes.communityGuidelines}>Community Guidelines</Link></article></section></div>;}

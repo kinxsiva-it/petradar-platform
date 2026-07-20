@@ -1,3 +1,4 @@
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -53,7 +54,7 @@ const auditLogRowModel = getCoreRowModel<AdminAuditLogItem>();
 @Component({
   selector: 'pr-admin-audit-logs-page',
   standalone: true,
-  imports: [EmptyStateComponent, FormsModule, LoadingSkeletonComponent],
+  imports: [DatePipe, EmptyStateComponent, FormsModule, LoadingSkeletonComponent],
   styleUrl: './admin-audit-logs-page.component.css',
   templateUrl: './admin-audit-logs-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

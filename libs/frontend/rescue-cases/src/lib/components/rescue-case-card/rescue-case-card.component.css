@@ -79,6 +79,13 @@ footer {
   font-weight: 800;
 }
 
+.badge-row > span.assignee {
+  max-width: 10rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 footer {
   grid-column: 1 / -1;
 }

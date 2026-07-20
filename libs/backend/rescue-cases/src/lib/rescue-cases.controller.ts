@@ -26,6 +26,7 @@ import {
   CreateInternalNoteDto,
   CreateRescueCaseDto,
   ListRescueCasesQueryDto,
+  RescueActivityQueryDto,
   UpdateRescueStatusDto,
 } from './dto/rescue-cases.dto.js';
 import { RescueCasesService } from './rescue-cases.service.js';
@@ -99,12 +100,23 @@ export class RescueCasesController {
   }
 
   @Get(':id/timeline')
-  @ApiOkResponse({ description: 'Return protected rescue case timeline.' })
+  @ApiOkResponse({ description: 'Return a protected rescue case timeline page using an opaque cursor.' })
   timeline(
     @CurrentUser() user: AuthenticatedUser | undefined,
     @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: RescueActivityQueryDto,
   ): ReturnType<RescueCasesService['timeline']> {
-    return this.rescueCases.timeline(this.requireUser(user), id);
+    return this.rescueCases.timeline(this.requireUser(user), id, query);
+  }
+
+  @Get(':id/notes')
+  @ApiOkResponse({ description: 'Return protected paginated rescue case internal notes.' })
+  notes(
+    @CurrentUser() user: AuthenticatedUser | undefined,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: RescueActivityQueryDto,
+  ): ReturnType<RescueCasesService['notes']> {
+    return this.rescueCases.notes(this.requireUser(user), id, query);
   }
 
   private requireUser(user: AuthenticatedUser | undefined): AuthenticatedUser {

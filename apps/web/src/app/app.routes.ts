@@ -85,7 +85,7 @@ export const appRoutes: Routes = [
       {
         path: 'volunteer',
         canActivate: [roleGuard],
-        data: { roles: ['VOLUNTEER', 'ADMIN'] },
+        data: { forbiddenRedirectUrl: '/map', roles: ['VOLUNTEER'] },
         loadChildren: () =>
           import('@petradar/frontend/volunteer').then((module) => module.VOLUNTEER_ROUTES),
       },

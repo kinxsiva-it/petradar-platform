@@ -75,7 +75,7 @@
       </div>
 
       <aside class="action-panel">
-        @if (isAdmin()) {
+        @if (canAssignVolunteer()) {
           <section class="assignment-form">
             <h2>Assign volunteer</h2>
             @if (item.assignedVolunteer) {

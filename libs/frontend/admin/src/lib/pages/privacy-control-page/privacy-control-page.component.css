@@ -5,12 +5,19 @@
 
 .page-header,
 .panel,
-.summary-grid article {
+.summary-card {
   border: 1px solid var(--color-border-default);
   border-radius: var(--radius-panel);
   background: var(--color-surface);
   padding: clamp(1rem, 2.5vw, 1.35rem);
   box-shadow: var(--shadow-card);
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .eyebrow,
@@ -36,11 +43,34 @@ h2 {
   font: var(--text-heading-3);
 }
 
+.page-header p:not(.eyebrow),
+.section-copy,
+.summary-card p {
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.privacy-chip,
+.backlog-count,
+.save-state {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  padding: 0.5rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .privacy-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.8fr);
   gap: 1rem;
   align-items: start;
+}
+
+.operations-layout {
+  grid-template-columns: minmax(0, 0.9fr) minmax(20rem, 1.1fr);
 }
 
 .form-panel {
@@ -50,22 +80,73 @@ h2 {
 
 .summary-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
 }
 
-.summary-grid span {
+.summary-card {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  min-width: 0;
+  box-shadow: none;
+}
+
+.summary-card > span:not(.badge),
+.summary-card > pr-status-badge {
+  min-height: 2rem;
+}
+
+.summary-card > span:not(.badge) {
   display: block;
   color: var(--color-primary);
-  font-size: 1.75rem;
+  font-size: 1.35rem;
   font-weight: 850;
 }
 
-.summary-grid b,
+.summary-card.protected pr-status-badge {
+  justify-self: start;
+}
+
+.summary-card b,
 .hint,
 dt,
 .control-row p {
   color: var(--color-text-muted);
+}
+
+.summary-card b {
+  color: var(--color-text-strong);
+}
+
+.summary-card p {
+  font-size: 0.82rem;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.section-heading > div {
+  min-width: 0;
+}
+
+.save-state {
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+}
+
+.save-state--unsaved {
+  background: var(--color-warning-subtle);
+  color: #a16207;
+}
+
+.save-state--saved {
+  background: var(--color-success-subtle);
+  color: var(--color-primary);
 }
 
 dl {
@@ -78,6 +159,19 @@ dl div {
   display: grid;
   grid-template-columns: 12rem minmax(0, 1fr);
   gap: 1rem;
+}
+
+.detail-list > div,
+.moderation-list > div {
+  align-items: baseline;
+  border-top: 1px solid var(--color-border-default);
+  padding-top: 0.7rem;
+}
+
+.detail-list > div:first-child,
+.moderation-list > div:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 dd {
@@ -109,6 +203,28 @@ select {
   padding: 0 0.75rem;
 }
 
+input:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--color-primary-subtle);
+  outline-offset: 2px;
+}
+
+.validation-message {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  font-weight: 750;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .button-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -123,6 +239,19 @@ button {
   color: white;
   padding: 0 0.8rem;
   font-weight: 800;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+button:not(:disabled):hover {
+  filter: brightness(0.96);
 }
 
 .secondary {
@@ -149,17 +278,49 @@ button {
   padding-top: 0.85rem;
 }
 
+.control-row > div {
+  min-width: 0;
+}
+
+.control-row p {
+  margin-top: 0.25rem;
+  line-height: 1.45;
+}
+
 .control-row strong {
   color: var(--color-text-strong);
 }
 
 @media (max-width: 960px) {
   .privacy-grid,
-  .summary-grid {
+  .operations-layout {
     grid-template-columns: 1fr;
   }
 
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   dl div {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header,
+  .section-heading,
+  .control-row {
+    display: grid;
+  }
+
+  .privacy-chip,
+  .backlog-count,
+  .save-state {
+    justify-self: start;
+  }
+
+  .summary-grid,
+  .button-row {
     grid-template-columns: 1fr;
   }
 }

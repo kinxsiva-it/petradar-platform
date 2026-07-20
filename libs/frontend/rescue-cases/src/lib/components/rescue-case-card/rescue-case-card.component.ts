@@ -20,4 +20,5 @@ export class RescueCaseCardComponent {
   readonly detailBaseRoute = input('/volunteer/rescue-cases');
   readonly accepted = output<string>();
   readonly showAccept = input(false);
+  readonly showAssignee = input(false);
 }

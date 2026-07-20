@@ -124,7 +124,7 @@ function metric(
     return null;
   }
   return {
-    delta: 'Current API value',
+    delta: 'Current platform total',
     label,
     tone,
     value,
@@ -148,7 +148,7 @@ function toUserMessage(error: unknown): string {
     return 'Analytics could not be loaded.';
   }
   if (error.status === 0) {
-    return 'The PetRadar API is unavailable. Analytics could not be loaded.';
+    return 'PetRadar analytics are temporarily unavailable. Please try again.';
   }
   if (error.status === 403) {
     return 'You do not have permission to view analytics.';

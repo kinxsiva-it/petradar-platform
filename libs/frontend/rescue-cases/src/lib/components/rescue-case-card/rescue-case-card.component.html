@@ -13,14 +13,24 @@
     <div class="badge-row">
       <pr-rescue-status-badge [status]="caseItem().status" />
       @if (caseItem().assignedVolunteer) {
-        <span>Assigned</span>
+        <span
+          [class.assignee]="showAssignee()"
+          [title]="showAssignee() ? caseItem().assignedVolunteer?.name ?? '' : 'Assigned'"
+        >
+          {{ showAssignee() ? caseItem().assignedVolunteer?.name : 'Assigned' }}
+        </span>
       } @else {
         <span>Unassigned</span>
       }
     </div>
   </div>
   <footer>
-    <a [routerLink]="[detailBaseRoute(), caseItem().id]">View case</a>
+    <a
+      [routerLink]="[detailBaseRoute(), caseItem().id]"
+      [attr.aria-label]="'View rescue case ' + caseItem().caseNumber"
+    >
+      View case
+    </a>
     @if (showAccept() && !caseItem().assignedVolunteer) {
       <button type="button" (click)="accepted.emit(caseItem().id)">Accept</button>
     }

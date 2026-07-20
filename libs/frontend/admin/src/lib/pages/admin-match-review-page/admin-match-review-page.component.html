@@ -3,7 +3,7 @@
     <div>
       <p class="eyebrow">Lost pet match review</p>
       <h1>Match Review</h1>
-      <p>Inspect backend-generated match candidates and moderate pending owner/sighting matches.</p>
+      <p>Inspect generated match candidates and moderate pending owner and sighting matches.</p>
     </div>
   </header>
 
@@ -29,7 +29,7 @@
       </article>
     </section>
 
-    <section class="filter-bar">
+    <section class="filter-bar" aria-label="Match review filters">
       <label>
         Review status
         <select [ngModel]="filters().status ?? 'All'" (ngModelChange)="updateStatus($event)">
@@ -39,13 +39,13 @@
           <option>REJECTED</option>
         </select>
       </label>
-      <button type="button" (click)="clearFilters()">Clear</button>
+      <button type="button" (click)="clearFilters()">Clear filters</button>
     </section>
 
     @if (items().length === 0) {
       <pr-empty-state
         title="No matches found"
-        description="No backend match results match the current review status."
+        description="No generated match results match the current review status."
         icon="0"
       />
     } @else {
@@ -65,17 +65,19 @@
               <tr>
                 @for (cell of row.getVisibleCells(); track cell.id) {
                   @if (cell.column.id === 'lostPet') {
-                    <td>
+                    <td class="primary-cell">
                       <b>{{ row.original.lostPet.name }}</b>
-                      <span>{{ row.original.lostPet.id }}</span>
+                      <span class="truncate" [title]="row.original.lostPet.id">{{ row.original.lostPet.id }}</span>
                     </td>
                   } @else if (cell.column.id === 'sighting') {
-                    <td>
+                    <td class="primary-cell">
                       <b>{{ row.original.sighting.species }} sighting</b>
-                      <span>{{ row.original.approximateLocationLabel }} - {{ row.original.distanceLabel }}</span>
+                      <span class="truncate" [title]="row.original.approximateLocationLabel + ' · ' + row.original.distanceLabel">
+                        {{ row.original.approximateLocationLabel }} &middot; {{ row.original.distanceLabel }}
+                      </span>
                     </td>
                   } @else if (cell.column.id === 'score') {
-                    <td>
+                    <td class="score-cell">
                       <strong>{{ row.original.score }}%</strong>
                       <span>{{ levelLabel(row.original.level) }}</span>
                     </td>
@@ -86,8 +88,16 @@
                         [tone]="statusTone(row.original.reviewStatus)"
                       />
                     </td>
+                  } @else if (cell.column.id === 'matchedAt') {
+                    <td class="date-cell" [title]="row.original.matchedAt">
+                      {{ row.original.matchedAt | date: 'medium' }}
+                    </td>
                   } @else if (cell.column.id === 'action') {
-                    <td><a [routerLink]="['/match-review', row.original.id]">Open</a></td>
+                    <td class="action-cell">
+                      <a [routerLink]="['/match-review', row.original.id]" [attr.aria-label]="'Open match details for ' + row.original.lostPet.name">
+                        Open details
+                      </a>
+                    </td>
                   } @else {
                     <td>{{ cellValue(cell) }}</td>
                   }
@@ -96,6 +106,29 @@
             }
           </tbody>
         </table>
+      </section>
+
+      <section class="match-cards" aria-label="Match review results">
+        @for (item of items(); track item.id) {
+          <article>
+            <header>
+              <div>
+                <h2>{{ item.lostPet.name }}</h2>
+                <p class="truncate" [title]="item.lostPet.id">{{ item.lostPet.id }}</p>
+              </div>
+              <pr-status-badge [label]="item.reviewStatusLabel" [tone]="statusTone(item.reviewStatus)" />
+            </header>
+            <p><strong>{{ item.sighting.species }} sighting</strong></p>
+            <p>{{ item.approximateLocationLabel }} &middot; {{ item.distanceLabel }}</p>
+            <div class="card-meta">
+              <span><b>{{ item.score }}%</b> {{ levelLabel(item.level) }}</span>
+              <span>Matched {{ item.matchedAt | date: 'mediumDate' }}</span>
+            </div>
+            <a [routerLink]="['/match-review', item.id]" [attr.aria-label]="'Open match details for ' + item.lostPet.name">
+              Open details
+            </a>
+          </article>
+        }
       </section>
 
       <div class="pagination" aria-label="Match review pagination">
